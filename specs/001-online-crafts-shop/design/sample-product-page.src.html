@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ארנב בכובע ירוק – היצירות של אביבה (דוגמת עיצוב)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+/* Design sample only. Stock photos (Unsplash) stand in for Aviva's own photos.
+   The real app self-hosts Heebo through next/font and has no inline styles. */
+:root{
+  --ground:#FFF8F0;     /* warm light page ground */
+  --panel:#FFFFFF;
+  --photo:#F8ECDF;      /* photo well */
+  --ink:#3A2A21;        /* warm espresso text (13:1 on white) */
+  --ink-2:#6B5649;      /* secondary text (6.6:1 on white) */
+  --line:#EADBCB;
+  --sun:#F4B43C;        /* marigold: primary actions, announcement */
+  --sun-hover:#EAA322;
+  --sun-soft:#FDEBC4;
+  --rose:#FCE3DB;       /* made-to-order note */
+  --rose-ink:#8A3A2A;   /* 6.3:1 on rose */
+  --peach:#FCEADB;      /* footer */
+  --alert:#B3261E;      /* errors / not available only */
+  --radius:20px;
+  --pill:999px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{font-family:Heebo,system-ui,sans-serif;background:var(--ground);color:var(--ink);font-size:16px;line-height:1.6}
+::selection{background:var(--sun-soft);color:var(--ink)}
+a{color:inherit;text-underline-offset:3px}
+:focus-visible{outline:3px solid var(--ink);outline-offset:3px;border-radius:8px}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+img{display:block;max-width:100%}
+.icon{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+
+.announce{background:var(--sun);color:var(--ink);font-size:13px;font-weight:700;text-align:center;padding:8px 16px}
+
+.header-wrap{position:sticky;top:0;z-index:5;padding:10px 12px;background:var(--ground)}
+.header{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--panel);border-radius:var(--pill);padding:8px 16px 8px 10px;box-shadow:0 3px 14px rgba(150,95,50,.10)}
+[dir=ltr] .header{padding:8px 10px 8px 16px}
+.brand{font-weight:800;font-size:clamp(16px,4.6vw,20px);letter-spacing:-.01em;text-decoration:none;white-space:nowrap}
+.actions{display:flex;align-items:center;gap:0}
+.icon-btn{width:42px;height:44px;display:grid;place-items:center;border-radius:50%;position:relative;text-decoration:none}
+.icon-btn:hover{background:var(--ground)}
+.badge{position:absolute;top:5px;inset-inline-end:3px;min-width:18px;height:18px;border-radius:9px;background:var(--sun);color:var(--ink);font-size:11px;font-weight:800;display:grid;place-items:center;padding:0 4px}
+.lang{font-size:13px;font-weight:700;padding:0 10px;height:36px;border:1.5px solid var(--ink);border-radius:var(--pill);display:inline-flex;align-items:center;margin-inline-end:4px;text-decoration:none}
+.lang:hover{background:var(--sun-soft)}
+
+.crumbs{font-size:13px;color:var(--ink-2);padding:6px 20px 12px}
+.crumbs a{text-decoration:none}.crumbs a:hover{text-decoration:underline}
+.crumbs span{margin:0 6px}
+
+.product{display:grid;gap:16px;padding:0 12px 32px;max-width:1240px;margin:0 auto}
+@media (min-width:900px){.product{grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:28px;align-items:start;padding:0 24px 48px}}
+
+.gallery .main{position:relative;border-radius:var(--radius);overflow:hidden;background:var(--photo);aspect-ratio:4/5}
+.gallery .main img{width:100%;height:100%;object-fit:cover}
+.zoom{position:absolute;bottom:12px;inset-inline-end:12px;width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.94);display:grid;place-items:center}
+.count{position:absolute;bottom:14px;inset-inline-start:14px;background:rgba(255,255,255,.94);font-size:13px;font-weight:700;border-radius:var(--pill);padding:6px 12px}
+.thumbs{display:flex;gap:8px;margin-top:10px;overflow-x:auto;padding-bottom:4px}
+.thumbs button{flex:0 0 72px;height:90px;border-radius:14px;overflow:hidden;background:var(--photo);border:2px solid transparent}
+.thumbs button[aria-current=true]{border-color:var(--sun)}
+.thumbs img{width:100%;height:100%;object-fit:cover}
+.synthetic{font-size:12px;color:var(--ink-2);margin-top:6px}
+
+.buy{background:var(--panel);border-radius:var(--radius);padding:22px 18px 24px}
+@media (min-width:900px){.buy{position:sticky;top:88px;padding:32px 30px}}
+.buy h1{font-size:30px;line-height:1.15;font-weight:800;letter-spacing:-.02em}
+.price{display:flex;align-items:baseline;gap:10px;margin-top:10px}
+.price strong{font-size:24px;font-weight:700;font-variant-numeric:tabular-nums}
+.price span{font-size:13px;color:var(--ink-2)}
+.made{display:flex;gap:10px;align-items:flex-start;background:var(--rose);color:var(--rose-ink);border-radius:16px;padding:12px 14px;margin-top:16px;font-size:15px;line-height:1.5}
+.made .icon{flex:none;margin-top:1px}
+.made b{font-weight:700}
+.lede{margin-top:16px;max-width:60ch}
+
+fieldset{border:0;margin-top:22px}
+fieldset[aria-invalid=true] .choice>span{border-color:var(--alert)}
+legend{font-size:14px;font-weight:700;margin-bottom:10px}
+legend em{font-style:normal;font-weight:500;color:var(--ink-2)}
+.choices{display:flex;flex-wrap:wrap;gap:8px}
+.choice input{position:absolute;opacity:0;pointer-events:none}
+.choice>span{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:8px 16px;border:1.5px solid var(--line);border-radius:14px;font-size:15px;font-weight:500;background:#fff;cursor:pointer}
+.choice>span i{width:16px;height:16px;border-radius:50%;border:1px solid rgba(58,42,33,.18)}
+.choice small{font-size:13px;color:var(--ink-2)}
+.choice input:checked+span{border-color:var(--ink);background:var(--sun-soft);box-shadow:inset 0 0 0 1px var(--ink)}
+.choice input:focus-visible+span{outline:3px solid var(--ink);outline-offset:2px}
+.sw-green{background:#9DB83F}.sw-yellow{background:#F2C94C}.sw-pink{background:#F2A7B5}
+
+.buyrow{display:flex;gap:10px;margin-top:24px}
+.qty{display:flex;align-items:center;border:1.5px solid var(--line);border-radius:var(--pill);height:54px;background:#fff}
+.qty button{width:44px;height:100%;font-size:20px}
+.qty output{min-width:24px;text-align:center;font-weight:700;font-variant-numeric:tabular-nums}
+.add{flex:1;height:54px;border-radius:var(--pill);background:var(--sun);color:var(--ink);font-size:17px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:10px;transition:transform .15s ease-out,background .15s}
+.add:hover{background:var(--sun-hover)}.add:active{transform:scale(.98)}
+.hint{font-size:13px;color:var(--alert);margin-top:8px;min-height:20px}
+.hint.off{visibility:hidden}
+
+.facts{list-style:none;margin-top:22px;border-top:1px solid var(--line);padding-top:16px;display:grid;gap:12px;font-size:15px}
+.facts li{display:flex;gap:12px;align-items:flex-start}
+.facts .icon{flex:none;margin-top:1px;color:#C9821A}
+.facts small{display:block;color:var(--ink-2);font-size:13px}
+
+.more{margin-top:22px}
+details{border-top:1px solid var(--line)}
+details:last-of-type{border-bottom:1px solid var(--line)}
+summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:14px 0;font-weight:700}
+summary::-webkit-details-marker{display:none}
+summary .icon{transition:transform .2s ease-out}
+details[open] summary .icon{transform:rotate(45deg)}
+details p{padding:0 0 16px;color:var(--ink-2);font-size:15px;max-width:62ch}
+
+.related{max-width:1240px;margin:0 auto;padding:8px 12px 40px}
+@media (min-width:900px){.related{padding:8px 24px 64px}}
+.related h2{font-size:22px;font-weight:800;margin:0 8px 14px;letter-spacing:-.01em}
+.cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (min-width:900px){.cards{grid-template-columns:repeat(4,minmax(0,1fr));gap:20px}}
+.card{text-decoration:none}
+.card .ph{border-radius:var(--radius);overflow:hidden;background:var(--photo);aspect-ratio:4/5}
+.card .ph img{width:100%;height:100%;object-fit:cover;transition:transform .4s ease-out}
+.card:hover .ph img{transform:scale(1.03)}
+.card b{display:block;font-weight:700;margin-top:10px;padding-inline:4px}
+.card span{font-size:15px;padding-inline:4px;font-variant-numeric:tabular-nums}
+.card .na{color:var(--alert);font-size:13px;font-weight:700}
+
+footer{background:var(--peach);color:var(--ink);padding:32px 20px 40px;font-size:14px;border-radius:28px 28px 0 0}
+footer .wrap{max-width:1240px;margin:0 auto;display:grid;gap:20px}
+@media (min-width:900px){footer .wrap{grid-template-columns:2fr 1fr 1fr}}
+footer h3{font-size:16px;margin-bottom:8px}
+footer ul{list-style:none;display:grid;gap:6px}
+.note{background:var(--peach);margin:0;padding:0 20px 20px;font-size:12px;color:var(--ink-2);text-align:center}
+</style>
+</head>
+<body>
+<div class="announce" data-t="announce">משלוח חינם בהזמנה מעל 300 ₪ · איסוף עצמי חינם</div>
+
+<div class="header-wrap">
+  <header class="header">
+    <a class="brand" href="#" data-t="brand">היצירות של אביבה</a>
+    <div class="actions">
+      <a class="lang" href="#" id="lang" lang="en" aria-label="English">EN</a>
+      <a class="icon-btn" href="#" aria-label="חיפוש" data-t-aria="search"><svg class="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg></a>
+      <a class="icon-btn" href="#" aria-label="סל קניות, 2 פריטים" data-t-aria="cart"><svg class="icon" viewBox="0 0 24 24"><path d="M5 8h14l-1.2 11.2a1 1 0 0 1-1 .8H7.2a1 1 0 0 1-1-.8L5 8z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/></svg><span class="badge">2</span></a>
+      <a class="icon-btn" href="#" aria-label="תפריט" data-t-aria="menu"><svg class="icon" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></a>
+    </div>
+  </header>
+</div>
+
+<nav class="crumbs" aria-label="breadcrumb"><a href="#" data-t="home">דף הבית</a><span aria-hidden="true">›</span><a href="#" data-t="cat">חיות סרוגות</a><span aria-hidden="true">›</span><span data-t="name">ארנב בכובע ירוק</span></nav>
+
+<main class="product">
+  <section class="gallery" aria-label="תמונות המוצר" data-t-aria="photos">
+    <div class="main">
+      <img id="mainimg" src="{{p5}}" alt="ארנב סרוג אפור בכובע ירוק ואוברול" data-t-alt="alt1">
+      <span class="count">1 / 4</span>
+      <button class="zoom" aria-label="הגדלת התמונה" data-t-aria="zoom"><svg class="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5M11 8.5v5M8.5 11h5"/></svg></button>
+    </div>
+    <div class="thumbs">
+      <button aria-current="true" data-src="{{p5}}"><img src="{{t5}}" alt=""></button>
+      <button data-src="{{p4}}"><img src="{{t4}}" alt=""></button>
+      <button data-src="{{p3}}"><img src="{{t3}}" alt=""></button>
+      <button data-src="{{p9}}"><img src="{{t9}}" alt=""></button>
+    </div>
+    <p class="synthetic" data-t="synthetic">תמונות לדוגמה בלבד (Unsplash); באתר יופיעו התמונות של אביבה.</p>
+  </section>
+
+  <section class="buy" aria-labelledby="pname">
+    <h1 id="pname" data-t="name">ארנב בכובע ירוק</h1>
+    <div class="price"><strong id="price">160 ₪</strong><span data-t="vat">כולל מע״מ</span></div>
+
+    <div class="made">
+      <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M6.5 7.5c3 1.5 8 1.5 11 0M5 12c4 1.5 10 1.5 14 0M6.5 16.5c3-1.5 8-1.5 11 0"/></svg>
+      <div data-t-html="made"><b>נסרג במיוחד בשבילכם.</b> מוכן למשלוח או לאיסוף תוך כשבועיים מההזמנה.</div>
+    </div>
+
+    <p class="lede" data-t="desc">את הארנב הזה סרגתי מצמר רך, עם אוזניים ארוכות, אוברול ירוק וכובע תואם. כל ארנב יוצא קצת אחר, כי כל אחד נסרג ביד מההתחלה.</p>
+
+    <fieldset>
+      <legend><span data-t="hat">צבע הכובע</span> <em data-t="choose">(בחרו אחד)</em></legend>
+      <div class="choices" id="opts">
+        <label class="choice"><input type="radio" name="opt" value="0"><span><i class="sw-green"></i><span data-t="green">ירוק</span></span></label>
+        <label class="choice"><input type="radio" name="opt" value="15"><span><i class="sw-yellow"></i><span data-t="yellow">צהוב</span> <small>+15 ₪</small></span></label>
+        <label class="choice"><input type="radio" name="opt" value="0"><span><i class="sw-pink"></i><span data-t="pink">ורוד</span></span></label>
+      </div>
+    </fieldset>
+
+    <div class="buyrow">
+      <div class="qty" role="group" aria-label="כמות" data-t-aria="qty">
+        <button type="button" id="minus" aria-label="הפחתת יחידה" data-t-aria="minus">−</button>
+        <output id="q" aria-live="polite">1</output>
+        <button type="button" id="plus" aria-label="הוספת יחידה" data-t-aria="plus">+</button>
+      </div>
+      <button class="add" id="add" aria-describedby="hint"><span data-t="add">הוספה לסל</span></button>
+    </div>
+    <p class="hint off" id="hint" aria-live="polite" data-t="pick">יש לבחור צבע כובע לפני ההוספה לסל</p>
+
+    <ul class="facts">
+      <li><svg class="icon" viewBox="0 0 24 24"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7z"/><circle cx="7" cy="17.5" r="1.6"/><circle cx="17" cy="17.5" r="1.6"/></svg><div data-t-html="ship">משלוח בכל הארץ 30 ₪<small>חינם בהזמנה מעל 300 ₪</small></div></li>
+      <li><svg class="icon" viewBox="0 0 24 24"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0C18.5 15.4 12 21 12 21z"/><circle cx="12" cy="10" r="2.3"/></svg><div data-t-html="pickup">איסוף עצמי חינם<small>הכתובת והשעות מופיעות בקופה</small></div></li>
+      <li><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/></svg><div data-t-html="pay">תשלום בכרטיס אשראי או ב-Bit<small>או בהעברה / מזומן באיסוף</small></div></li>
+    </ul>
+
+    <div class="more">
+      <details><summary><span data-t="d1">משלוח ואיסוף</span><svg class="icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></summary><p data-t="d1b">כשהארנב מוכן אני שולחת אותו בדואר או בשליח, או שאתם אוספים אותו ממני. אעדכן אתכם במייל כשהוא יוצא לדרך.</p></details>
+      <details><summary><span data-t="d2">ביטולים והחזרות</span><svg class="icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></summary><p data-t="d2b">הפרטים המלאים במדיניות המשלוחים וההחזרות.</p></details>
+    </div>
+  </section>
+</main>
+
+<section class="related" aria-labelledby="rel">
+  <h2 id="rel" data-t="more">עוד חיות סרוגות</h2>
+  <div class="cards">
+    <a class="card" href="#"><div class="ph"><img src="{{p3}}" alt=""></div><b data-t="p2">שני חברים ישנים</b><span>220 ₪</span></a>
+    <a class="card" href="#"><div class="ph"><img src="{{p9}}" alt=""></div><b data-t="p3">מלאך קטן</b><span>140 ₪</span></a>
+    <a class="card" href="#"><div class="ph"><img src="{{p7}}" alt=""></div><b data-t="p4">חבר כתום</b><span>120 ₪</span></a>
+    <a class="card" href="#"><div class="ph"><img src="{{p8}}" alt=""></div><b data-t="p5">שלישיית תינוקות</b><span class="na" data-t="na">לא זמין כרגע</span></a>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div><h3 data-t="brand">היצירות של אביבה</h3><p data-t="biz">עוסק מורשה 000000000 · שדרות בן-צבי 120/18 · aviva@example.co.il · 050-0000000</p></div>
+    <div><h3 data-t="info">מידע</h3><ul><li><a href="#" data-t="about">אודות</a></li><li><a href="#" data-t="shipret">משלוחים והחזרות</a></li><li><a href="#" data-t="contact">יצירת קשר</a></li></ul></div>
+    <div><h3 data-t="legal">משפטי</h3><ul><li><a href="#" data-t="terms">תקנון</a></li><li><a href="#" data-t="privacy">מדיניות פרטיות</a></li><li><a href="#" data-t="a11y">הצהרת נגישות</a></li></ul></div>
+  </div>
+</footer>
+<p class="note" data-t="note">דוגמת עיצוב. מחירים, דמי משלוח ופרטי העסק הם דוגמה בלבד.</p>
+
+<script>
+const en={announce:"Free shipping on orders over ₪300 · Free self-pickup",brand:"Aviva's Crafts",home:"Home",cat:"Crocheted animals",name:"Bunny in a green hat",
+synthetic:"Sample photos only (Unsplash); the shop will show Aviva's own photos.",vat:"incl. VAT",
+made:"<b>Crocheted just for you.</b> Ready to ship or collect about two weeks after you order.",
+desc:"I crocheted this bunny from soft wool, with long ears, green overalls and a matching hat. Every bunny comes out a little different, because each one is made by hand from scratch.",
+hat:"Hat colour",choose:"(choose one)",green:"Green",yellow:"Yellow",pink:"Pink",add:"Add to cart",pick:"Choose a hat colour before adding to the cart",
+ship:"Shipping anywhere in Israel ₪30<small>Free on orders over ₪300</small>",pickup:"Free self-pickup<small>Address and hours are shown at checkout</small>",
+pay:"Pay by card or Bit<small>or bank transfer / cash on pickup</small>",d1:"Shipping and pickup",d1b:"When the bunny is ready I send it by post or courier, or you collect it from me. I'll email you when it's on its way.",
+d2:"Cancellations and returns",d2b:"Full details are in the shipping and returns policy.",more:"More crocheted animals",p2:"Two sleepy friends",p3:"Little angel",p4:"Orange buddy",p5:"Baby trio",na:"Not available right now",
+info:"Info",about:"About",shipret:"Shipping & returns",contact:"Contact",legal:"Legal",terms:"Terms",privacy:"Privacy policy",a11y:"Accessibility statement",
+biz:"Licensed business 000000000 · 120/18 Ben-Zvi Blvd · aviva@example.co.il · 050-0000000",note:"Design sample. Prices, delivery fees and business details are examples only.",
+aria:{search:"Search",cart:"Cart, 2 items",menu:"Menu",photos:"Product photos",zoom:"Enlarge photo",qty:"Quantity",plus:"Add one",minus:"Remove one"},alt:{alt1:"Grey crocheted bunny in a green hat and overalls"}};
+const he={};document.querySelectorAll('[data-t]').forEach(e=>he[e.dataset.t]=e.textContent);document.querySelectorAll('[data-t-html]').forEach(e=>he[e.dataset.tHtml]=e.innerHTML);
+const heAria={};document.querySelectorAll('[data-t-aria]').forEach(e=>heAria[e.dataset.tAria]=e.getAttribute('aria-label'));
+const heAlt={};document.querySelectorAll('[data-t-alt]').forEach(e=>heAlt[e.dataset.tAlt]=e.alt);
+let lang='he';const fmt=n=>lang==='he'?n+' ₪':'₪'+n;
+const base=160;let q=1;const price=document.getElementById('price'),add=document.getElementById('add'),hint=document.getElementById('hint'),fs=document.querySelector('fieldset');
+function upd(){const c=document.querySelector('input[name=opt]:checked');const d=c?+c.value:0;price.textContent=fmt((base+d)*q);
+ if(c){hint.classList.add('off');fs.removeAttribute('aria-invalid')}
+ document.querySelectorAll('.choice small').forEach(s=>s.textContent='+'+(lang==='he'?'15 ₪':'₪15'));
+ document.querySelectorAll('.card span:not(.na)').forEach(s=>{const n=s.textContent.replace(/\D/g,'');s.textContent=fmt(n)})}
+document.getElementById('opts').addEventListener('change',upd);
+document.getElementById('plus').onclick=()=>{if(q<20){q++;document.getElementById('q').textContent=q;upd()}};
+document.getElementById('minus').onclick=()=>{if(q>1){q--;document.getElementById('q').textContent=q;upd()}};
+add.onclick=()=>{const c=document.querySelector('input[name=opt]:checked');if(!c){hint.classList.remove('off');fs.setAttribute('aria-invalid','true');document.querySelector('input[name=opt]').focus();return}
+ const b=document.querySelector('.badge');b.textContent=+b.textContent+q;const s=add.querySelector('span');s.textContent=lang==='he'?'נוסף לסל ✓':'Added to cart ✓';setTimeout(()=>s.textContent=lang==='he'?'הוספה לסל':'Add to cart',1800)};
+document.querySelectorAll('.thumbs button').forEach((b,i,all)=>b.onclick=()=>{document.getElementById('mainimg').src=b.dataset.src;all.forEach(x=>x.removeAttribute('aria-current'));b.setAttribute('aria-current','true');document.querySelector('.count').textContent=(i+1)+' / '+all.length});
+document.getElementById('lang').onclick=e=>{e.preventDefault();lang=lang==='he'?'en':'he';const L=lang==='en';
+ document.documentElement.lang=lang;document.documentElement.dir=L?'ltr':'rtl';
+ document.querySelectorAll('[data-t]').forEach(el=>el.textContent=L?en[el.dataset.t]:he[el.dataset.t]);
+ document.querySelectorAll('[data-t-html]').forEach(el=>el.innerHTML=L?en[el.dataset.tHtml]:he[el.dataset.tHtml]);
+ document.querySelectorAll('[data-t-aria]').forEach(el=>el.setAttribute('aria-label',L?en.aria[el.dataset.tAria]:heAria[el.dataset.tAria]));
+ document.querySelectorAll('[data-t-alt]').forEach(el=>el.alt=L?en.alt[el.dataset.tAlt]:heAlt[el.dataset.tAlt]);
+ const t=document.getElementById('lang');t.textContent=L?'עב':'EN';t.setAttribute('aria-label',L?'עברית':'English');t.lang=L?'he':'en';upd()};
+upd();
+</script>
+</body>
+</html>
