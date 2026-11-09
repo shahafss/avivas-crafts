@@ -1,0 +1,7 @@
+saveExact: true
+engineStrict: true
+allowBuilds:
+  sharp: true
+  esbuild: true
+  '@parcel/watcher': false
+  '@swc/core': false

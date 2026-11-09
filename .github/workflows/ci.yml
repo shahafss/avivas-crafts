@@ -1,0 +1,73 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      DATABASE_URL_TEST: postgres://postgres:postgres@localhost:5432/avivas_crafts_test
+      E2E_DATABASE_URL: postgres://postgres:postgres@localhost:5432/avivas_crafts_e2e
+      PGPASSWORD: postgres
+    steps:
+      - uses: actions/checkout@v4
+        timeout-minutes: 5
+      - name: Enable Corepack (pnpm 12.6.0 from packageManager)
+        run: corepack enable pnpm
+        timeout-minutes: 2
+      - uses: actions/setup-node@v4
+        timeout-minutes: 5
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        timeout-minutes: 10
+      - name: Create test databases
+        run: |
+          psql -h localhost -U postgres -c 'CREATE DATABASE avivas_crafts_e2e'
+          psql -h localhost -U postgres -c 'CREATE DATABASE avivas_crafts_test'
+        timeout-minutes: 2
+      - name: Verify (typecheck, lint, CSS, tests incl. real PostgreSQL, audit)
+        run: pnpm verify
+        timeout-minutes: 15
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium webkit
+        timeout-minutes: 10
+      - name: End-to-end tests
+        run: pnpm test:e2e
+        timeout-minutes: 30
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        timeout-minutes: 5
+        with:
+          name: playwright-report
+          path: |
+            playwright-report
+            test-results
+          retention-days: 7

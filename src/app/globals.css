@@ -1,0 +1,156 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-*: initial;
+  --color-ground: #fff8f0;
+  --color-panel: #ffffff;
+  --color-photo: #f8ecdf;
+  --color-ink: #3a2a21;
+  --color-ink-2: #6b5649;
+  --color-line: #eadbcb;
+  --color-field: #977e6e;
+  --color-sun: #f4b43c;
+  --color-sun-hover: #eaa322;
+  --color-sun-soft: #fdebc4;
+  --color-sun-ink: #c9821a;
+  --color-rose: #fce3db;
+  --color-rose-ink: #8a3a2a;
+  --color-peach: #fceadb;
+  --color-alert: #b3261e;
+  --color-transparent: transparent;
+  --color-current: currentColor;
+
+  --radius-card: 20px;
+  --radius-chip: 14px;
+  --radius-pill: 999px;
+
+  --shadow-*: initial;
+  --shadow-float: 0 3px 14px rgb(150 95 50 / 0.1);
+
+  --breakpoint-*: initial;
+  --breakpoint-sm: 40rem;
+  --breakpoint-lg: 56.25rem;
+  --breakpoint-xl: 77.5rem;
+
+  --font-sans: var(--font-heebo), system-ui, sans-serif;
+
+  --z-index-header: 20;
+  --z-index-popover: 30;
+  --z-index-banner: 40;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    scrollbar-color: var(--color-line) transparent;
+  }
+
+  body {
+    margin-inline: 0;
+    padding-inline: 0;
+    background-color: var(--color-ground);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.6;
+    caret-color: var(--color-ink);
+  }
+
+  ::selection {
+    background-color: var(--color-sun-soft);
+    color: var(--color-ink);
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--color-ink);
+    outline-offset: 3px;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: var(--color-line);
+    border-radius: var(--radius-pill);
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Option colour dots (storefront.md 7.13a). Plain classes: the name is built at runtime. */
+.swatch-white {
+  background-color: #ffffff;
+}
+.swatch-cream {
+  background-color: #f3e6c9;
+}
+.swatch-beige {
+  background-color: #d9c3a0;
+}
+.swatch-brown {
+  background-color: #8b5e3c;
+}
+.swatch-grey {
+  background-color: #9e9a96;
+}
+.swatch-black {
+  background-color: #2b2522;
+}
+.swatch-red {
+  background-color: #c8442f;
+}
+.swatch-pink {
+  background-color: #f2a7b5;
+}
+.swatch-orange {
+  background-color: #ee8a3a;
+}
+.swatch-yellow {
+  background-color: #f2c94c;
+}
+.swatch-green {
+  background-color: #9db83f;
+}
+.swatch-blue {
+  background-color: #6a9bd1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* The cart badge in the header grows and settles when something is added (storefront.md 7.12).
+   Reduced motion switches every animation off in the block above. */
+@keyframes badge-pop {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.35);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.badge-pop {
+  animation: badge-pop 300ms ease-out;
+}

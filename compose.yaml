@@ -1,0 +1,19 @@
+# Local PostgreSQL 17 for development, E2E and the `pg` test project.
+# Host port 5433 (Postgres.app 18 already uses 5432 on the maintainer's machine).
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - '127.0.0.1:5433:5432'
+    volumes:
+      - ./.data/pg:/var/lib/postgresql/data
+      - ./ops/dev/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 5s
+      timeout: 3s
+      retries: 10
