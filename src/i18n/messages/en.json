@@ -1,0 +1,931 @@
+{
+  "common": {
+    "skipToContent": "Skip to content",
+    "busy": "One moment…",
+    "loading": "Loading…",
+    "menu": "Menu",
+    "menuNav": "Site menu",
+    "search": "Search",
+    "allPieces": "All pieces",
+    "breadcrumbs": "You are here",
+    "home": "Home",
+    "nav": {
+      "about": "About",
+      "shippingReturns": "Shipping & returns",
+      "contact": "Contact",
+      "categories": "Categories"
+    },
+    "announcement": {
+      "freeShippingOver": "Free shipping on orders over <money>{amount}</money>",
+      "freePickup": "Free self-pickup"
+    },
+    "footer": {
+      "copyright": "© {year} {shopName}"
+    },
+    "cart": {
+      "label": "Cart, {count, plural, =0 {empty} one {1 item} other {# items}}"
+    },
+    "language": {
+      "toEnglishShort": "EN",
+      "toEnglish": "English",
+      "toHebrewShort": "עב",
+      "toHebrew": "עברית"
+    },
+    "dialog": {
+      "confirm": "Confirm",
+      "cancel": "Cancel"
+    },
+    "toast": {
+      "close": "Close"
+    }
+  },
+  "shop": {
+    "catalog": {
+      "intro": "I knit or crochet every piece here by hand, after you order.",
+      "sortLabel": "Sort",
+      "sort": {
+        "newest": "Newest",
+        "priceAsc": "Price: low to high",
+        "priceDesc": "Price: high to low"
+      },
+      "gridLabel": "Pieces",
+      "emptyTitle": "No pieces here yet",
+      "emptyText": "You can write to me and ask about an order.",
+      "emptyAction": "Write to me",
+      "categoriesLabel": "Categories",
+      "all": "All"
+    },
+    "card": {
+      "from": "From",
+      "notOrderable": "Not available to order right now"
+    },
+    "product": {
+      "breadcrumbs": "Breadcrumbs",
+      "vat": "incl. VAT",
+      "from": "From",
+      "madeLead": "Made just for you.",
+      "madeTime": "Time to make before shipping or pickup: <prep>{prepTime}</prep>",
+      "chooseOne": "(choose one)",
+      "readonlyLine": "<group>{groupName}</group>: <values></values>",
+      "unavailable": "Not available to order right now",
+      "unavailableLink": "You can write to me",
+      "factsLabel": "Shipping and payment details",
+      "shipping": "Delivery across Israel",
+      "shippingFee": "Delivery across Israel {fee}",
+      "shippingFreeOver": "Free on orders over {threshold}",
+      "pickup": "Free self-pickup",
+      "pickupNote": "The address and hours are shown at checkout",
+      "payOnline": "Secure payment by credit card",
+      "payOnlineAlt": "Or pay me directly: details at checkout",
+      "payOffline": "Pay me directly: details at checkout",
+      "shippingTitle": "Shipping and pickup",
+      "shippingText": "I make every order after you place it, and then you can have it delivered or collect it.",
+      "returnsTitle": "Cancellations and returns",
+      "returnsText": "You can read the cancellation and return rules on the shipping and returns page.",
+      "readMore": "Go to shipping and returns",
+      "related": "More <cat>{category}</cat>",
+      "relatedLabel": "More pieces"
+    },
+    "gallery": {
+      "label": "Photos of {product}",
+      "photoOf": "Photo {n} of {total}",
+      "altDefault": "{name}, photo {n} of {total}",
+      "zoom": "Enlarge photo",
+      "close": "Close",
+      "previous": "Previous photo",
+      "next": "Next photo",
+      "thumbnails": "Choose a photo"
+    },
+    "notAvailable": {
+      "title": "This piece isn't available any more",
+      "text": "Maybe you will find something else here that you like:",
+      "listLabel": "Pieces you may like"
+    },
+    "category": {
+      "breadcrumbs": "Breadcrumb",
+      "count": "{count, plural, one {# piece} other {# pieces}}",
+      "emptyTitle": "No pieces in this category yet",
+      "emptyText": "You can look at all the pieces.",
+      "emptyAction": "All pieces"
+    },
+    "search": {
+      "title": "Search",
+      "breadcrumbs": "Breadcrumb",
+      "label": "What are you looking for?",
+      "button": "Search",
+      "results": "{count, plural, one {# piece} other {# pieces}} for “<q>{query}</q>”",
+      "noResultsTitle": "I couldn't find pieces for “<q>{query}</q>”",
+      "noResultsText": "Try another word, or go to one of the categories.",
+      "tooLong": "You can search up to 80 characters.",
+      "prompt": "Search by name or description, or go to one of the categories."
+    }
+  },
+  "cart": {
+    "title": "Your cart",
+    "loading": "Loading…",
+    "loadError": "I couldn't load your cart. Please try again.",
+    "retry": "Try again",
+    "linesLabel": "Items in your cart",
+    "empty": {
+      "title": "Your cart is empty",
+      "text": "You haven't added any pieces yet.",
+      "action": "All pieces"
+    },
+    "stepper": {
+      "label": "Quantity",
+      "decrease": "Remove one",
+      "increase": "Add one",
+      "atMin": "You can't order fewer than one.",
+      "atMax": "You can order up to {max} of each item."
+    },
+    "add": {
+      "button": "Add to cart",
+      "added": "Added to cart",
+      "chooseFirst": "Choose a <group>{groupName}</group> before adding to the cart",
+      "announce": "Added to cart. Your cart now has {count, plural, one {# item} other {# items}}",
+      "full": "You can order up to 50 different items in one order.",
+      "inCartRow": "<n>{name}</n> is in your cart · <cart>Go to cart</cart>"
+    },
+    "line": {
+      "option": "<g>{group}</g>: <v>{value}</v>",
+      "remove": "Remove",
+      "removeFromCart": "Remove from cart",
+      "chooseAgainLink": "Choose again",
+      "quantityOf": "Quantity: {name}",
+      "gone": "A piece that is no longer available"
+    },
+    "flags": {
+      "unavailable": "This piece can't be ordered any more.",
+      "chooseAgain": "The option you chose no longer exists.",
+      "noUsd": "Not available for shipping abroad."
+    },
+    "summary": {
+      "label": "Cart summary",
+      "heading": "Some items in your cart can't be ordered",
+      "item": "{name}: {reason}",
+      "subtotal": "Subtotal",
+      "deliveryLater": "Delivery is calculated at checkout",
+      "freeShippingOver": "Free shipping over <money>{threshold}</money>",
+      "continue": "Continue to checkout",
+      "keepShopping": "Keep shopping"
+    },
+    "errors": {
+      "invalid": "I couldn't read your cart. Please refresh the page."
+    }
+  },
+  "checkout": {
+    "ships_israel_only": "For now I only ship within Israel.",
+    "errors": {
+      "fullName": "Please enter your full name (at least 2 characters).",
+      "phone": "Please enter a valid phone number.",
+      "email": "Please enter a valid email address.",
+      "country": "Please choose a country.",
+      "city": "Please enter a city.",
+      "line1": "Please enter a street and number.",
+      "line2": "This field is too long.",
+      "postalCodeIl": "An Israeli postal code has 7 digits.",
+      "postalCode": "A postal code can have up to 12 characters.",
+      "note": "You can write up to 1,000 characters.",
+      "acceptTerms": "To order, please accept the terms.",
+      "deliveryMethod": "Please choose shipping or pickup.",
+      "paymentMethod": "Please choose how to pay.",
+      "generic": "Something went wrong. Please try again."
+    },
+    "title": "Finish your order",
+    "loading": "Loading…",
+    "quoting": "Working it out…",
+    "busy": "One moment…",
+    "backToCart": "Back to the cart",
+    "backToShop": "Back to the shop",
+    "errorSummary": "Please fix a few details",
+    "honeypot": "Leave this field empty",
+    "rate_limited": "Too many requests. Please try again in a few minutes.",
+    "form_expired": "I couldn't send the form. Reload the page and try again.",
+    "shop_not_ready": "The shop isn't open for orders yet. Please try again later.",
+    "payment_unavailable_method": "The payment method you chose isn't available right now. Choose another one.",
+    "delivery_unavailable": "The delivery option you chose isn't available right now. Choose another one.",
+    "lines_unavailable": "Some items in your order can't be ordered right now.",
+    "payment_unavailable": "Online payment isn't available right now. Try again, or choose to pay me directly.",
+    "link_expired": "This link is no longer active.",
+    "already_completed": "This order has already been handled.",
+    "total_changed": "The price has changed since you started your order.",
+    "offline_unavailable": "Paying me directly isn't available right now.",
+    "paymentDescriptionOne": "{shopName} · 1 item",
+    "paymentDescriptionMany": "{shopName} · {count} items",
+    "otherCountryMessage": "For now I only ship within Israel. You can choose self-pickup or <contact>write to me</contact>.",
+    "sections": {
+      "contact": "Contact details",
+      "delivery": "Delivery or pickup",
+      "payment": "Payment",
+      "note": "Note",
+      "consent": "Confirmations"
+    },
+    "fields": {
+      "fullName": "Full name",
+      "phone": "Phone",
+      "email": "Email",
+      "emailHint": "I'll send your order confirmation here",
+      "country": "Country",
+      "otherCountry": "Other country",
+      "city": "City",
+      "line1": "Street and number",
+      "line2": "Apartment, floor (optional)",
+      "postalCode": "Postal code (optional)"
+    },
+    "delivery": {
+      "shipping": "Delivery to your door",
+      "pickup": "Self-pickup"
+    },
+    "payment": {
+      "online": "Secure payment on the site",
+      "onlineHint": "By credit card, on the payment company's secure page",
+      "offline": "Pay me directly",
+      "offlineHint": "After you order you'll get the payment details: transfer, Bit, PayBox or cash on pickup"
+    },
+    "note": {
+      "toggle": "Add a note (optional)",
+      "label": "Note for the order"
+    },
+    "terms": {
+      "label": "I have read the <terms>terms of sale</terms> and agree to them",
+      "newTab": "(opens in a new tab)"
+    },
+    "marketing": {
+      "label": "I'd like to get updates by email",
+      "hint": "Consent to receive updates and promotional emails. You can withdraw it at any time."
+    },
+    "collection": "The details are needed to handle your order and to contact you about it. You aren't legally required to provide them, but without them an order can't be placed. Who receives them and how they are kept: <privacy>Privacy Policy</privacy>.",
+    "seller": "{name} · Reg. no. {regNumber}",
+    "summary": {
+      "label": "Order summary",
+      "toggle": "Order summary",
+      "subtotal": "Subtotal",
+      "delivery": "Delivery",
+      "free": "Free",
+      "total": "Total",
+      "prepTime": "Time to make: {prepTime}",
+      "quantity": "× {count}",
+      "option": "{group}: {value}"
+    },
+    "submit": {
+      "online": "Continue to secure payment",
+      "offline": "Place order"
+    },
+    "return": {
+      "title": "Payment",
+      "checking": "Checking your payment…",
+      "confirmed": "Payment confirmed",
+      "failed": {
+        "title": "The payment didn't go through",
+        "text": "Your details are saved. You can try again or pay me directly."
+      },
+      "retry": "Try again",
+      "switchOffline": "Pay me directly instead",
+      "totalChanged": "The price has changed since you started your order. The new total is {total}.",
+      "confirmContinue": "Confirm and continue",
+      "switched": "Your order continues as direct payment to me. All the details were emailed to you.",
+      "mismatch": "There was a problem with the payment amount. I'll contact you soon.",
+      "expired": "This link is no longer active",
+      "toCart": "To the cart",
+      "timeout": "The payment is still being checked. A confirmation will reach you by email."
+    },
+    "fakePay": {
+      "title": "Fake payment page",
+      "notice": "This is not a real payment. This page exists only for development and tests.",
+      "amount": "Amount to pay:",
+      "pay": "Pay",
+      "fail": "Fail the payment",
+      "payClose": "Pay, and close the tab before returning",
+      "closed": "The payment was recorded. You can close this tab."
+    }
+  },
+  "order": {
+    "title": "Your order",
+    "heading": "Thank you! Your order is in",
+    "numberLabel": "Order number",
+    "emailSent": "A confirmation was also sent by email.",
+    "paymentState": {
+      "awaiting_payment": "Awaiting payment",
+      "paid": "Paid",
+      "refunded": "Refunded"
+    },
+    "howToPay": "How to pay",
+    "quoteNumber": "When you transfer, write the order number <n>{number}</n>.",
+    "pickup": "Self-pickup",
+    "madePaid": "Now I start crocheting.",
+    "madeAwaiting": "I'll start crocheting when the payment arrives.",
+    "summary": {
+      "label": "Order details",
+      "subtotal": "Subtotal",
+      "delivery": "Delivery",
+      "free": "Free",
+      "total": "Total",
+      "prepTime": "Time to make: {prepTime}",
+      "quantity": "× {count}",
+      "option": "{group}: {value}"
+    },
+    "backToShop": "Back to the shop",
+    "expired": {
+      "title": "This link is no longer active",
+      "text": "An order link is valid for 30 days. If you need anything about your order, write to me and I'll answer.",
+      "contact": "Contact"
+    }
+  },
+  "admin": {
+    "brand": "Shop admin",
+    "skipToContent": "Skip to content",
+    "nav": {
+      "label": "Admin menu",
+      "dashboard": "Dashboard",
+      "products": "Products",
+      "categories": "Categories",
+      "orders": "Orders",
+      "customers": "Customers",
+      "settings": "Settings",
+      "content": "Content",
+      "stats": "Statistics",
+      "security": "Security",
+      "activity": "Activity log",
+      "signOut": "Sign out"
+    },
+    "dashboard": {
+      "title": "Dashboard",
+      "welcome": "Hello, {name}",
+      "intro": "New orders and things that need attention will appear here."
+    },
+    "notFound": {
+      "title": "Page not found",
+      "text": "That address does not exist in the admin area.",
+      "toDashboard": "Back to the dashboard"
+    },
+    "auth": {
+      "signIn": {
+        "title": "Sign in to the shop admin",
+        "intro": "Sign-in has two steps: your Google account first, then the passkey on your device.",
+        "google": "Sign in with Google",
+        "errors": {
+          "not_allowed": "This account is not allowed to manage the shop.",
+          "expired": "The link expired or was already used. Try signing in again.",
+          "error": "Sign-in did not work. Try again.",
+          "rate_limited": "Too many sign-in attempts. Try again in a few minutes.",
+          "blocked": "Sign-in is temporarily blocked after failed attempts. Try again in 15 minutes."
+        }
+      },
+      "passkey": {
+        "title": "Confirm with your passkey",
+        "intro": "Step two: confirm it is you with your device's passkey.",
+        "pinHint": "The phone's screen-lock PIN or pattern is enough. No fingerprint or face scan is needed.",
+        "button": "Confirm with passkey",
+        "busy": "Checking...",
+        "lostPasskey": "I lost my passkey",
+        "blockedTitle": "Sign-in is temporarily blocked",
+        "blocked": "There were too many failed attempts. Try again in 15 minutes, or ask the other admin to clear the block.",
+        "backToSignIn": "Back to sign-in"
+      },
+      "recovery": {
+        "title": "Recover access",
+        "intro": "Enter one of the recovery codes you saved. After it is accepted you can add a new passkey, which only works once the other admin approves it.",
+        "codeLabel": "Recovery code",
+        "codeHint": "12 characters, dashes or spaces are fine",
+        "submit": "Check the code",
+        "invalid": "The code is wrong or was already used.",
+        "blocked": "Too many attempts. Try again in 15 minutes.",
+        "failed": "That did not work. Try again.",
+        "needsOtherTitle": "Recovery needs another admin",
+        "needsOther": "Recovery needs another admin with an active passkey, and there is none right now. Please contact the person who maintains the site.",
+        "end": "I understand, end sign-in",
+        "registerTitle": "Add a new passkey",
+        "registerIntro": "The code was accepted. Name the device and confirm the passkey.",
+        "deviceLabel": "Device name",
+        "devicePlaceholder": "For example: Aviva's phone",
+        "register": "Add passkey",
+        "waitingTitle": "Waiting for approval",
+        "waiting": "The new passkey is waiting for the other admin's approval. You can sign in once they approve it.",
+        "toSignIn": "To the sign-in page"
+      },
+      "setup": {
+        "title": "First sign-in setup",
+        "intro": "Before the first sign-in, connect your Google account and add a passkey for this device.",
+        "google": "Continue with Google",
+        "missingToken": "The setup link is missing or invalid. Ask for a new one.",
+        "registerTitle": "Add a passkey",
+        "registerIntro": "Name the device and confirm the passkey.",
+        "deviceLabel": "Device name",
+        "devicePlaceholder": "For example: Aviva's phone",
+        "register": "Add passkey",
+        "codesTitle": "Your recovery codes",
+        "codesIntro": "Keep these codes somewhere safe, for example printed. Each code works once and they will not be shown again.",
+        "codesWarning": "Recovering with a code also needs the other admin's approval.",
+        "copy": "Copy the codes",
+        "copied": "Codes copied",
+        "print": "Print",
+        "saved": "I saved the codes",
+        "codesList": "Recovery codes"
+      },
+      "passkeyButton": {
+        "cancelled": "The confirmation was cancelled or not completed. You can try again.",
+        "unsupported": "This browser does not support passkeys.",
+        "failed": "The confirmation did not work. Try again.",
+        "blocked": "Sign-in is temporarily blocked after failed attempts. Try again in 15 minutes.",
+        "sessionExpired": "The sign-in expired. Start again.",
+        "noOtherAdmin": "A passkey cannot be added right now because no other admin has an active passkey.",
+        "alreadyRegistered": "This passkey is already registered.",
+        "needLabel": "Please name the device."
+      },
+      "reauth": {
+        "title": "Confirm with your passkey",
+        "text": "This is a security action, so please confirm again with your passkey.",
+        "confirm": "Confirm with passkey",
+        "cancel": "Cancel"
+      }
+    },
+    "confirm_required": "Please confirm the action before it is carried out.",
+    "categories": {
+      "errors": {
+        "invalid": "The category name is missing or too long (80 characters at most).",
+        "slug_taken": "This address is already used by another category.",
+        "not_found": "Category not found.",
+        "bad_order": "The category order is not valid. Reload the page and try again.",
+        "has_products": "A category with products cannot be deleted. {count, plural, one {It has one product} other {It has # products}}: move them to another category first."
+      },
+      "title": "Categories",
+      "intro": "Categories group the products. The order here is the order on the site.",
+      "add": {
+        "title": "New category",
+        "nameHe": "Name in Hebrew",
+        "nameEn": "Name in English (optional)",
+        "submit": "Add category"
+      },
+      "empty": "There are no categories yet. Add the first one above.",
+      "listLabel": "Categories",
+      "products": "{count, plural, =0 {No products} one {One product} other {# products}}",
+      "row": {
+        "nameHe": "Name in Hebrew",
+        "nameEn": "Name in English (optional)",
+        "save": "Save",
+        "moveUp": "Move up",
+        "moveDown": "Move down",
+        "delete": "Delete"
+      },
+      "delete": {
+        "title": "Delete the category?",
+        "text": "The category \"{name}\" will be deleted. This cannot be undone.",
+        "confirm": "Delete category"
+      },
+      "toast": {
+        "created": "Category added",
+        "updated": "Category saved",
+        "reordered": "Order saved",
+        "deleted": "Category deleted"
+      }
+    },
+    "products": {
+      "errors": {
+        "invalid": "The value is not valid. Check the text length and the price.",
+        "not_found": "Product not found.",
+        "slug_taken": "This address is already used by another product.",
+        "slug_frozen": "The product address cannot be changed after the first publish.",
+        "category_not_found": "Category not found.",
+        "publish_incomplete": "It cannot be published yet. Missing:",
+        "invalid_transition": "This action is not possible in the product's current state.",
+        "option_ils_not_positive": "The price after an option's surcharge or discount must stay above zero.",
+        "option_usd_not_positive": "The USD price after an option's surcharge or discount must stay above zero.",
+        "option_usd_missing": "The product has a USD price, so every option with a shekel surcharge also needs a USD surcharge.",
+        "option_min_values": "On a published product, every option group needs at least two values.",
+        "option_group_invalid": "This option group does not belong to the product.",
+        "option_value_invalid": "One of the option values does not belong to this group.",
+        "bad_image_order": "The list of photos does not match the product's photos. Reload the page and try again.",
+        "image_not_found": "Photo not found on this product.",
+        "last_photo": "The last photo of a published product cannot be removed. Add another photo first, or move the product to draft.",
+        "invalid_price": "The price must be a positive number with up to two decimals.",
+        "invalid_delta": "The extra must be a number, for example 20 or -10."
+      },
+      "missing": {
+        "nameHe": "Product name in Hebrew",
+        "descriptionHe": "Description in Hebrew",
+        "priceIlsMinor": "Price in shekels",
+        "priceUsdMinor": "Price in dollars (a USD shipping zone is enabled)",
+        "categoryId": "Category",
+        "prepTimeHe": "Preparation time",
+        "images": "Photo (at least one)",
+        "optionGroups": "Every option group needs at least two values"
+      },
+      "title": "Products",
+      "new": "New product",
+      "newDefaultName": "New product",
+      "empty": "There are no products yet. Press \"New product\" to start.",
+      "emptyFiltered": "No products match the filter.",
+      "filters": {
+        "state": "Filter by state",
+        "category": "Filter by category",
+        "allStates": "All states",
+        "allCategories": "All categories"
+      },
+      "state": {
+        "draft": "Draft",
+        "published": "Published",
+        "hidden": "Hidden"
+      },
+      "notOrderable": "Not available to order",
+      "noPhoto": "No photo",
+      "noPrice": "No price",
+      "listLabel": "Product list",
+      "editor": {
+        "back": "Back to the product list",
+        "address": "Product address: {slug}",
+        "loading": "Loading the editor…",
+        "stateLabel": "State"
+      },
+      "sections": {
+        "details": "Product details",
+        "photos": "Photos",
+        "options": "Options",
+        "publish": "Publish and save"
+      },
+      "fields": {
+        "nameHe": "Product name (Hebrew)",
+        "nameEn": "Product name (English, optional)",
+        "nameEnHint": "Without an English name, the English site shows the Hebrew name.",
+        "descriptionHe": "Description (Hebrew)",
+        "descriptionEn": "Description (English, optional)",
+        "priceIls": "Price in shekels, including VAT",
+        "priceIlsHint": "Required to publish. For example: 180",
+        "priceUsd": "Price in dollars (optional)",
+        "priceUsdHint": "Used only for orders shipped abroad.",
+        "category": "Category",
+        "categoryNone": "Choose a category",
+        "prepTimeHe": "Preparation time (Hebrew)",
+        "prepTimeHeHint": "For example: about two weeks",
+        "prepTimeEn": "Preparation time (English, optional)"
+      },
+      "photos": {
+        "hint": "Up to 12 photos, straight from the phone gallery. The first photo is the main photo.",
+        "add": "Add photos",
+        "listLabel": "Product photos",
+        "empty": "No photos have been uploaded yet.",
+        "uploading": "Uploading {name}…",
+        "progress": "{done} of {total} photos uploaded",
+        "failed": "{name}: {reason}",
+        "main": "Main photo",
+        "makeMain": "Make main photo",
+        "moveUp": "Move up",
+        "moveDown": "Move down",
+        "remove": "Remove photo",
+        "removeTitle": "Remove the photo?",
+        "removeText": "The photo will no longer appear in the shop.",
+        "removeConfirm": "Remove photo",
+        "photoLabel": "Photo {n} of {total}",
+        "altSummary": "Photo description (optional)",
+        "altHint": "Describes the photo for people who cannot see it.",
+        "altHe": "Description in Hebrew",
+        "altEn": "Description in English",
+        "altSave": "Save description"
+      },
+      "options": {
+        "hint": "For example colour or size. To publish, every group needs at least two values.",
+        "empty": "This product has no options yet.",
+        "add": "Add option group",
+        "groupName": "Group name (Hebrew)",
+        "groupNameHint": "For example: hair colour",
+        "groupNameEn": "Group name (English, optional)",
+        "valueAdd": "Add value",
+        "valueLabel": "Value name (Hebrew)",
+        "valueLabelEn": "Value name (English, optional)",
+        "delta": "Extra in shekels",
+        "deltaHint": "Empty = no extra",
+        "deltaUsd": "Extra in dollars",
+        "valueRemove": "Remove value",
+        "valueRemoveTitle": "Remove the value?",
+        "valueRemoveText": "Carts that hold this value will ask to choose again.",
+        "valueRemoveConfirm": "Remove value",
+        "valuesRequired": "To publish, there must be at least two values.",
+        "groupSave": "Save group",
+        "groupDelete": "Delete group",
+        "groupDeleteTitle": "Delete the option group?",
+        "groupDeleteText": "The group and all its values will be deleted. Carts that hold values of this group will ask to choose again.",
+        "groupDeleteConfirm": "Delete group",
+        "swatchLegend": "Colour (optional)",
+        "saved": "Group saved",
+        "deleted": "Group deleted",
+        "unsaved": "Unsaved changes"
+      },
+      "swatch": {
+        "none": "No colour",
+        "white": "White",
+        "cream": "Cream",
+        "beige": "Beige",
+        "brown": "Brown",
+        "grey": "Grey",
+        "black": "Black",
+        "red": "Red",
+        "pink": "Pink",
+        "orange": "Orange",
+        "yellow": "Yellow",
+        "green": "Green",
+        "blue": "Blue"
+      },
+      "bar": {
+        "save": "Save",
+        "publish": "Publish",
+        "hide": "Hide",
+        "unhide": "Unhide",
+        "setDraft": "Move to draft",
+        "orderable": "Not available to order right now",
+        "orderableHint": "The product stays in the shop, without an add-to-cart button.",
+        "delete": "Delete product",
+        "deleteTitle": "Delete the product?",
+        "deleteText": "The product and its photos are deleted at once. Past orders keep their own details. This cannot be undone.",
+        "deleteConfirm": "Delete product",
+        "missingTitle": "To publish, this is missing:"
+      },
+      "toast": {
+        "saved": "Product saved",
+        "published": "Product published",
+        "hidden": "Product hidden",
+        "unhidden": "Product is visible again",
+        "drafted": "Product moved to draft",
+        "deleted": "Product deleted"
+      }
+    },
+    "images": {
+      "errors": {
+        "unsupported_type": "This file is not a supported photo. You can upload JPEG, PNG, WebP or HEIC.",
+        "too_large": "The file is too large. The limit is 20 MB.",
+        "too_many_pixels": "The photo is too large. Try a photo at normal resolution.",
+        "too_many_pixels_heic": "This HEIC photo has too high a resolution. Shoot at the camera's normal resolution, or save the photo as JPEG.",
+        "too_many_images": "A product can have up to 12 photos. Remove one to add another.",
+        "corrupt": "The photo cannot be read. The file may be damaged; try another photo.",
+        "bad_request": "The upload failed. Try again.",
+        "not_found": "Product not found.",
+        "unauthorized": "You have been signed out. Sign in again and retry."
+      }
+    },
+    "saved": "Saved",
+    "failed": "The action failed. Try again.",
+    "settings": {
+      "title": "Settings",
+      "intro": "How the shop works: its name, payment, delivery and business details.",
+      "save": "Save",
+      "toast": {
+        "saved": "Settings saved",
+        "zoneSaved": "Delivery zone saved"
+      },
+      "shop": {
+        "title": "Shop name",
+        "hint": "The name shown in the site header, the browser tab and the emails. It is not the business's legal name.",
+        "nameHe": "Shop name in Hebrew",
+        "nameEn": "Shop name in English (optional)"
+      },
+      "payment": {
+        "title": "Payment methods",
+        "hint": "At least one payment method must stay on.",
+        "online": "Secure payment on the site (credit card)",
+        "offline": "Direct payment (transfer, Bit, PayBox, cash)",
+        "instructionsHe": "Direct payment instructions, in Hebrew",
+        "instructionsHint": "Shown to customers after ordering and in the confirmation email, e.g. account details for a transfer.",
+        "instructionsEn": "Direct payment instructions, in English (optional)"
+      },
+      "pickup": {
+        "title": "Self-pickup",
+        "hint": "Shown to customers at checkout, under the self-pickup option.",
+        "he": "Pickup instructions in Hebrew",
+        "en": "Pickup instructions in English (optional)"
+      },
+      "zones": {
+        "title": "Delivery",
+        "intro": "Each delivery zone has a currency, a delivery fee and a free-shipping amount. A new zone is added by the site maintainer.",
+        "countries": "Countries: {countries}",
+        "israelEnabled": "The Israel zone is always on.",
+        "enabled": "Zone is on",
+        "shipping": "Delivery to the door",
+        "pickup": "Self-pickup",
+        "fee": "Delivery fee ({symbol})",
+        "threshold": "Free delivery over ({symbol})",
+        "thresholdHint": "Leave empty for no free delivery.",
+        "blockedTitle": "The zone can't be turned on yet",
+        "blockedText": "These products are published without a USD price, or with an option adjustment that has no USD amount. Complete them, then turn the zone on:"
+      },
+      "business": {
+        "title": "Business details",
+        "hint": "Shown at the bottom of the site, in the terms and in the emails, as the law requires.",
+        "nameHe": "Business (legal) name in Hebrew",
+        "nameEn": "Business name in English (optional)",
+        "regNumber": "Business number (ע.מ.)",
+        "phone": "Phone",
+        "email": "Email",
+        "addressHe": "Address in Hebrew",
+        "addressEn": "Address in English (optional)"
+      },
+      "notifications": {
+        "title": "Notification emails",
+        "hint": "New orders and payment alerts are sent to these addresses. Up to three.",
+        "email": "Address {n}"
+      },
+      "errors": {
+        "invalid": "The value isn't valid.",
+        "shopNameHe": "The Hebrew shop name is required (up to 60 characters).",
+        "shopNameEn": "The English shop name can be up to 60 characters.",
+        "instructions": "The instructions are too long (up to 5,000 characters).",
+        "businessNameHe": "The Hebrew business name is required.",
+        "businessNameEn": "The English business name is too long.",
+        "businessRegNumber": "The business number is required.",
+        "businessPhone": "The phone is required.",
+        "businessAddressHe": "The Hebrew address is required.",
+        "businessAddressEn": "The English address is too long.",
+        "email": "The email address isn't valid.",
+        "notificationEmails": "One to three valid email addresses are needed.",
+        "last_payment_method": "At least one payment method must stay on.",
+        "last_delivery_method": "An enabled zone must keep at least one delivery method.",
+        "israel_stays_enabled": "The Israel zone must stay on.",
+        "pickup_israel_only": "Self-pickup is only possible in Israel.",
+        "zone_not_found": "The delivery zone wasn't found.",
+        "usd_missing": "The zone can't be turned on: published products lack a USD price.",
+        "fee": "The delivery fee isn't valid (a number, 0 or more).",
+        "threshold": "The amount isn't valid (a number, 0 or more, or empty)."
+      }
+    }
+  },
+  "emails": {
+    "securityAlert": {
+      "subject": "Security alert – {shopName}",
+      "when": "When",
+      "admin": "Admin",
+      "todoLabel": "What to do",
+      "kinds": {
+        "google_rejected": {
+          "title": "Sign-in with an unapproved Google account",
+          "what": "Someone tried to sign in to the shop admin with a Google account that is not an approved admin.",
+          "todo": "No action is needed: the account got no access. If this keeps happening, secure the admins' Google accounts."
+        },
+        "blocked": {
+          "title": "Passkey sign-in blocked",
+          "what": "Passkey sign-in was blocked after several failed attempts.",
+          "todo": "If this was not you, secure the admin's Google account. Another admin can clear the block in the admin area."
+        },
+        "passkey_abandoned": {
+          "title": "Sign-in not completed with the passkey",
+          "what": "Someone signed in with an admin's Google account but did not finish the passkey step.",
+          "todo": "If this was not you, secure the admin's Google account."
+        },
+        "admin_added": {
+          "title": "An admin was added",
+          "what": "A new admin was added to the shop.",
+          "todo": "If you did not expect this, check the admin list and remove anyone who should not be there."
+        },
+        "admin_removed": {
+          "title": "An admin was removed",
+          "what": "An admin was removed from the shop.",
+          "todo": "If you did not expect this, check the admin list and contact the maintainer."
+        },
+        "admin_reset": {
+          "title": "An admin's access was reset",
+          "what": "An admin's access was reset by the maintainer.",
+          "todo": "If you did not expect this, contact the maintainer."
+        },
+        "passkey_added": {
+          "title": "A passkey was added",
+          "what": "A passkey was added to an admin account.",
+          "todo": "If you did not expect this, remove the passkey in the admin area and secure the Google account."
+        },
+        "passkey_removed": {
+          "title": "A passkey was removed",
+          "what": "A passkey was removed from an admin account.",
+          "todo": "If you did not expect this, check the passkeys in the admin area."
+        },
+        "recovery_used": {
+          "title": "A recovery code was used",
+          "what": "A recovery code was used to sign in.",
+          "todo": "If this was not you, secure the admin's Google account. A new passkey is waiting for approval by another admin."
+        },
+        "recovery_regenerated": {
+          "title": "Recovery codes were regenerated",
+          "what": "An admin's recovery codes were regenerated.",
+          "todo": "If you did not expect this, secure the admin's Google account."
+        },
+        "recovery_refused": {
+          "title": "A recovery request was refused",
+          "what": "A recovery request was refused because there is no other admin who could approve it.",
+          "todo": "If you did not ask for a recovery, secure the admin's Google account. If you did, contact the maintainer."
+        },
+        "recovery_pending": {
+          "title": "A passkey is waiting for approval",
+          "what": "A new passkey created during a recovery is waiting for approval by another admin.",
+          "todo": "Sign in to the admin area, check that the request is from the admin you expect, and approve or reject it."
+        },
+        "recovery_approved": {
+          "title": "A recovery passkey was approved",
+          "what": "A passkey created during a recovery was approved.",
+          "todo": "If you did not expect this, remove the passkey in the admin area."
+        },
+        "recovery_rejected": {
+          "title": "A recovery passkey was rejected",
+          "what": "A passkey created during a recovery was rejected.",
+          "todo": "If you did not expect this, secure the admin's Google account."
+        }
+      }
+    },
+    "order": {
+      "subject": "Order {number} – {shopName}",
+      "title": "Thank you for your order",
+      "intro": "I've received your order. Here are all the details.",
+      "number": "Order number",
+      "items": "Items",
+      "quantity": "Quantity: {count}",
+      "prep": "Time to make: {prepTime}",
+      "subtotal": "Subtotal",
+      "deliveryFee": "Delivery",
+      "free": "Free",
+      "total": "Total",
+      "paymentMethod": "Payment method",
+      "method": {
+        "online": "Secure payment on the site",
+        "offline": "Pay me directly"
+      },
+      "paymentState": "Payment status",
+      "state": {
+        "awaiting_payment": "Awaiting payment",
+        "paid": "Paid",
+        "refunded": "Refunded"
+      },
+      "deliveryMethod": "Delivery or pickup",
+      "shipping": "Delivery to your door",
+      "pickup": "Self-pickup",
+      "shipTo": "Delivery address",
+      "pickupInstructions": "Pickup instructions",
+      "howToPay": "How to pay",
+      "quoteNumber": "When you transfer, write the order number {number}.",
+      "cancellation": "Cancelling an order",
+      "cancellationText": "You may cancel a purchase as the law and the shop's cancellation policy allow. Pieces made specially for you fall under the exception in the law. Full details on the shipping, returns and cancellation page:",
+      "seller": "Seller details",
+      "regNumber": "Reg. no. {number}",
+      "viewOrder": "View your order"
+    },
+    "newOrder": {
+      "subject": "New order {number} – {shopName}",
+      "title": "A new order came in",
+      "number": "Order number",
+      "customer": "Customer details",
+      "name": "Name",
+      "phone": "Phone",
+      "email": "Email",
+      "note": "Note",
+      "open": "Open the order in the admin"
+    },
+    "paymentMismatch": {
+      "subject": "Payment amount problem – {shopName}",
+      "title": "The payment doesn't match the order",
+      "what": "A payment arrived in an amount or currency different from the order's. No order was created.",
+      "reference": "Reference",
+      "provider": "Payment provider",
+      "expected": "Order amount",
+      "reported": "Amount paid",
+      "transaction": "Transaction number",
+      "todo": "Check the payment provider's dashboard, contact the customer and settle the payment (refund or top-up). The customer's details are kept in the system for 30 days. No card details are included."
+    },
+    "paymentAttention": {
+      "subject": "Payment needs a look – {shopName}",
+      "order": "Order",
+      "amount": "Amount",
+      "cases": {
+        "second_payment": {
+          "title": "Possible double payment",
+          "what": "A further payment, in another transaction, arrived for an online payment that was already confirmed. No new order was created.",
+          "todo": "They probably paid twice: check the payment provider's dashboard and refund the extra payment if needed."
+        },
+        "orphan_payment": {
+          "title": "Payment for an unknown order",
+          "what": "A payment arrived for an online checkout the system doesn't have (it expired or never existed). No order was created.",
+          "todo": "Probably a double payment: check the payment provider's dashboard and refund the payment if needed."
+        },
+        "switched_offline": {
+          "title": "Paid on the site after switching to direct payment",
+          "what": "The customer switched to direct payment and still paid on the payment page. Order {number} is awaiting payment.",
+          "todo": "There are two ways. Keep the online payment, mark order {number} as paid and tell the customer not to pay directly. Or refund the online payment in the provider's dashboard. First check whether the customer already paid directly."
+        },
+        "unverified_expiry": {
+          "title": "Couldn't check the status of an expired payment",
+          "what": "An online checkout expired and I couldn't get its final status from the payment provider. It was deleted from the system.",
+          "todo": "Check the payment provider's dashboard for a payment, and refund it if needed."
+        }
+      }
+    }
+  },
+  "errors": {
+    "notFound": {
+      "title": "Page not found",
+      "text": "The link may be old or the page may have moved. You can search here, or go to all pieces.",
+      "searchLabel": "Search",
+      "searchPlaceholder": "What are you looking for?",
+      "searchButton": "Search"
+    },
+    "generic": {
+      "title": "Something went wrong",
+      "text": "I could not load this page. Please try again, and if it keeps happening, go back to the home page.",
+      "retry": "Try again",
+      "home": "Back to the home page"
+    }
+  },
+  "consent": {},
+  "legal": {},
+  "contact": {}
+}
