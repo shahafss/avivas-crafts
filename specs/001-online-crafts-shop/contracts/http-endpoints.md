@@ -1,11 +1,5 @@
 # Contract: HTTP Endpoints (Route Handlers)
 
-> **Living document.** Moved from `specs/001-online-crafts-shop/` on 2026-11-09. Every feature that
-> changes this contract updates this file in its own branch. Unqualified references to `spec.md`,
-> `plan.md`, `research.md` (R-numbers), `quickstart.md`, FR-/SC- numbers and task IDs mean the
-> ones in [`specs/001-online-crafts-shop/`](../../specs/001-online-crafts-shop/) unless a later
-> spec is named.
-
 Route handlers live in `src/app/api/**/route.ts`. All responses are JSON unless stated. Errors use
 `{ "error": "<code>" }` with no stack traces or internal details (ASVS V16).
 

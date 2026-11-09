@@ -1,11 +1,5 @@
 # Contract: Transactional Emails
 
-> **Living document.** Moved from `specs/001-online-crafts-shop/` on 2026-11-09. Every feature that
-> changes this contract updates this file in its own branch. Unqualified references to `spec.md`,
-> `plan.md`, `research.md` (R-numbers), `quickstart.md`, FR-/SC- numbers and task IDs mean the
-> ones in [`specs/001-online-crafts-shop/`](../../specs/001-online-crafts-shop/) unless a later
-> spec is named.
-
 All emails are transactional (no marketing sending in scope, FR-038). Each is rendered from
 `src/server/email/templates/<kind>.ts` with strings from `src/i18n/messages/{he,en}.json`
 (`emails.*` keys), as HTML (`<html lang dir>`) plus a plain-text part, and queued in

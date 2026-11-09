@@ -1,14 +1,12 @@
 <!--
 Sync Impact Report
-- Version change: 1.3.0 → 1.4.0 (MINOR: Development Workflow materially expanded; maintainer decision
-  2026-11-09)
+- Version change: 1.4.0 → 1.4.1 (PATCH: where design documents live; maintainer decision 2026-11-09)
 - Modified principles: none
 - Modified sections:
-  - Development Workflow: work is ordered by docs/roadmap.md and each roadmap item is its own Spec Kit
-    feature branched from `dev`; shared living design documents moved to docs/; spec 001 frozen as the
-    MVP record; branch and pull-request flow (`dev` integration, `main` production, squash into `dev`,
-    merge commit + tag into `main`, CI must pass); the maintainer does all commits, pushes and pull
-    requests, and automated tooling does none of them
+  - Development Workflow: features keep their own `data-model.md` and `contracts/` (Spec Kit's
+    convention) instead of shared living copies in docs/; the Drizzle schema is the source of truth
+    for the whole data model; `docs/design/storefront.md` stays as the shared design system; the
+    T087 exception to the spec 001 freeze is removed (T087 is done)
 - Added sections: none
 - Removed sections: none
 - Templates: plan/spec/tasks templates read this file at runtime; no template edits required
@@ -160,10 +158,12 @@ compliance is far cheaper to build in than to retrofit.
   becomes its own Spec Kit feature when work on it starts (`/speckit-specify`), on a branch
   `NNN-short-name` created from an up-to-date `dev`. Each feature follows specify → plan → tasks →
   implement → converge, with the project maintainer approving each gate.
-- Shared living design documents (`docs/data-model.md`, `docs/contracts/`,
-  `docs/design/storefront.md`) are updated by the feature that changes them, in that feature's
-  branch. `specs/001-online-crafts-shop` is frozen as the record of the MVP and is not edited
-  (the one exception: ticking T087 once CI confirms its bundle-size test passes).
+- Each feature's plan writes its own `data-model.md` and `contracts/` in its spec folder, covering
+  what that feature adds or changes; the code (the Drizzle schema in `src/server/db/schema/`) is
+  the source of truth for the whole data model. `docs/design/storefront.md` is the shop's design
+  system and is binding for every feature: a feature that changes the design updates it, and
+  plans and tasks cite the sections they use. `specs/001-online-crafts-shop` is frozen as the
+  record of the MVP and is not edited.
 - Every implementation batch is reviewed against the spec, plan, and this constitution before
   it is considered complete; violations of principles IV or VII are always Critical.
 - Before public launch: an automated security scan of the running site shows no High or
@@ -186,4 +186,4 @@ compliance is far cheaper to build in than to retrofit.
 - Versioning follows semantic versioning: MAJOR for removing or redefining a principle, MINOR for
   adding a principle or materially expanding guidance, PATCH for wording fixes.
 
-**Version**: 1.4.0 | **Ratified**: 2026-10-31 | **Last Amended**: 2026-11-09
+**Version**: 1.4.1 | **Ratified**: 2026-10-31 | **Last Amended**: 2026-11-09

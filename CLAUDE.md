@@ -6,11 +6,13 @@ specific to this project. The binding rules are in `.specify/memory/constitution
 ## Where things are
 
 - Vision: `PRODUCT.md`. Order of work: `docs/roadmap.md`.
-- Living design docs, updated by the feature that changes them: `docs/data-model.md`,
-  `docs/contracts/`, `docs/design/storefront.md`.
+- Each feature's plan writes its own `data-model.md` and `contracts/` (Spec Kit's convention) for
+  what it adds or changes. The whole data model's source of truth is the Drizzle schema in
+  `src/server/db/schema/`.
+- Design system, binding for every feature: `docs/design/storefront.md`. Plans and tasks cite its
+  sections; a feature that changes the design updates it.
 - `specs/001-online-crafts-shop/` is frozen (the MVP record). Read it for decisions already made
-  (spec FRs, `plan.md`, `research.md`); never edit it. Exception: tick T087 once CI passes the
-  bundle-size E2E test.
+  (spec FRs, `plan.md`, `research.md`); never edit it.
 
 ## Branches and git
 

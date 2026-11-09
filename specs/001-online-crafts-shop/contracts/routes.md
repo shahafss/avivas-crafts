@@ -1,11 +1,5 @@
 # Contract: Page Routes (URLs)
 
-> **Living document.** Moved from `specs/001-online-crafts-shop/` on 2026-11-09. Every feature that
-> changes this contract updates this file in its own branch. Unqualified references to `spec.md`,
-> `plan.md`, `research.md` (R-numbers), `quickstart.md`, FR-/SC- numbers and task IDs mean the
-> ones in [`specs/001-online-crafts-shop/`](../../specs/001-online-crafts-shop/) unless a later
-> spec is named.
-
 Every public page exists under both `/he/...` (default, RTL) and `/en/...` (LTR) (FR-041,
 FR-043). Each page emits `<link rel="alternate" hreflang>` for the other language and a
 canonical URL. The language switch links to the same path in the other locale (FR-042).

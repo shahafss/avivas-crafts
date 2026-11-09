@@ -14,9 +14,11 @@ The vision (who the shop is for, what success means, principles, what is out of 
   asking again, and change them only on purpose.
 - The old task IDs under "Source" are starting material for `/speckit-tasks`, not tasks to copy
   blindly: check them against the code as it is now.
-- Shared, living design docs are in [`docs/`](.): [`data-model.md`](data-model.md),
-  [`contracts/`](contracts/), [`design/storefront.md`](design/storefront.md). A feature that changes
-  the data model, a contract or the storefront design updates these files in the same branch.
+- Each feature's plan writes its own `data-model.md` and `contracts/` for what it adds or changes.
+  The Drizzle schema in `src/server/db/schema/` is the source of truth for the whole data model;
+  spec 001's `data-model.md` and `contracts/` are background. The design system
+  [`design/storefront.md`](design/storefront.md) is binding for every feature: plans and tasks cite
+  the sections they use, and a feature that changes the design updates it in the same branch.
 - When a feature starts, set its status to "In progress" and link its spec folder; when it is
   merged to `dev`, set it to "Done (dev)"; when released to `main`, "Released (vX.Y.Z)".
 
