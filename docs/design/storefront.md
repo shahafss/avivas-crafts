@@ -1,5 +1,11 @@
 # Storefront design: brief and design system
 
+> **Living document.** Moved from `specs/001-online-crafts-shop/` on 2026-11-09. Every feature that
+> changes the storefront design updates this file in its own branch. Unqualified references to `spec.md`,
+> `plan.md`, `research.md` (R-numbers), `quickstart.md`, FR-/SC- numbers and task IDs mean the
+> ones in [`specs/001-online-crafts-shop/`](../../specs/001-online-crafts-shop/) unless a later
+> spec is named.
+
 **Feature**: `001-online-crafts-shop` · **Status**: Approved by the user (2026-11-08); amended after plan-review rounds 1–2 the same day ·
 **Visual authority**: the approved sample `design/sample-product-page.src.html` (user approval
 2026-11-08: "Yes, go with it"). The 2 MB `sample-product-page.html` is the same page with photos

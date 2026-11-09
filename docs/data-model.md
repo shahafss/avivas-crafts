@@ -1,6 +1,12 @@
 # Data Model: Aviva's Crafts Online Shop
 
-**Feature**: `001-online-crafts-shop` | **Date**: 2026-11-07 | **Plan**: [plan.md](./plan.md)
+> **Living document.** Moved from `specs/001-online-crafts-shop/` on 2026-11-09. Every feature that
+> changes the database schema updates this file in its own branch. Unqualified references to `spec.md`,
+> `plan.md`, `research.md` (R-numbers), `quickstart.md`, FR-/SC- numbers and task IDs mean the
+> ones in [`specs/001-online-crafts-shop/`](../specs/001-online-crafts-shop/) unless a later
+> spec is named.
+
+**Feature**: `001-online-crafts-shop` | **Date**: 2026-11-07 | **Plan**: [specs/001-online-crafts-shop/plan.md](../specs/001-online-crafts-shop/plan.md)
 
 PostgreSQL 17, defined in `src/server/db/schema/` (`catalog.ts`, `commerce.ts`, `admin.ts`, `system.ts`; Drizzle). Conventions:
 
