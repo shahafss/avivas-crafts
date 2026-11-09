@@ -302,8 +302,35 @@
   "order": {
     "title": "Your order",
     "heading": "Thank you! Your order is in",
+    "headingLater": "Your order",
     "numberLabel": "Order number",
     "emailSent": "A confirmation was also sent by email.",
+    "progress": "Order progress",
+    "steps": {
+      "received": "Received",
+      "making": "Being made",
+      "shipped": "Shipped",
+      "ready": "Ready for pickup",
+      "completed": "Completed"
+    },
+    "tracking": {
+      "title": "Your order is on its way",
+      "number": "Tracking number"
+    },
+    "pickupReady": {
+      "title": "Your order is ready for pickup",
+      "fallback": "Write to me to arrange pickup"
+    },
+    "cancelled": {
+      "title": "This order was cancelled",
+      "refunded": "Your money was refunded",
+      "willRefund": "Your money will be refunded"
+    },
+    "contact": {
+      "link": "Contact",
+      "phone": "Phone",
+      "email": "Email"
+    },
     "paymentState": {
       "awaiting_payment": "Awaiting payment",
       "paid": "Paid",
@@ -313,7 +340,8 @@
     "quoteNumber": "When you transfer, write the order number <n>{number}</n>.",
     "pickup": "Self-pickup",
     "madePaid": "Now I start crocheting.",
-    "madeAwaiting": "I'll start crocheting when the payment arrives.",
+    "madeInPreparation": "I'm crocheting your order right now.",
+    "madeAwaiting": "I got your order and will start on it soon.",
     "summary": {
       "label": "Order details",
       "subtotal": "Subtotal",
@@ -327,8 +355,7 @@
     "backToShop": "Back to the shop",
     "expired": {
       "title": "This link is no longer active",
-      "text": "An order link is valid for 30 days. If you need anything about your order, write to me and I'll answer.",
-      "contact": "Contact"
+      "text": "If you need anything about your order, write to me and I'll reply."
     }
   },
   "admin": {
@@ -351,7 +378,209 @@
     "dashboard": {
       "title": "Dashboard",
       "welcome": "Hello, {name}",
-      "intro": "New orders and things that need attention will appear here."
+      "newOrders": "New orders",
+      "awaitingPayment": "Awaiting payment",
+      "nothingWaiting": "No orders are waiting for you right now",
+      "settingsNotice": "Worth completing in Settings:",
+      "toSettings": "To Settings",
+      "settingsFields": {
+        "businessNameHe": "Business name (Hebrew)",
+        "businessNameEn": "Business name (English)",
+        "businessRegNumber": "Business registration number",
+        "businessEmail": "Business email",
+        "businessPhone": "Business phone",
+        "businessAddressHe": "Business address (Hebrew)",
+        "businessAddressEn": "Business address (English)",
+        "notificationEmails": "Notification emails",
+        "pickupInstructionsHe": "Pickup instructions (Hebrew)"
+      }
+    },
+    "orders": {
+      "status": {
+        "new": "New",
+        "in_preparation": "In preparation",
+        "shipped": "Shipped",
+        "ready_for_pickup": "Ready for pickup",
+        "completed": "Completed",
+        "cancelled": "Cancelled"
+      },
+      "payment": {
+        "awaiting_payment": "Awaiting payment",
+        "paid": "Paid",
+        "refunded": "Refunded"
+      },
+      "paymentMethod": {
+        "online": "Secure payment on the site",
+        "offline": "Pay me directly"
+      },
+      "delivery": {
+        "shipping": "Shipping",
+        "pickup": "Pickup"
+      },
+      "list": {
+        "title": "Orders",
+        "numberLabel": "Go to order number",
+        "numberGo": "Go",
+        "numberNotFound": "I couldn't find order number {number}",
+        "numberInvalid": "An order number is digits only, for example 1023",
+        "statusFilter": "Filter by status",
+        "paymentFilter": "Filter by payment",
+        "all": "All",
+        "openChip": "Without cancelled orders",
+        "openChipRemove": "Remove the filter: without cancelled orders",
+        "clear": "Clear the filter",
+        "listLabel": "Orders list",
+        "emptyFiltered": "No orders match the filter",
+        "emptyFilteredText": "Try another filter, or show all orders.",
+        "emptyAll": "No orders yet",
+        "emptyAllText": "When an order comes in it will show here.",
+        "pagingLabel": "List pages",
+        "previous": "Previous",
+        "next": "Next",
+        "pageOf": "Page {page} of {count}"
+      },
+      "detail": {
+        "title": "Order",
+        "allOrders": "All orders",
+        "emailFailed": "The customer did not get the order email. Worth calling them",
+        "failedEmail": {
+          "order-cancelled": "The cancellation email was not sent to the customer",
+          "order-refunded": "The refund email was not sent to the customer"
+        },
+        "anonymised": "The customer can no longer be contacted",
+        "items": "Items",
+        "option": "{group}: {value}",
+        "prepTime": "Preparation time: {prepTime}",
+        "subtotal": "Subtotal",
+        "deliveryFee": "Delivery",
+        "free": "Free",
+        "total": "Total",
+        "customer": "Customer",
+        "phone": "Phone",
+        "email": "Email",
+        "delivery": "Delivery method",
+        "note": "Customer's note",
+        "payment": "Payment",
+        "paidAt": "Paid on <d>{date}</d>",
+        "refundedAt": "Refunded on <d>{date}</d>",
+        "tracking": "Tracking number",
+        "pickupNote": "Pickup note",
+        "history": "History",
+        "actions": "Actions"
+      },
+      "history": {
+        "created": "Order received",
+        "payment_confirmed": "Online payment confirmed",
+        "status_changed": "Status: {from} → {to}",
+        "back": "One step back: {from} → {to}",
+        "payment_marked_paid": "Marked as paid",
+        "refunded": "Marked as refunded",
+        "customer_edited": "Customer details updated",
+        "fulfilment_edited": {
+          "trackingNumber": "Tracking number updated",
+          "pickupNote": "Pickup note updated"
+        },
+        "emailFailed": {
+          "order-confirmation": "The order email was not sent to the customer",
+          "order-cancelled": "The cancellation email was not sent to the customer",
+          "order-refunded": "The refund email was not sent to the customer"
+        },
+        "unknown": "Update",
+        "actor": {
+          "system": "The system",
+          "removedAdmin": "A removed admin"
+        }
+      },
+      "actions": {
+        "back": "Back one step",
+        "edit": "Edit",
+        "save": "Save",
+        "close": "Close",
+        "trackingLabel": "Tracking number (optional)",
+        "pickupNoteLabel": "Pickup note (optional)",
+        "trackingCurrent": "Tracking number",
+        "pickupNoteCurrent": "Pickup note",
+        "noneEntered": "Not entered",
+        "done": {
+          "completed": "This order is completed",
+          "cancelled": "This order is cancelled"
+        },
+        "complete": {
+          "title": "Mark this order as completed?",
+          "body": "Once an order is completed its status cannot be changed.",
+          "bodyUnpaid": "This order is still awaiting payment. You can mark the payment as received and complete it in one go.",
+          "confirm": "Mark as completed",
+          "markPaid": "Mark as paid and complete",
+          "withoutPayment": "Complete without payment"
+        },
+        "toast": {
+          "status": "Status updated: {status}",
+          "back": "Moved back one step",
+          "saved": "Change saved",
+          "paid": "Payment marked as paid",
+          "refunded": "Refund recorded"
+        },
+        "markPaid": "Mark as paid",
+        "markRefunded": "Mark as refunded",
+        "paid": {
+          "title": "Payment received",
+          "body": "Mark the payment as received? This cannot be undone."
+        },
+        "refund": {
+          "title": "Refund",
+          "body": "Mark the money as returned to the customer? The customer will get an email about it. This cannot be undone."
+        }
+      },
+      "cancel": {
+        "back": "Back",
+        "button": "Cancel the order",
+        "title": "Cancel this order?",
+        "body": "The customer will get an email that the order was cancelled.",
+        "confirm": "Cancel the order",
+        "paidReminder": "The order was paid. After cancelling you need to return the money. {method}",
+        "reminderTitle": "The money needs to be returned",
+        "method": {
+          "online": "Paid on the site: return it through the payment company's website.",
+          "offline": "Paid directly: return it the same way it was paid."
+        }
+      },
+      "errors": {
+        "stale": "This order just changed. The page now shows its current state.",
+        "not_allowed": "That cannot be done on this order.",
+        "not_found": "I could not find this order.",
+        "invalid": "That action is not valid. Reload the page and try again.",
+        "tracking_too_long": "Up to 100 characters",
+        "pickup_note_too_long": "Up to 500 characters",
+        "anonymized": "This order's customer details were already deleted, so they cannot be edited."
+      },
+      "customer": {
+        "title": "Correct the customer's details",
+        "intro": "You can correct the name, phone, email and address. Items, amounts and delivery method do not change.",
+        "fullName": "Full name",
+        "phone": "Phone",
+        "email": "Email",
+        "country": "Country",
+        "countryName": {
+          "IL": "Israel"
+        },
+        "city": "City",
+        "line1": "Street and number",
+        "line2": "Apartment, entrance (optional)",
+        "postalCode": "Postal code (optional)",
+        "save": "Save",
+        "saved": "Details saved",
+        "errorSummary": "Please fix a few details",
+        "errors": {
+          "fullName": "Write a name of 2 to 100 characters",
+          "phone": "The phone number does not look right",
+          "email": "The email address does not look right",
+          "city": "Write a city",
+          "line1": "Write a street and number",
+          "line2": "Up to 200 characters",
+          "postalCodeIl": "An Israeli postal code has 7 digits",
+          "postalCode": "Up to 12 characters"
+        }
+      }
     },
     "notFound": {
       "title": "Page not found",
@@ -858,7 +1087,8 @@
       "cancellationText": "You may cancel a purchase as the law and the shop's cancellation policy allow. Pieces made specially for you fall under the exception in the law. Full details on the shipping, returns and cancellation page:",
       "seller": "Seller details",
       "regNumber": "Reg. no. {number}",
-      "viewOrder": "View your order"
+      "followIntro": "This link shows where your order stands at any time.",
+      "viewOrder": "Follow your order"
     },
     "newOrder": {
       "subject": "New order {number} – {shopName}",
@@ -907,6 +1137,37 @@
           "what": "An online checkout expired and I couldn't get its final status from the payment provider. It was deleted from the system.",
           "todo": "Check the payment provider's dashboard for a payment, and refund it if needed."
         }
+      }
+    },
+    "orderEmailFailed": {
+      "subject": "{shopName}: the email for order {number} was not sent to the customer",
+      "title": "The order email was not sent to the customer",
+      "number": "Order number",
+      "what": "I could not send the customer their order confirmation email, so they have no tracking link. It is worth calling them.",
+      "open": "Open the order"
+    },
+    "cancelled": {
+      "subject": "{shopName}: order {number} was cancelled",
+      "title": "Order cancelled",
+      "intro": "Your order was cancelled.",
+      "number": "Order number",
+      "paid": {
+        "online": "The money will be returned to your card through the payment company.",
+        "offline": "I'll return the money the same way you paid."
+      },
+      "refunded": "Your money has already been returned.",
+      "unpaid": "No payment was taken.",
+      "closing": "Any questions? You can write or call me:"
+    },
+    "refunded": {
+      "subject": "{shopName}: refund for order {number}",
+      "title": "Refund",
+      "intro": "I've refunded your order.",
+      "number": "Order number",
+      "amount": "Refunded amount",
+      "method": {
+        "online": "It will show on your card within a few business days, depending on your card company.",
+        "offline": "The refund was made the same way you paid."
       }
     }
   },

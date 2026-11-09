@@ -6,6 +6,9 @@
 > references to `spec.md`, `plan.md`, `research.md` (R-numbers), `data-model.md`, `contracts/`,
 > FR-/SC- numbers and task IDs mean the ones in
 > [`specs/001-online-crafts-shop/`](../../specs/001-online-crafts-shop/) unless a later spec is named.
+> **Amended 2026-11-09 by `002-order-handling`**: §8.8 is now the customer's order status page, and
+> the document also designs the admin order screens ([§12](#12-admin-area)). New text qualifies
+> requirement ids as "002 FR-xxx" / "002 SC-xxx".
 
 **Feature**: `001-online-crafts-shop` · **Status**: Approved by the user (2026-11-08); amended after plan-review rounds 1–2 the same day ·
 **Visual authority**: the approved sample `design/sample-product-page.src.html` (user approval
@@ -14,8 +17,9 @@ inlined; it adds nothing to read.
 
 This document is binding for every public storefront screen (`src/app/[locale]/**`,
 `src/components/shop/**`, `src/components/ui/**`). Where it and the sample differ, this document
-wins; every deliberate difference is listed in [§13](#13-deviations-from-the-sample). It does not
-design the admin area (see [§12](#12-admin-area)).
+wins; every deliberate difference is listed in [§13](#13-deviations-from-the-sample). It also
+designs the admin order screens (`src/app/admin/**`, `src/components/admin/**`) in
+[§12](#12-admin-area).
 
 ---
 
@@ -64,7 +68,9 @@ design the admin area (see [§12](#12-admin-area)).
 
 ### Scope and anti-goals
 
-- **In scope**: every public screen in [§8](#8-screens), their states, both directions.
+- **In scope**: every public screen in [§8](#8-screens), their states, both directions; and, since
+  002, the admin order screens in [§12](#12-admin-area) (Hebrew, right-to-left, Operate mode,
+  phone first).
 - **Feels wrong** (user, 2026-11-07): a childish toy store; a cold luxury boutique. Also out:
   the rejected themed directions (knitting chart, ball band, wrapped gift, market stall). Do not
   revive them as decoration.
@@ -520,6 +526,26 @@ Table of the device-storage registry. From 640 px a normal table (header row `ph
 `line` row dividers). Below 640 px each row becomes a stacked card using
 `td::before { content: attr(data-label) }` (labels from translations).
 
+### 7.26 `ui/ConfirmDialog` (island) and its secondary action (002)
+
+Native modal `<dialog>` for every action that cannot be undone (§12.3). White `rounded-card`,
+`shadow-float`, width `min(92vw, 26rem)`, padding 24; h2 (20/800), a short consequence in
+`ink-2`, then the buttons stacked in one column with a 12 px gap. Focus starts on **Cancel**, so a
+stray Enter never confirms anything; `Esc` and a tap on the backdrop cancel (not while busy).
+
+- Default: **Cancel** (`secondary`) then the confirm button (`primary`, labelled with the action,
+  e.g. "סימון כהושלמה").
+- **Optional secondary action** (002): the props `secondaryLabel` and `onSecondary` add a second
+  `secondary` button **between** Cancel and the confirm button. Order: Cancel · secondary ·
+  confirm. It has the same size and busy handling as the others (`aria-busy`, label replaced by
+  the spinner, no second press); focus still starts on Cancel. Without these props the dialog is
+  unchanged for every existing caller. Used once: completing an offline order that still awaits
+  payment, "השלמה בלי תשלום" beside the primary "סימון כשולם והשלמה" (§12.3).
+- **Optional dismiss label** (002): the prop `cancelLabel` replaces the text of the Cancel button
+  (default: the common "ביטול" / "Cancel"). Behaviour, position, size and initial focus are
+  unchanged. Used once: the cancel-order dialog, where "ביטול" would be confused with the
+  order's own cancel action, so its dismiss button reads "חזרה" / "Back" (§12.3).
+
 ---
 
 ## 8. Screens
@@ -693,27 +719,101 @@ A single centred white panel (max 32rem) on ground, `role="status"` region:
 - **Expired / unknown**: "הקישור הזה כבר לא פעיל" + link to the cart.
 - **Timeout with `r=success`**: "התשלום עדיין בבדיקה. אישור יגיע אליכם במייל."
 
-### 8.8 Order confirmation `/{locale}/order/{token}`
+### 8.8 Order status page `/{locale}/order/{token}`
 
-Centred column (max 40rem):
-1. 56 px `sun-soft` circle with `check` icon; h1 "תודה! ההזמנה התקבלה" / "Thank you! Your order
-   is in"; "מספר הזמנה" with the number large (24/800, `<bdi>`, tabular); "אישור נשלח גם
-   במייל." (no email address, phone or street address shown, per routes contract).
-2. Payment state chip: "שולם" (`sun-soft`) or "ממתין לתשלום" (white, `field` border).
-3. Offline: `attention` Notice h2 "איך משלמים" with the owner's instructions (Markdown) and
-   "בהעברה כתבו את מספר ההזמנה {number}".
-4. Pickup: `info` Notice h2 "איסוף עצמי" with pickup instructions.
-5. `Notice made`: "עכשיו אני מתחילה לסרוג." for paid orders, "אתחיל לסרוג כשהתשלום יתקבל." for
-   awaiting payment; each item in the summary shows its own "זמן הכנה: {prepTime}" from the
-   `order_line` snapshot (Clarifications 2026-11-08). The same per-item times are in the
-   confirmation email.
-6. `OrderSummary` with per-item preparation time (no thumbnails: order photos are private).
-7. Quiet link "חזרה לחנות" / "Back to the shop".
-8. `OrderCleanup` (tiny island, renders nothing): removes `ac_checkout`, and removes the cart
-   (`ac_cart_v1`) when the server says the order was created less than an hour ago — so a cart
-   is cleared even if the checkout or return page could not do it, while opening an old order link
-   later never empties a newer cart.
-States: expired/invalid token → `EmptyState` "הקישור כבר לא פעיל" + Contact link.
+Rewritten by 002 (002 FR-014, 002 FR-015, 002 US4): the confirmation page is now the place where the
+customer follows their order. It is in the order's language, server-rendered, `noindex`,
+`no-store`, and never shows the customer's name, address, phone or email (001 routes contract,
+002 FR-014). Centred column (max 40rem). Content, top to bottom:
+
+1. **Check circle**: 56 px `sun-soft` circle with the `check` icon. Not shown on a Cancelled order.
+2. **h1**: "תודה! ההזמנה התקבלה" / "Thank you! Your order is in" only while `justPlaced` (the order
+   was placed less than one hour ago, as today); after that "ההזמנה שלכם" / "Your order"
+   (`order.headingLater`).
+3. **Number**: "מספר הזמנה" with the number large (24/800, `<bdi>`, `tnum`), `data-testid="order-number"`;
+   then "אישור נשלח גם במייל." / "A confirmation was also sent by email." at all times, with no
+   address (the existing `emailSent` line).
+4. **Payment chip** (`data-testid="order-payment-state"`), text label always present, three states:
+   "שולם" / "Paid" (`sun-soft` fill), "ממתין לתשלום" / "Awaiting payment" (white, 1.5 px `field`
+   border), "הוחזר" / "Refunded" (`photo` fill). On a Cancelled order that is still
+   `awaiting_payment` there is **no chip** (nothing is owed); paid and refunded chips stay.
+5. **`OrderProgress`** (`src/components/shop/OrderProgress.tsx`, server): an `<ol
+data-testid="order-progress" aria-label="התקדמות ההזמנה" / "Order progress">` of four `<li
+data-testid="order-step" data-state="done|current|todo">`, shown for open and Completed orders
+   (not Cancelled). Status → current step: New 1, In preparation 2, Shipped / Ready for pickup 3,
+   Completed 4. Labels: 1 "התקבלה" / "Received"; 2 "בהכנה" / "Being made"; 3 by delivery method:
+   "נשלחה" / "Shipped" for shipping orders and "מוכנה לאיסוף" / "Ready for pickup" for pickup
+   orders; 4 "הושלמה" / "Completed".
+   - **done**: 28 px `ink` dot with a white `check` icon, label `ink` 400.
+   - **current**: 28 px dot with a 3 px `sun` ring plus a 1.5 px `ink` inner ring (§13, WCAG
+     1.4.11: marigold alone is 1.8:1), label `ink` 700, `aria-current="step"` on the `<li>`.
+   - **todo**: 28 px white dot with a 1.5 px `field` outline, label `ink-2`.
+   - Below 640 px a **vertical** list (dot at inline-start, 12 px gap, a 2 px `line` connector
+     between dots); from 640 px a **horizontal** row (four equal columns, dots joined by the
+     connector, label centred under each dot). Looks come from `data-state` selectors, never a
+     `style` attribute. Colour is never the only signal: the done check, the bold label and
+     `aria-current` carry the state without it.
+6. **Status `Notice`** (all `info`, h2 inside):
+   - **Shipped**: "המשלוח בדרך" / "Your order is on its way", with the tracking number
+     (`<bdi dir="ltr" class="tnum" data-testid="order-tracking-number">`) when there is one;
+     without a number just "המשלוח בדרך".
+   - **Ready for pickup** (`data-testid="order-pickup-note"`): Aviva's pickup note
+     (`dir="auto"`, `whitespace-pre-line`); else the shop's pickup instructions (owner text
+     through `pick()`, `lang="he" dir="auto"` on a Hebrew fallback on `/en`); else "כתבו לי כדי
+     לתאם איסוף" / "Write to me to arrange pickup" with the seller's phone (`tel:`) and email
+     (`mailto:`) from settings (`<bdi dir="ltr">`) and the Contact link.
+   - **Cancelled** (`data-testid="order-cancelled"`): "ההזמנה בוטלה" / "This order was cancelled",
+     plus "הכסף הוחזר" / "Your money was refunded" when the payment state is refunded, or "הכסף
+     יוחזר אליכם" / "Your money will be refunded" while it is still paid; the seller's phone
+     (`tel:`) and email (`mailto:`) from settings and the Contact link. It **replaces** the
+     progress and the check circle. (`/{locale}/contact` belongs to roadmap item 003; until it
+     ships the phone and email are the working contact.)
+7. **Offline payment**: the `attention` Notice h2 "איך משלמים" with the owner's instructions
+   (Markdown) and "בהעברה כתבו את מספר ההזמנה {number}" (`data-testid="offline-instructions"`),
+   shown **only** while the order is offline, awaiting payment, and neither Cancelled nor
+   Completed. Once Aviva marks it paid the Notice disappears and the chip reads "שולם".
+8. **Pickup instructions**: pickup orders that are New or In preparation keep the `info` Notice
+   h2 "איסוף עצמי" with the shop's pickup instructions (`data-testid="pickup-instructions"`).
+   Not shown once Shipped / Ready for pickup (the pickup note replaces it), Completed or Cancelled.
+9. **`Notice made`**: the first
+   matching row of this table wins (002 plan.md > Design system updates, word for word):
+
+   | Status | Payment state | `made` Notice |
+   |---|---|---|
+   | Shipped, Ready for pickup, Completed, Cancelled | any | hidden |
+   | New, In preparation | refunded | hidden |
+   | New | awaiting payment | "קיבלתי את ההזמנה ואתחיל לעבוד עליה בקרוב." / "I got your order and will start on it soon." (`madeAwaiting`, wording changed; Clarifications 2026-11-09) |
+   | New | paid | "עכשיו אני מתחילה לסרוג." (`madePaid`) |
+   | In preparation | awaiting payment or paid | "אני סורגת את ההזמנה שלכם עכשיו." (`madeInPreparation`; also for cash at pickup, Clarifications 2026-11-09) |
+
+   Each item in the summary still shows its own "זמן הכנה: {prepTime}" from the `order_line`
+   snapshot (Clarifications 2026-11-08).
+
+10. `OrderSummary` with per-item preparation time (no thumbnails: order photos are private;
+    `data-testid` `order-summary`, `order-line`, `order-prep-time` unchanged).
+11. Quiet link "חזרה לחנות" / "Back to the shop".
+12. `OrderCleanup` (tiny island, renders nothing): removes `ac_checkout`, and removes the cart
+    (`ac_cart_v1`) when the server says the order was created less than an hour ago (`justPlaced`),
+    so opening an old order link later never empties a newer cart. Unchanged.
+
+**Link validity** (002 FR-015): the link works while the order is open, and for 30 days after it
+becomes Completed or Cancelled. After that, and for an unknown token: `EmptyState` "הקישור כבר לא
+פעיל" / "This link is no longer active", a sentence that does **not** mention a fixed number of
+days ("אם צריך משהו בקשר להזמנה, כתבו לי ואענה." / "If you need anything about your order, write
+to me and I'll reply."), and the Contact link.
+
+**Test ids** (002 contracts/routes.md): kept `order-number`, `order-payment-state`, `order-summary`,
+`order-line`, `order-prep-time`, `offline-instructions`, `pickup-instructions`; new
+`order-progress`, `order-step`, `order-tracking-number`, `order-pickup-note`, `order-cancelled`.
+
+Accept (both directions): for each of the six statuses the right step is current (3 = "נשלחה" for
+a shipping order, "מוכנה לאיסוף" for a pickup order) and only that `<li>` has `aria-current="step"`;
+vertical at 375 px and horizontal at 640 px and wider, with no horizontal page scroll at 320 px;
+Shipped shows the tracking number in a left-to-right isolate; Ready for pickup never renders blank
+(note, instructions or contact fallback); Cancelled shows no progress, no check circle and no
+"ממתין לתשלום" chip; the offline payment Notice is absent once Completed or Cancelled; the `made`
+Notice text matches the table for every status and payment state; the h1 changes after one hour;
+no name, address, phone or email of the customer anywhere on the page; axe reports no violations.
 
 ### 8.9 Content pages `/{locale}/pages/{slug}`
 
@@ -767,7 +867,8 @@ and style; nothing optional loads before acceptance.
 | Cart | EmptyState | Skeleton lines | alert Notice + retry | per-line flags + ErrorSummary on continue |
 | Checkout | client-side redirect to cart when empty | inline quote spinner; busy submit | field errors, ErrorSummary, formError Notice | flagged lines → error with link to cart |
 | Payment return | — | checking spinner | failed / mismatch / expired / timeout panels | — |
-| Order | — | server-rendered | expired-link EmptyState | — |
+| Order | — | server-rendered | expired-link EmptyState (no "30 days" in the text; unknown token the same) | Cancelled: `info` Notice replaces progress and check circle |
+| Admin orders ([§12](#12-admin-area)) | list: "no orders match" EmptyState; home: "nothing waiting" | server-rendered; busy buttons | stale / not-allowed / field errors; email-failed alerts | order not found → admin 404 page |
 | Contact | — | busy submit | field errors, rate-limit Notice | — |
 
 ---
@@ -801,9 +902,173 @@ and style; nothing optional loads before acceptance.
 
 ## 12. Admin area
 
-Out of scope for this brief. The admin uses the same tokens, Heebo and the `ui/` primitives
-(Button, Notice, form controls, ConfirmDialog, Toast) so the system stays one, but its layouts
-are designed in Operate mode by the admin tasks (mobile-first, large targets, plain Hebrew).
+Added by 002 (admin order handling). **Operate mode**: plain Hebrew (right-to-left), phone first,
+one obvious next step, large targets, nothing decorative. It uses the same tokens, Heebo and `ui/`
+primitives as the storefront (`Button`, `LinkButton`, `ChipLink`, `ChipRow`, `Notice`, `Price`,
+`Disclosure`, `EmptyState`, `TextField`, `TextArea`, `FormField`, `ErrorSummary`, `ConfirmDialog`,
+`Toast`, `Icon`); no new component library, no new colour. Every admin string is Hebrew with a real
+English entry in `en.json`. Prices, order numbers, phones and emails are in `<bdi>` (phone and
+email also `dir="ltr"`); numbers use `tnum`. No `style` attribute. Admin screens are `noindex`,
+`no-store`, and each `page.tsx` calls `requireAdmin()` first (002 FR-019).
+
+### 12.1 Frame
+
+- **Layout** (existing, unchanged; 002 does not edit `src/app/admin/(protected)/layout.tsx`): a
+  header with the brand, the admin's name (hidden below 640 px) and sign-out, a horizontally scrollable row of
+  navigation pills (44 px high, `rounded-pill`, `hover:bg-sun-soft`; "הזמנות" is already one of
+  them; no current-page marker), and a `max-w-5xl` `<main id="main">` with 16 px side gutters and
+  24 px block padding. The two-column order page (§12.3) switches at 900 px inside this main.
+- **Page title**: h1 28/800, `ink`, `text-wrap: balance`; one h1 per page.
+- **Status badges** (`admin/OrderStatusBadge`, `rounded-pill`, 13/700, padding 4×12, text label
+  always present, so colour is never the only signal):
+
+  | Status | Label | Look |
+  |---|---|---|
+  | New | "חדשה" | `sun-soft` fill, `ink` text |
+  | In preparation | "בהכנה" | `photo` fill, `ink` text |
+  | Shipped | "נשלחה" | `panel` fill, 1.5 px `ink` border |
+  | Ready for pickup | "מוכנה לאיסוף" | `panel` fill, 1.5 px `ink` border |
+  | Completed | "הושלמה" | `panel` fill, 1.5 px `field` border, `ink-2` text |
+  | Cancelled | "בוטלה" | `panel` fill, 1.5 px `alert` border, `alert` text |
+
+- **Payment badges** (`PaymentStateBadge`, same shape): "ממתין לתשלום" `panel` fill + 1.5 px
+  `field` border; "שולם" `sun-soft` fill; "הוחזר" `photo` fill. All text `ink`.
+- **`Toast`** after every successful action (e.g. "ההזמנה עברה להכנה"), `role="status"`, with the component's default duration and
+  dismiss button; errors are never toasts: they are `Notice`s next to the action or under the field.
+- **Dates** are shown in Israel time (`Asia/Jerusalem`, 24-hour clock), e.g. "9.11.2026, 14:05"
+  (`formatDateTime`, 002 research R14).
+- **Failure and stale messages** use the `alert` `Notice` with `role="alert"`; success feedback
+  uses the `Toast`. Buttons are never disabled; while a change runs the pressed button is
+  `aria-busy` (§7.1).
+
+### 12.2 Orders list `/admin/orders`
+
+Top to bottom, one column, within `max-w-5xl`:
+
+1. h1 "הזמנות".
+2. **Order-number box** (first, because customers quote the number): a `<form method="get">` with
+   `TextField` label "מעבר להזמנה לפי מספר" (`inputmode="numeric"`, `dir="ltr"`, accepts "#1023"
+   or "1023") and a `secondary` button "מעבר". Found → opens the order. Not found → an `info`
+   `Notice` above the list naming the number without the "#" ("לא מצאתי הזמנה מספר 1023"); not digits → `info`
+   "מספר הזמנה הוא רק ספרות, למשל 1023". Filters in the URL are kept.
+3. **Status `ChipRow`** ("הכול" + the six labels) and **payment `ChipRow`** ("הכול" + three
+   labels), each current chip `aria-current="page"` (§7.3). When `open=1` (the admin home link) a
+   removable chip "בלי הזמנות שבוטלו" with a `close` icon shows in the same row area. A quiet
+   link "ניקוי הסינון" appears when any filter is on.
+4. **Cards** (a `<ul>` of `<li>`; the whole card is one link to the order, 44 px+ target, white,
+   `rounded-card`, 1 px `line` border, padding 16): first line "#1023" (`<bdi>`, 700, `tnum`) and
+   the date (`ink-2` 13) at inline-end; customer name (16/500); total (`Price md`); the two badges
+   (status, payment) in a wrapping row.
+5. **Paging row** (25 per page): "הקודם · עמוד 2 מתוך 5 · הבא", with directional `chevron` icons
+   that flip in RTL; links keep `status`, `payment` and `open`; hidden when there is one page.
+
+States:
+
+- **Empty result**: `EmptyState` "אין הזמנות שמתאימות לסינון" with a primary link "ניקוי הסינון".
+- **No orders at all**: `EmptyState` "עוד אין הזמנות" (no link).
+- **Invalid filter value**: ignored (list shows everything for that filter).
+- **Page beyond the last**: shows the last page.
+- **Error**: no admin `error.tsx` exists; an uncaught error falls to the root `global-error.tsx` (§8.12), which replaces the whole document: no admin header, and its home link goes to the storefront. 002 adds no error file.
+
+Accept: with 30 seeded orders page 1 shows 25 cards and a paging row; each filter narrows the list
+and survives paging; the number box opens the order or explains; targets ≥ 44 px; no horizontal
+scroll at 320 px; the list is unreachable signed out.
+
+### 12.3 Order page `/admin/orders/[id]`
+
+One column on phones; from 900 px two columns: **details at inline-start**, a **sticky actions
+panel at inline-end** (`position: sticky; top: 24px`, because the admin header is not sticky; white, `rounded-card`). On a phone the actions
+panel comes right after the alerts, before the details, so the next step is on top. Unknown or
+malformed id → the admin 404 page, never an error. Order of blocks:
+
+1. **Header**: "הזמנה #1023" (h1), the date and time, then the status and payment badges.
+2. **Alerts** (only when they apply):
+   - "order received" email failed (002 FR-007): `alert` `Notice` "הלקוח לא קיבל את מייל ההזמנה.
+     כדאי להתקשר" with the customer's phone as a `tel:` `LinkButton`.
+   - cancellation or refund email failed: a smaller `alert` line "מייל הביטול לא נשלח ללקוח" /
+     "מייל ההחזר לא נשלח ללקוח" (one per failed email).
+   - Customer anonymised (feature 003): `info` `Notice` "לא ניתן ליצור קשר עם הלקוח".
+3. **Actions panel**: preceded, while the order is Cancelled and paid, by the **refund reminder**
+   (002 SC-008): a persistent `attention` `Notice` "צריך להחזיר את הכסף" with the sentence chosen by
+   payment method ("בתשלום באתר — דרך האתר של חברת הסליקה" for online, "בתשלום ישיר — באותה דרך
+   שבה שולם" for offline) and the "סימון כהוחזר" button inside it. `OrderActions` renders it at the
+   top of the actions panel, not in the Alerts block: on phones directly after the alerts, from
+   900 px at the top of the sticky right-hand column. Shows only what the status and payment state allow (002 FR-008):
+   - one **primary** button for the main next step ("בהכנה", "נשלחה", "מוכנה לאיסוף", "הושלמה" as
+     the status allows; shipping orders never get "מוכנה לאיסוף", pickup orders never "נשלחה");
+     **secondary** buttons for the other allowed steps ("נשלחה" or "מוכנה לאיסוף" from New, "ביטול
+     ההזמנה"); a **quiet** button "חזרה שלב אחד" for the step back (In preparation, Shipped,
+     Ready for pickup only).
+   - Choosing "נשלחה" or "מוכנה לאיסוף" reveals `TextField` "מספר משלוח (לא חובה)" (`dir="ltr"`,
+     max 100) or `TextArea` "הערה לאיסוף (לא חובה)" (max 500) above the confirm press; the field is
+     pre-filled when the order re-enters that status. Next to the primary "שמירה" sits a quiet
+     "סגירה" button that closes the field without saving (never "ביטול", which is the order's
+     cancel button).
+   - On a Shipped / Ready order the stored tracking number / pickup note is shown in the panel
+     with a quiet "עריכה" button that opens the same field with a primary "שמירה" button (no status
+     change; the history records the edit without the text).
+   - **Payment buttons**: "סימון כשולם" (offline orders awaiting payment, any status), "סימון
+     כהוחזר" (paid orders). While the refund reminder shows (Cancelled and paid) the panel leaves
+     out "סימון כהוחזר": the Notice holds the only one, rendered by `OrderActions` so it has the
+     same `ConfirmDialog` and busy handling. Never offered for online orders awaiting payment (002 FR-012).
+   - **`ConfirmDialog`** (§7.26) for Completed, Cancel, mark paid and mark refunded; each states
+     its consequence in plain words. Mark paid: "לסמן שהתשלום התקבל? אי אפשר לבטל את זה." Mark
+     refunded: "לסמן שהכסף הוחזר ללקוח? הלקוח יקבל על כך מייל. אי אפשר לבטל את זה."
+     Completing an offline order that still awaits payment opens a dialog with **primary "סימון
+     כשולם והשלמה"**, **secondary "השלמה בלי תשלום"** and Cancel. The **cancel** dialog has the
+     title "לבטל את ההזמנה?" and the body "הלקוח יקבל מייל שההזמנה בוטלה."; for a paid order the body
+     also holds the refund reminder "ההזמנה שולמה. אחרי הביטול צריך להחזיר את הכסף: בתשלום באתר —
+     דרך האתר של חברת הסליקה; בתשלום ישיר — באותה דרך שבה שולם." (the sentence by payment method). Its dismiss button reads "חזרה" / "Back" (`cancelLabel`, §7.26).
+   - Busy: the pressed button is `aria-busy`; success → `Toast` and the page refreshes; stale → an
+     `alert` `Notice` "ההזמנה השתנתה הרגע. הדף מציג עכשיו את המצב העדכני." and a refresh;
+     not allowed → an `alert` `Notice` "אי אפשר לעשות את זה בהזמנה הזאת." and a refresh; field errors sit under the field (`ErrorSummary` when more than one).
+   - Final states (Completed / Cancelled, nothing to do): the panel shows a plain line ("ההזמנה
+     הושלמה" / "ההזמנה בוטלה") and only the payment buttons that still apply.
+4. **Items**: one row per line: 72×90 `photo` well with the snapshot photo
+   (`/api/admin/media/<key>`, or the empty well, `alt=""`, `loading="lazy"`), name, options
+   "{group}: {value}", "{quantity} × {unit price}", line total (`Price md`), "זמן הכנה: {prepTime}".
+   Then subtotal, delivery fee, total with currency.
+5. **Customer**: name; phone and email as 44 px `LinkButton`s (`tel:` / `mailto:`) with `phone` /
+   `mail` icons, in `<bdi dir="ltr">`.
+6. **Delivery**: the address lines (shipping) or "איסוף עצמי".
+7. **Customer's note**: `whitespace-pre-line`, `dir="auto"`; omitted when empty.
+8. **Payment**: method ("תשלום מאובטח באתר" / "תשלום ישיר אליי": the same wording as `checkout.payment.*`, copied into
+   `admin.orders.paymentMethod.*`, not reused keys), state, and the paid / refunded date and time.
+9. **Tracking number / pickup note**: `<bdi dir="ltr">` for the number; the note `dir="auto"`,
+   `whitespace-pre-line`. Omitted when there is none.
+10. **Customer details correction**: a `Disclosure` "תיקון פרטי הלקוח" holding the form (`FormField`
+    primitives: name, phone, email and, for shipping orders, the address fields; `ErrorSummary`
+    after a failed submit; primary "שמירה"). Items, amounts and delivery method cannot be edited.
+    Anonymised: the disclosure is replaced by the `info` line above.
+11. **History**: an `<ol>`, newest first, "{date} · {what} · {who}", where "who" is the admin's
+    name, "מנהלת שהוסרה" when the admin was removed since, or "המערכת" for automatic entries (failed
+    emails are system entries). Never any customer
+    text, tracking number or note.
+
+States: **not found** (admin 404); **stale** and **not allowed** (Notice + refresh, above);
+**error** (no admin `error.tsx`; root `global-error.tsx`, which shows no admin header and links to the storefront); **anonymised** (info Notice, correction form replaced, status
+changes still work); **email failed** in its three forms (order received, cancellation, refund);
+**refund reminder** (Cancelled and paid); **tracking / pickup-note edit** (inline field).
+
+Accept: on a phone the allowed next step is visible without scrolling past the details; each
+status offers exactly the buttons of 002 FR-009 / 002 FR-013 and no others; focus starts on Cancel in
+every dialog; Escape cancels; a double tap changes the order once; the stale message appears when a
+second tab acted first; the customer's phone and email are one tap away; every dynamic string in
+`<bdi>`; axe reports no violations.
+
+### 12.4 Admin home `/admin`
+
+- h1 "לוח בקרה" and a one-line welcome.
+- **Two count cards** (a two-column grid from 640 px, stacked below; white `rounded-card`, 1 px
+  `line` border, padding 20): the number large (40/800, `tnum`), the label under it ("הזמנות חדשות"
+  / "ממתינות לתשלום"); **the whole card is one link** (44 px+) to `/admin/orders?status=new`
+  and `/admin/orders?payment=awaiting_payment&open=1`, so the list shows exactly what the count
+  counted (002 research R13: awaiting-payment orders that are not Cancelled).
+- When both counts are zero: a plain line "אין כרגע הזמנות שמחכות לך" (instead of the cards).
+- **Settings notice**: while any required shop setting still has its placeholder value, an
+  `attention` `Notice` "כדאי להשלים בהגדרות:" listing them, with a link "להגדרות" to the
+  settings page.
+- Accept: the count equals the number of cards in the linked list; signed out it shows nothing.
 
 ---
 

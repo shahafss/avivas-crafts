@@ -11,8 +11,15 @@ export interface ConfirmDialogProps {
   children?: ReactNode;
   /** Translated action name, e.g. "Delete product". Defaults to the common "Confirm". */
   confirmLabel?: string;
-  /** The action is running; the confirm button shows it and cannot be pressed twice. */
+  /** Label of the dismiss button; defaults to the common "Cancel" (storefront.md §7.26). */
+  cancelLabel?: string;
+  /** The action is running; the pressed button shows it and nothing can be pressed twice. */
   busy?: boolean;
+  /** Which button was pressed, so the busy spinner shows on that one (default: confirm). */
+  busyButton?: 'confirm' | 'secondary';
+  /** Optional second choice between Cancel and the confirm button (storefront.md §7.26). */
+  secondaryLabel?: string;
+  onSecondary?: () => void;
   onConfirm: () => void;
   onCancel: () => void;
 }
@@ -26,7 +33,11 @@ export function ConfirmDialog({
   title,
   children,
   confirmLabel,
+  cancelLabel,
   busy = false,
+  busyButton = 'confirm',
+  secondaryLabel,
+  onSecondary,
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
@@ -77,12 +88,27 @@ export function ConfirmDialog({
               }}
               data-testid="confirm-dialog-cancel"
             >
-              {t('cancel')}
+              {cancelLabel ?? t('cancel')}
             </Button>
+            {secondaryLabel === undefined || onSecondary === undefined ? null : (
+              <Button
+                variant="secondary"
+                busy={busy && busyButton === 'secondary'}
+                busyLabel={busyText}
+                onClick={() => {
+                  if (!busy) onSecondary();
+                }}
+                data-testid="confirm-dialog-secondary"
+              >
+                {secondaryLabel}
+              </Button>
+            )}
             <Button
-              busy={busy}
+              busy={busy && busyButton === 'confirm'}
               busyLabel={busyText}
-              onClick={onConfirm}
+              onClick={() => {
+                if (!busy) onConfirm();
+              }}
               data-testid="confirm-dialog-confirm"
             >
               {confirmLabel ?? t('confirm')}

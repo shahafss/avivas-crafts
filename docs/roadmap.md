@@ -27,7 +27,7 @@ The vision (who the shop is for, what success means, principles, what is out of 
 | # | Item | Launch blocker | Status | Spec |
 |---|------|----------------|--------|------|
 | 001 | MVP: owner manages products; visitors browse, cart, guest checkout and pay | yes | Done (frozen record) | [specs/001-online-crafts-shop](../specs/001-online-crafts-shop/) |
-| 002 | Order handling | yes | Planned | — |
+| 002 | Order handling | yes | Done (dev) | [specs/002-order-handling](../specs/002-order-handling/) |
 | 003 | Privacy, consent, legal and content pages | yes | Planned | — |
 | 004 | Admin security management | yes | Planned | — |
 | 005 | English version and language switch | yes | Planned | — |
@@ -43,8 +43,13 @@ created, so if the order changes, the numbers follow the order of creation, not 
 **Goal**: Aviva is notified of every order, sees and filters orders in the admin area, opens one
 to see items, options, contact details, delivery choice and payment state, marks offline payments
 as received, and moves orders through New → In preparation → Shipped / Ready for pickup →
-Completed, or Cancelled (with refund confirmation). The customer gets the matching email in the
-language they ordered in.
+Completed, or Cancelled (with refund confirmation). The customer gets one "order received" email
+in the language they ordered in (plus an email when the order is cancelled or refunded), then
+follows the order on its page (progress, tracking number or pickup note, payment state); no other status
+or payment change sends an email. Aviva can also correct a customer's contact details.
+
+**Left for later**: customer search, data export and anonymisation (003); a view of the activity
+log (004).
 
 **Why first**: without it Aviva cannot run the shop; orders already arrive (spec 001 built
 checkout and the order notification email).
