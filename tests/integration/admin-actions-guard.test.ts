@@ -117,6 +117,26 @@ describe('admin file walk', () => {
   });
 });
 
+describe('the order Server Actions are among the discovered exports', () => {
+  it('lists all six, so moving or renaming the file cannot drop them from the guard checks', async () => {
+    const file = actionFiles.find((entry) =>
+      relative(REPO_ROOT, entry).endsWith('orders/[id]/actions.ts'),
+    );
+    expect(file).toBeDefined();
+    const names = (await exportedActions(file ?? '')).map(([name]) => name);
+    for (const name of [
+      'setOrderStatus',
+      'stepBackOrderStatus',
+      'updateFulfilmentDetails',
+      'markOrderPaid',
+      'markOrderRefunded',
+      'updateOrderCustomer',
+    ]) {
+      expect(names).toContain(name);
+    }
+  });
+});
+
 describe('every admin Server Action guards itself first', () => {
   for (const [label, session] of [
     ['signed out', null],

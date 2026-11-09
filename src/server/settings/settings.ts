@@ -58,10 +58,14 @@ export async function getZoneForCountry(countryCode: string): Promise<Zone | nul
   return row?.zone ?? null;
 }
 
+/** Fields the admin home may list (002 research R13). */
+export type AttentionField = keyof typeof SEED_PLACEHOLDERS | 'pickupInstructionsHe';
+
 /** Names of the settings fields that still hold a seed placeholder. */
-export function placeholderFields(settings: Settings): string[] {
-  const result: string[] = [];
-  for (const [field, placeholder] of Object.entries(SEED_PLACEHOLDERS)) {
+export function placeholderFields(settings: Settings): (keyof typeof SEED_PLACEHOLDERS)[] {
+  const result: (keyof typeof SEED_PLACEHOLDERS)[] = [];
+  for (const field of Object.keys(SEED_PLACEHOLDERS) as (keyof typeof SEED_PLACEHOLDERS)[]) {
+    const placeholder: unknown = SEED_PLACEHOLDERS[field];
     const current = (settings as unknown as Record<string, unknown>)[field];
     const same = Array.isArray(placeholder)
       ? Array.isArray(current) &&
@@ -71,6 +75,25 @@ export function placeholderFields(settings: Settings): string[] {
     if (same) result.push(field);
   }
   return result;
+}
+
+/**
+ * Settings fields the admin home asks Aviva to complete (research R13): the seed placeholders,
+ * plus `pickupInstructionsHe` when an enabled zone offers pickup and the Hebrew instructions are
+ * empty.
+ */
+export async function settingsNeedingAttention(): Promise<AttentionField[]> {
+  const settings = await getSettings();
+  const fields: AttentionField[] = placeholderFields(settings);
+  if ((settings.pickupInstructionsHe ?? '').trim() === '') {
+    const [zone] = await db
+      .select({ id: shippingZone.id })
+      .from(shippingZone)
+      .where(and(eq(shippingZone.enabled, true), eq(shippingZone.pickupEnabled, true)))
+      .limit(1);
+    if (zone) fields.push('pickupInstructionsHe');
+  }
+  return fields;
 }
 
 // ---------------------------------------------------------------- admin writes

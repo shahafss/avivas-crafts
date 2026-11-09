@@ -41,6 +41,11 @@ function readUser(): MockUser {
   return { ...DEFAULT_USER, ...(JSON.parse(readFileSync(USER_FILE, 'utf8')) as Partial<MockUser>) };
 }
 
+/** Email of the mock Google user (what `pnpm dev` gives the first admin). */
+export function mockUserEmail(): string {
+  return readUser().email;
+}
+
 export interface OidcMock {
   issuer: string;
   stop: () => Promise<void>;

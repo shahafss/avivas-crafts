@@ -14,10 +14,19 @@ import { expect, resetDb, sql, test } from './fixtures';
 // finished the Google step (`pending_passkey`), and must reveal none of the shop's private data.
 // The lists come from the file tree, so routes added by later phases are covered automatically.
 
-const SENTINELS = ['SENTINEL-DRAFT', 'sentinel@example.test', 'SENTINEL-ORDER-NOTE'];
+const SENTINELS = [
+  'SENTINEL-DRAFT',
+  'sentinel@example.test',
+  'SENTINEL-ORDER-NOTE',
+  'Sentinel Customer',
+  '+972501234567',
+  '0501234567',
+  '050-123-4567',
+];
 const SESSION_COOKIE = '__Host-ac_admin';
 
 let productId = '';
+let orderId = '';
 let pendingToken = '';
 
 test.beforeAll(async () => {
@@ -28,7 +37,7 @@ test.beforeAll(async () => {
     RETURNING id`;
   productId = product?.id ?? '';
   const [zone] = await sql<{ id: string }[]>`SELECT id FROM shipping_zone LIMIT 1`;
-  await sql`
+  const [order] = await sql<{ id: string }[]>`
     INSERT INTO orders
       (public_token_hash, public_token_expires_at, locale, zone_id, currency, customer_name,
        customer_phone, customer_email, delivery_method, payment_method, subtotal_minor, total_minor,
@@ -36,7 +45,9 @@ test.beforeAll(async () => {
     VALUES
       (${createHash('sha256').update('sentinel-order-token').digest()}, now() + interval '30 days',
        'he', ${zone?.id ?? ''}, 'ILS', 'Sentinel Customer', '+972501234567', 'sentinel@example.test',
-       'pickup', 'offline', 10000, 10000, now(), 1, 1, 'SENTINEL-ORDER-NOTE')`;
+       'pickup', 'offline', 10000, 10000, now(), 1, 1, 'SENTINEL-ORDER-NOTE')
+    RETURNING id`;
+  orderId = order?.id ?? '';
   const [admin] = await sql<{ id: string }[]>`
     INSERT INTO admin_user (display_name, google_email, google_sub)
     VALUES ('Access Admin', 'access-admin@example.test', 'sub-access-admin')
@@ -102,7 +113,12 @@ for (const state of states) {
       test(`page ${page.title} redirects to sign-in and shows no private data`, async ({
         request,
       }) => {
-        const response = await request.get(pageUrl(page.path, fill), {
+        // `/admin/orders/[id]` is requested with the real sentinel order, so the guard is tested
+        // where the order's private data would be shown.
+        const url = pageUrl(page.path, (segment) =>
+          page.path.includes('/orders/') && segment === '[id]' ? orderId : fill(segment),
+        );
+        const response = await request.get(url, {
           maxRedirects: 0,
           headers: headersFor(),
         });

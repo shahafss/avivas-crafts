@@ -153,3 +153,27 @@ export function totalsParts(
     text: rows.map(([label, value]) => `${label}: ${value}`).join('\n'),
   };
 }
+
+/**
+ * The seller's identity (distance-selling disclosure): heading, business name, registration
+ * line, address, phone and email. Shared by the customer emails that carry it.
+ */
+export function sellerParts(settings: Settings, locale: Locale): RenderedParts {
+  const businessName = pickText(locale, settings.businessNameHe, settings.businessNameEn);
+  const businessAddress = pickText(locale, settings.businessAddressHe, settings.businessAddressEn);
+  const regLine = emailT(locale, 'emails.order.regNumber', { number: settings.businessRegNumber });
+  const title = emailT(locale, 'emails.order.seller');
+  return {
+    html:
+      heading(title) +
+      `<p><bdi>${escapeHtml(businessName)}</bdi><br>${escapeHtml(regLine)}<br><bdi>${escapeHtml(businessAddress)}</bdi><br><bdi>${escapeHtml(settings.businessPhone)}</bdi><br><bdi>${escapeHtml(settings.businessEmail)}</bdi></p>`,
+    text: [
+      title,
+      businessName,
+      regLine,
+      businessAddress,
+      settings.businessPhone,
+      settings.businessEmail,
+    ].join('\n'),
+  };
+}

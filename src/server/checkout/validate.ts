@@ -13,8 +13,13 @@ export function isValidPhone(phone: string, country: string | undefined): boolea
   return parsePhoneNumberFromString(phone, phoneCountry(country))?.isValid() === true;
 }
 
+/** The phone as E.164 for the address country (Israel when there is none); unchanged if unparsable. */
+export function normalisePhone(phone: string, country: string | undefined): string {
+  return parsePhoneNumberFromString(phone, phoneCountry(country))?.number ?? phone;
+}
+
 /** `user@Example.COM` -> `user@example.com` (only the domain is case-insensitive in practice). */
-function lowerDomain(email: string): string {
+export function lowerDomain(email: string): string {
   const at = email.lastIndexOf('@');
   return `${email.slice(0, at)}@${email.slice(at + 1).toLowerCase()}`;
 }
@@ -33,8 +38,7 @@ export const checkoutServerSchema = checkoutFormSchema
   })
   .transform((form) => {
     const country = form.deliveryMethod === 'shipping' ? form.address?.country : undefined;
-    const phone =
-      parsePhoneNumberFromString(form.phone, phoneCountry(country))?.number ?? form.phone;
+    const phone = normalisePhone(form.phone, country);
     const { address, note, ...rest } = form;
     const trimmedNote = note?.trim() ?? '';
     return {

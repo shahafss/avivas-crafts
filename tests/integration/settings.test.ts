@@ -16,7 +16,14 @@ import {
   shopSettings,
 } from '@/server/db/schema';
 import { runSeed } from '@/server/db/seed';
-import { productsMissingUsdPrice, updateSettings, updateZone } from '@/server/settings/settings';
+import {
+  getSettings,
+  placeholderFields,
+  productsMissingUsdPrice,
+  settingsNeedingAttention,
+  updateSettings,
+  updateZone,
+} from '@/server/settings/settings';
 
 let testDb: TestDbHandle;
 let files: TestStorage;
@@ -296,5 +303,41 @@ describe('activity log', () => {
     expect(await activity()).toEqual(['settings.updated', 'zone.updated']);
     const rows = await testDb.db.select().from(adminActivity);
     expect(rows.every((row) => row.adminId === actor.adminId)).toBe(true);
+  });
+});
+
+describe('settingsNeedingAttention (002 US7, research R13)', () => {
+  const setZone = (values: Partial<typeof shippingZone.$inferInsert>) =>
+    testDb.db.update(shippingZone).set(values).where(eq(shippingZone.code, 'IL'));
+  const setInstructions = (value: string | null) =>
+    testDb.db.update(shopSettings).set({ pickupInstructionsHe: value });
+
+  it('lists the seed placeholders, the same as placeholderFields()', async () => {
+    const expected = placeholderFields(await getSettings());
+    expect(expected.length).toBeGreaterThan(0);
+    // The seed always enables pickup in a zone and leaves the pickup instructions empty.
+    expect(await settingsNeedingAttention()).toEqual([...expected, 'pickupInstructionsHe']);
+    // With pickup off, only the placeholders remain.
+    await testDb.db.update(shippingZone).set({ pickupEnabled: false });
+    expect(await settingsNeedingAttention()).toEqual(expected);
+  });
+
+  it('adds pickupInstructionsHe when an enabled zone offers pickup and the text is empty or blank', async () => {
+    await setZone({ enabled: true, pickupEnabled: true });
+    await setInstructions(null);
+    expect(await settingsNeedingAttention()).toContain('pickupInstructionsHe');
+    await setInstructions('   ');
+    expect(await settingsNeedingAttention()).toContain('pickupInstructionsHe');
+  });
+
+  it('does not list it when pickup is disabled, the zone is disabled or the text is filled', async () => {
+    await setInstructions(null);
+    await setZone({ enabled: true, pickupEnabled: false });
+    expect(await settingsNeedingAttention()).not.toContain('pickupInstructionsHe');
+    await setZone({ enabled: false, pickupEnabled: true });
+    expect(await settingsNeedingAttention()).not.toContain('pickupInstructionsHe');
+    await setZone({ enabled: true, pickupEnabled: true });
+    await setInstructions('איסוף בשבת');
+    expect(await settingsNeedingAttention()).not.toContain('pickupInstructionsHe');
   });
 });

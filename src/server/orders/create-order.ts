@@ -6,7 +6,11 @@ import { getEnv } from '@/server/env';
 import { enqueueOrderEmails } from './order-emails';
 import { orderLineRows, type LineSnapshot, type PhotoToCopy } from './snapshots';
 
-/** Order confirmation links stay valid for 30 days (data-model.md > orders). */
+/**
+ * How long an order link lives after its order is Completed or Cancelled (002 FR-015): the status
+ * change sets `public_token_expires_at` to now + this. Order creation writes the same value, but
+ * it is not consulted while the order is open (`getOrderByToken`).
+ */
 export const ORDER_TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
 export function sha256(value: string | Buffer): Buffer {

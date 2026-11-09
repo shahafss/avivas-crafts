@@ -5,7 +5,10 @@ import { orderLine, orders, shopSettings } from '@/server/db/schema';
 import type { DbLike } from '@/server/db/types';
 import { enqueueEmail } from '@/server/email/outbox';
 import { renderNewOrder } from '@/server/email/templates/new-order';
+import { renderOrderCancelled } from '@/server/email/templates/order-cancelled';
 import { renderOrderConfirmation } from '@/server/email/templates/order-confirmation';
+import { renderOrderEmailFailed } from '@/server/email/templates/order-email-failed';
+import { renderOrderRefunded } from '@/server/email/templates/order-refunded';
 import {
   renderPaymentAttention,
   type PaymentAttentionData,
@@ -148,5 +151,83 @@ export async function enqueuePaymentAttention(
     ...mail,
     baseKey: `attention:${pendingId}:${data.transactionId ?? data.case}`,
     ...(data.orderId === undefined ? {} : { orderId: data.orderId }),
+  });
+}
+
+/**
+ * Owner email (Hebrew): the order's "order received" email gave up (002 FR-007, research R5).
+ * Called by the outbox sender inside the transaction that marks the row failed. The caller kicks
+ * the outbox afterwards.
+ */
+export async function enqueueOrderEmailFailed(tx: DbLike, orderId: string): Promise<void> {
+  const [order] = await tx
+    .select({ orderNumber: orders.orderNumber })
+    .from(orders)
+    .where(eq(orders.id, orderId));
+  if (!order) throw new Error('order missing');
+  const settings = await loadSettings(tx);
+  const mail = renderOrderEmailFailed({
+    shopName: settings.shopNameHe,
+    orderNumber: order.orderNumber,
+    orderId,
+    origin: getEnv().APP_ORIGIN,
+  });
+  await enqueueToOwners(tx, settings.notificationEmails, {
+    kind: 'order-email-failed',
+    ...mail,
+    baseKey: `order-email-failed:${orderId}`,
+    orderId,
+  });
+}
+
+/**
+ * Customer email `order-refunded` (contracts/emails.md): the payment was marked refunded. Queued
+ * inside the caller's transaction, in the order's language, to the order's own address; skipped
+ * when the order was anonymised (`customer_email` null). The caller kicks the outbox afterwards.
+ */
+export async function enqueueOrderRefundedEmail(tx: DbLike, orderId: string): Promise<void> {
+  const [order] = await tx.select().from(orders).where(eq(orders.id, orderId));
+  if (!order) throw new Error('order missing');
+  if (order.customerEmail === null) return;
+  const settings = await loadSettings(tx);
+  const mail = renderOrderRefunded({ order, settings });
+  await enqueueEmail(tx, {
+    kind: 'order-refunded',
+    to: order.customerEmail,
+    locale: order.locale,
+    subject: mail.subject,
+    html: mail.html,
+    text: mail.text,
+    orderId,
+    dedupeKey: `order-refunded:${orderId}`,
+  });
+}
+
+/**
+ * Customer email `order-cancelled` (contracts/emails.md): the order became Cancelled. Queued
+ * inside the caller's transaction (after the status update, so the payment state is current), in
+ * the order's language, to the order's own address; skipped when the order was anonymised
+ * (`customer_email` null). The caller kicks the outbox afterwards.
+ */
+export async function enqueueOrderCancelledEmail(tx: DbLike, orderId: string): Promise<void> {
+  const [order] = await tx.select().from(orders).where(eq(orders.id, orderId));
+  if (!order) throw new Error('order missing');
+  if (order.customerEmail === null) return;
+  const lines = await tx
+    .select()
+    .from(orderLine)
+    .where(eq(orderLine.orderId, orderId))
+    .orderBy(asc(orderLine.id));
+  const settings = await loadSettings(tx);
+  const mail = renderOrderCancelled({ order, lines, settings });
+  await enqueueEmail(tx, {
+    kind: 'order-cancelled',
+    to: order.customerEmail,
+    locale: order.locale,
+    subject: mail.subject,
+    html: mail.html,
+    text: mail.text,
+    orderId,
+    dedupeKey: `order-cancelled:${orderId}`,
   });
 }
