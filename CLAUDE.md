@@ -29,8 +29,12 @@ specific to this project. The binding rules are in `.specify/memory/constitution
 ## CI
 
 - `.github/workflows/ci.yml` runs on pull requests into `dev` and `main`, on pushes to `main`, and
-  by hand. The required check is the `verify` job: `pnpm verify` (incl. real PostgreSQL) and
-  Playwright E2E (Chromium + WebKit).
+  by hand. Its jobs run in parallel and must all pass before a merge: `checks` (types, lint, CSS,
+  unit + integration tests, audit), `test-pg` (real PostgreSQL), and `e2e` split per Playwright
+  project (`chromium-desktop` + `consent`, `chromium-mobile`, `webkit-mobile`). A new Playwright
+  project needs a matrix entry there.
+- `pnpm verify` locally runs the same checks as `checks` + `test-pg`. Use `pnpm run audit`, not
+  `pnpm audit`: the built-in command ignores the script's `--audit-level=high`.
 - Long E2E runs often hang on this machine (16 GB RAM, full swap). Run single spec files locally;
   leave the full E2E run to CI.
 

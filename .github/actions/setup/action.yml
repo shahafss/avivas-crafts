@@ -1,0 +1,16 @@
+name: Set up Node and pnpm
+description: Enable pnpm through Corepack, set up Node 24 with the pnpm cache and install dependencies.
+
+runs:
+  using: composite
+  steps:
+    - name: Enable Corepack (pnpm 12.6.0 from packageManager)
+      shell: bash
+      run: corepack enable pnpm
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 24
+        cache: pnpm
+    - name: Install dependencies
+      shell: bash
+      run: pnpm install --frozen-lockfile

@@ -1,8 +1,9 @@
 name: CI
 
-# Pull requests into dev (features) and main (releases) must pass this check before merging.
+# Pull requests into dev (features) and main (releases) must pass every job before merging.
 # Pushes to main re-check the released code; dev is not re-checked on push because the squash
 # commit is the code its pull request already tested. Run by hand from the Actions tab if needed.
+# The jobs run in parallel. Locally, `pnpm verify` runs the same checks as `checks` + `test-pg`.
 on:
   pull_request:
     branches: [dev, main]
@@ -18,15 +19,43 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  verify:
+  checks:
+    name: Checks (types, lint, CSS, unit + integration tests, audit)
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        timeout-minutes: 5
+      - uses: ./.github/actions/setup
+        timeout-minutes: 10
+      - name: Typecheck
+        run: pnpm typecheck
+        timeout-minutes: 5
+      - name: Lint
+        run: pnpm lint
+        timeout-minutes: 5
+      - name: Logical CSS check
+        run: pnpm check:css
+        timeout-minutes: 2
+      - name: Unit and integration tests
+        run: pnpm test
+        timeout-minutes: 10
+      - name: Dependency audit (fails on high or critical)
+        # `pnpm run`, because plain `pnpm audit` is pnpm's built-in command and ignores the script's level.
+        run: pnpm run audit
+        timeout-minutes: 3
+
+  test-pg:
+    name: PostgreSQL tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
     services:
       postgres:
         image: postgres:17-alpine
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: avivas_crafts_test
         ports:
           - 5432:5432
         options: >-
@@ -36,42 +65,78 @@ jobs:
           --health-retries 10
     env:
       DATABASE_URL_TEST: postgres://postgres:postgres@localhost:5432/avivas_crafts_test
-      E2E_DATABASE_URL: postgres://postgres:postgres@localhost:5432/avivas_crafts_e2e
-      PGPASSWORD: postgres
     steps:
       - uses: actions/checkout@v4
         timeout-minutes: 5
-      - name: Enable Corepack (pnpm 12.6.0 from packageManager)
-        run: corepack enable pnpm
-        timeout-minutes: 2
-      - uses: actions/setup-node@v4
-        timeout-minutes: 5
-        with:
-          node-version: 24
-          cache: pnpm
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+      - uses: ./.github/actions/setup
         timeout-minutes: 10
-      - name: Create test databases
-        run: |
-          psql -h localhost -U postgres -c 'CREATE DATABASE avivas_crafts_e2e'
-          psql -h localhost -U postgres -c 'CREATE DATABASE avivas_crafts_test'
-        timeout-minutes: 2
-      - name: Verify (typecheck, lint, CSS, tests incl. real PostgreSQL, audit)
-        run: pnpm verify
-        timeout-minutes: 15
-      - name: Install Playwright browsers
-        run: pnpm exec playwright install --with-deps chromium webkit
+      - name: Tests against real PostgreSQL 17
+        run: pnpm test:pg
+        timeout-minutes: 10
+
+  e2e:
+    name: E2E (${{ matrix.name }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    strategy:
+      # Let every browser finish, so one failure does not hide another.
+      fail-fast: false
+      matrix:
+        include:
+          - name: chromium-desktop
+            # The consent project has few specs and also runs on desktop Chrome, so it shares this job.
+            projects: --project=chromium-desktop --project=consent
+            browser: chromium
+          - name: chromium-mobile
+            projects: --project=chromium-mobile
+            browser: chromium
+          - name: webkit-mobile
+            projects: --project=webkit-mobile
+            browser: webkit
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: avivas_crafts_e2e
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      E2E_DATABASE_URL: postgres://postgres:postgres@localhost:5432/avivas_crafts_e2e
+    steps:
+      - uses: actions/checkout@v4
+        timeout-minutes: 5
+      - uses: ./.github/actions/setup
+        timeout-minutes: 10
+      - name: Cache the Next.js build cache
+        uses: actions/cache@v4
+        timeout-minutes: 3
+        with:
+          path: .next/cache
+          key: nextjs-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('src/**', 'next.config.ts') }}
+          restore-keys: |
+            nextjs-${{ hashFiles('pnpm-lock.yaml') }}-
+      - name: Build
+        run: pnpm build
+        timeout-minutes: 10
+      - name: Install Playwright browser (${{ matrix.browser }})
+        run: pnpm exec playwright install --with-deps ${{ matrix.browser }}
         timeout-minutes: 10
       - name: End-to-end tests
-        run: pnpm test:e2e
+        run: pnpm exec playwright test --pass-with-no-tests ${{ matrix.projects }}
         timeout-minutes: 30
       - name: Upload Playwright report
         if: failure()
         uses: actions/upload-artifact@v4
         timeout-minutes: 5
         with:
-          name: playwright-report
+          name: playwright-report-${{ matrix.name }}
           path: |
             playwright-report
             test-results
