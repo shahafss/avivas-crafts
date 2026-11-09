@@ -87,8 +87,13 @@ jobs:
             # The consent project has few specs and also runs on desktop Chrome, so it shares this job.
             projects: --project=chromium-desktop --project=consent
             browser: chromium
-          - name: chromium-mobile
-            projects: --project=chromium-mobile
+          # chromium-mobile carries most flows (specs skip it on desktop), so it is split in two halves,
+          # each with its own database. Names avoid "/" because they are used in artifact names.
+          - name: chromium-mobile-1of2
+            projects: --project=chromium-mobile --shard=1/2
+            browser: chromium
+          - name: chromium-mobile-2of2
+            projects: --project=chromium-mobile --shard=2/2
             browser: chromium
           - name: webkit-mobile
             projects: --project=webkit-mobile
