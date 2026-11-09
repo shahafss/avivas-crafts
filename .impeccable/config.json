@@ -7,7 +7,7 @@
         "rule": "cream-palette",
         "value": "*",
         "files": [
-          "specs/001-online-crafts-shop/design/sample-product-page.html"
+          "docs/design/sample-product-page.html"
         ],
         "createdAt": "2026-11-07T22:01:05.138Z",
         "reason": "brief-pinned: user named allbirds.com as the reference; its warm stone ground is matched deliberately (2026-11-08)"

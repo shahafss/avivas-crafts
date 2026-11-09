@@ -1,14 +1,15 @@
 <!--
 Sync Impact Report
-- Version change: 1.2.0 → 1.3.0 (MINOR: principle IV guidance relaxed to fit a small family shop;
-  maintainer decision 2026-11-08)
-- Modified principles:
-  - IV. Security by Design: payment confirmation may also come from the shop's authenticated
-    server-to-server query to the provider, or from the owner marking an order paid by hand;
-    admin factors need not be fully independent (synced passkeys are fine); least privilege applies
-    where the platform makes it simple (one database account for the app is fine); logs exclude
-    customers' personal data and secrets, while recording which admin acted is fine
-- Added principles: none
+- Version change: 1.3.0 → 1.4.0 (MINOR: Development Workflow materially expanded; maintainer decision
+  2026-11-09)
+- Modified principles: none
+- Modified sections:
+  - Development Workflow: work is ordered by docs/roadmap.md and each roadmap item is its own Spec Kit
+    feature branched from `dev`; shared living design documents moved to docs/; spec 001 frozen as the
+    MVP record; branch and pull-request flow (`dev` integration, `main` production, squash into `dev`,
+    merge commit + tag into `main`, CI must pass); the maintainer does all commits, pushes and pull
+    requests, and automated tooling does none of them
+- Added sections: none
 - Removed sections: none
 - Templates: plan/spec/tasks templates read this file at runtime; no template edits required
 - Deferred TODOs: none
@@ -155,14 +156,26 @@ compliance is far cheaper to build in than to retrofit.
 
 ## Development Workflow
 
-- Work follows the Spec Kit flow: specify → plan → tasks → implement → converge, with the
-  project maintainer approving each gate.
+- The product vision is `PRODUCT.md`; the order of work is `docs/roadmap.md`. Each roadmap item
+  becomes its own Spec Kit feature when work on it starts (`/speckit-specify`), on a branch
+  `NNN-short-name` created from an up-to-date `dev`. Each feature follows specify → plan → tasks →
+  implement → converge, with the project maintainer approving each gate.
+- Shared living design documents (`docs/data-model.md`, `docs/contracts/`,
+  `docs/design/storefront.md`) are updated by the feature that changes them, in that feature's
+  branch. `specs/001-online-crafts-shop` is frozen as the record of the MVP and is not edited
+  (the one exception: ticking T087 once CI confirms its bundle-size test passes).
 - Every implementation batch is reviewed against the spec, plan, and this constitution before
   it is considered complete; violations of principles IV or VII are always Critical.
 - Before public launch: an automated security scan of the running site shows no High or
   Critical findings, the security headers and cookie behavior are verified, and the legal texts
   are reviewed by a qualified legal professional (the project provides drafts, not legal advice).
-- The maintainer commits changes after testing; automated tooling does not commit on its own.
+- Branches: `main` is production and `dev` is integration. A feature branch merges into `dev`
+  through a pull request whose CI check passes (squash merge). `dev` is released to `main` through a
+  pull request with a merge commit, and the release is tagged with its version. Nothing is pushed
+  directly to `dev` or `main`, and neither is ever force-pushed or rewritten.
+- The maintainer creates branches other than Spec Kit feature branches, commits after testing,
+  pushes, and opens and merges pull requests. Automated tooling, including AI agents, does not
+  commit, push, or open or merge pull requests.
 
 ## Governance
 
@@ -173,4 +186,4 @@ compliance is far cheaper to build in than to retrofit.
 - Versioning follows semantic versioning: MAJOR for removing or redefining a principle, MINOR for
   adding a principle or materially expanding guidance, PATCH for wording fixes.
 
-**Version**: 1.3.0 | **Ratified**: 2026-10-31 | **Last Amended**: 2026-11-08
+**Version**: 1.4.0 | **Ratified**: 2026-10-31 | **Last Amended**: 2026-11-09

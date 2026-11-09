@@ -53,7 +53,7 @@ Success means:
 
 - **Name:** "Aviva's Crafts" is a working name, not final. No logo or wordmark exists yet.
 - **Voice (decided 2026-11-07):** the shop speaks as Aviva in the first person (Hebrew feminine singular: "סרגתי", "אני שולחת"); customers are addressed in the plural ("בחרו", "הוסיפו"). English mirrors it ("I crocheted…").
-- **Storefront look (approved 2026-11-08):** the category standard, executed well, in the spirit of soliducosmetics.com and allbirds.com, warm and positive: warm light ground, espresso text, marigold actions, a rose made-to-order note, a peach footer, Heebo only. It must not feel like a childish toy store or a cold luxury boutique. The binding reference is `specs/001-online-crafts-shop/design/storefront.md`.
+- **Storefront look (approved 2026-11-08):** the category standard, executed well, in the spirit of soliducosmetics.com and allbirds.com, warm and positive: warm light ground, espresso text, marigold actions, a rose made-to-order note, a peach footer, Heebo only. It must not feel like a childish toy store or a cold luxury boutique. The binding reference is `docs/design/storefront.md`.
 - **Admin wording:** plain Hebrew with no jargon, and clear feedback on success and on errors. This is binding (constitution principle II).
 
 ## Evidence on Hand

@@ -1,5 +1,11 @@
 # Contract: Payment Provider Adapter
 
+> **Living document.** Moved from `specs/001-online-crafts-shop/` on 2026-11-09. Every feature that
+> changes this contract updates this file in its own branch. Unqualified references to `spec.md`,
+> `plan.md`, `research.md` (R-numbers), `quickstart.md`, FR-/SC- numbers and task IDs mean the
+> ones in [`specs/001-online-crafts-shop/`](../../specs/001-online-crafts-shop/) unless a later
+> spec is named.
+
 File: `src/server/payments/provider.ts`. Implementations: `payplus.ts` (production, sandbox in
 staging) and `fake.ts` (tests and local development). Selected by env `PAYMENT_PROVIDER`.
 The `fake` adapter refuses to load when `APP_ENV=production`.

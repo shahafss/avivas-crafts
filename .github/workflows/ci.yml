@@ -1,9 +1,14 @@
 name: CI
 
+# Pull requests into dev (features) and main (releases) must pass this check before merging.
+# Pushes to main re-check the released code; dev is not re-checked on push because the squash
+# commit is the code its pull request already tested. Run by hand from the Actions tab if needed.
 on:
+  pull_request:
+    branches: [dev, main]
   push:
     branches: [main]
-  pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read

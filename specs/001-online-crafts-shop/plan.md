@@ -1,5 +1,13 @@
 # Implementation Plan: Aviva's Crafts Online Shop
 
+> **Frozen 2026-11-09.** This feature is the record of the MVP: User Stories 1 and 2 (the owner
+> manages products; visitors browse, cart, check out as guests and pay) were built and approved.
+> The unbuilt work (User Stories 3–5, admin security management, launch readiness) moved to
+> [`docs/roadmap.md`](../../docs/roadmap.md), where each item becomes its own Spec Kit feature.
+> `data-model.md`, `contracts/` and `design/` moved to [`docs/`](../../docs/) as living documents;
+> paths in this feature that point to them now mean `docs/data-model.md`, `docs/contracts/…` and
+> `docs/design/…`. Do not edit this feature any more.
+
 **Branch**: `001-online-crafts-shop` | **Date**: 2026-11-07 | **Spec**: [spec.md](./spec.md)
 
 **Input**: Feature specification from `specs/001-online-crafts-shop/spec.md`

@@ -1,5 +1,11 @@
 # Contract: Device Storage Registry and Consent
 
+> **Living document.** Moved from `specs/001-online-crafts-shop/` on 2026-11-09. Every feature that
+> changes this contract updates this file in its own branch. Unqualified references to `spec.md`,
+> `plan.md`, `research.md` (R-numbers), `quickstart.md`, FR-/SC- numbers and task IDs mean the
+> ones in [`specs/001-online-crafts-shop/`](../../specs/001-online-crafts-shop/) unless a later
+> spec is named.
+
 File: `src/lib/consent/registry.ts` is the **single source of truth** for everything the site
 stores on a visitor's device. The Cookie Policy page renders its table from this registry
 (FR-037a), and an E2E test fails if the browser ends up with any cookie or storage key not in

@@ -1,5 +1,11 @@
 # Contract: Server Actions
 
+> **Living document.** Moved from `specs/001-online-crafts-shop/` on 2026-11-09. Every feature that
+> changes this contract updates this file in its own branch. Unqualified references to `spec.md`,
+> `plan.md`, `research.md` (R-numbers), `quickstart.md`, FR-/SC- numbers and task IDs mean the
+> ones in [`specs/001-online-crafts-shop/`](../../specs/001-online-crafts-shop/) unless a later
+> spec is named.
+
 Server Actions are the write interface for forms. Each action:
 
 1. for admin actions, calls `requireAdmin()` **before anything else, including input parsing**
