@@ -20,7 +20,20 @@
       "freePickup": "Free self-pickup"
     },
     "footer": {
-      "copyright": "© {year} {shopName}"
+      "copyright": "© {year} {shopName}",
+      "info": "Info",
+      "legal": "Legal",
+      "vat": "VAT registration no. <num>{number}</num>",
+      "about": "About",
+      "shippingReturns": "Shipping & returns",
+      "contact": "Contact",
+      "terms": "Terms of use and sale",
+      "privacy": "Privacy policy",
+      "cookies": "Cookie policy",
+      "accessibility": "Accessibility statement",
+      "infoNav": "Information about the shop",
+      "legalNav": "Legal documents",
+      "cookieSettings": "Cookie settings"
     },
     "cart": {
       "label": "Cart, {count, plural, =0 {empty} one {1 item} other {# items}}"
@@ -466,7 +479,17 @@
         "tracking": "Tracking number",
         "pickupNote": "Pickup note",
         "history": "History",
-        "actions": "Actions"
+        "actions": "Actions",
+        "consent": {
+          "title": "Consents",
+          "terms": "Terms accepted: <d>{date}</d>",
+          "termsVersion": "Terms version {n}",
+          "privacyVersion": "Privacy Policy version {n}",
+          "marketingGiven": "Marketing: agreed on <d>{date}</d>",
+          "marketingWithdrawn": "Marketing: agreed on <d>{given}</d>, withdrawn on <d>{withdrawn}</d>",
+          "marketingNone": "Marketing: not agreed",
+          "marketingCleared": "Marketing: —"
+        }
       },
       "history": {
         "created": "Order received",
@@ -489,7 +512,8 @@
         "actor": {
           "system": "The system",
           "removedAdmin": "A removed admin"
-        }
+        },
+        "anonymized": "The customer's details were erased"
       },
       "actions": {
         "back": "Back one step",
@@ -972,6 +996,144 @@
         "fee": "The delivery fee isn't valid (a number, 0 or more).",
         "threshold": "The amount isn't valid (a number, 0 or more, or empty)."
       }
+    },
+    "reauth_required": "Please confirm with your passkey again to continue.",
+    "customers": {
+      "title": "Customers",
+      "intro": "Look up a customer by email or phone: download their data, stop marketing emails or erase their details.",
+      "search": {
+        "label": "Email or phone",
+        "submit": "Search"
+      },
+      "errors": {
+        "query": "Please enter an email or a phone number"
+      },
+      "results": "Search results",
+      "ordersLabel": "The customer's orders",
+      "summary": {
+        "orders": "{count, plural, =0 {No orders found} one {1 order found} other {# orders found}}",
+        "checkouts": "{count, plural, one {1 payment not completed} other {# payments not completed}}",
+        "emails": "{count, plural, one {1 email} other {# emails}}"
+      },
+      "others": "Other details that appeared on these orders:",
+      "export": "Download data",
+      "withdraw": {
+        "action": "Stop marketing",
+        "title": "Stop marketing emails to this customer?",
+        "body": "The customer will get no marketing emails from the shop. The orders stay as they are, and the original consent date is kept.",
+        "confirm": "Stop marketing emails"
+      },
+      "erase": {
+        "action": "Erase details",
+        "title": "Erase this customer's details?",
+        "body": "Name, phone, email and address will be erased from {count} orders. The orders themselves (amounts and items) are kept for tax records. This cannot be undone.",
+        "bodyEmails": "The customer's stored emails will be erased. This cannot be undone.",
+        "open": "One of these orders is still open. After erasing, you won't be able to contact the customer about it.",
+        "confirm": "Erase details"
+      },
+      "keptCheckouts": "{count, plural, one {# payment still in progress was not erased. It is} other {# payments still in progress were not erased. They are}} deleted automatically within 48 hours, or up to 24 hours later if the payment provider cannot be reached for the final status check (so up to 72 hours; or 30 days if the amount did not match). If the customer completes a payment, a new order with their details will appear, so search again in 3 days.",
+      "stale": "Some orders changed since the search and were not erased. The current result is shown.",
+      "empty": {
+        "title": "No customers found",
+        "text": "Try another email or phone number."
+      },
+      "toast": {
+        "exported": "File downloaded",
+        "withdrawn": "Marketing emails stopped",
+        "erased": "The customer's details were erased"
+      }
+    },
+    "stats": {
+      "title": "Statistics",
+      "intro": "How many people visited the shop and what they looked at. Counting uses no cookies and identifies no one.",
+      "period": {
+        "label": "Period",
+        "d7": "7 days",
+        "d30": "30 days",
+        "d90": "90 days"
+      },
+      "chart": {
+        "title": "Visits per day",
+        "label": "Visits per day over the last {days} days: {total, plural, one {# visit} other {# visits}} in total, {today} today.",
+        "showTable": "Show as table",
+        "day": "Day",
+        "visits": "Visits"
+      },
+      "products": {
+        "title": "Most viewed products",
+        "views": "{count, plural, one {# view} other {# views}}"
+      },
+      "referrers": {
+        "title": "Where they came from",
+        "visits": "{count, plural, one {# visit} other {# visits}}",
+        "direct": "Direct"
+      },
+      "listEmpty": "No data in this period",
+      "empty": {
+        "title": "No data yet",
+        "text": "Once people visit the shop, the numbers will appear here."
+      }
+    },
+    "content": {
+      "title": "Content pages",
+      "intro": "Edit the shop's pages here: About, shipping and returns, terms, privacy and more.",
+      "list": {
+        "label": "Shop pages",
+        "badgeDraft": "Draft supplied with the site",
+        "badgeEdited": "Edited",
+        "updated": "Updated <d>{date}</d>",
+        "versions": "Earlier versions",
+        "versionsOf": "Earlier versions of {title}"
+      },
+      "editor": {
+        "back": "Back to the content pages",
+        "intro": "Changes appear on the site as soon as you save. If you do not write an English text, visitors in English see the Hebrew text.",
+        "tabsLabel": "Page language",
+        "tabHe": "עברית",
+        "tabEn": "English",
+        "tabHasError": "has an error",
+        "titleLabel": "Page title",
+        "bodyLabel": "Page text",
+        "bodyHint": "Use the buttons above the box: heading, bold, list and link.",
+        "toolbarLabel": "Text formatting",
+        "toolHeading": "Heading",
+        "toolBold": "Bold",
+        "toolList": "List",
+        "toolLink": "Link",
+        "linkText": "link text",
+        "previewShow": "Preview",
+        "previewLabel": "How the text will look on the site",
+        "previewEmpty": "There is no text to show yet.",
+        "previewFailed": "The preview cannot be shown right now. Try again.",
+        "save": "Save",
+        "saving": "Saving…",
+        "saved": "Page saved",
+        "unchanged": "Nothing to save: the text is the same as the saved one",
+        "errorSummary": "Please fix a few details",
+        "reload": "Reload",
+        "versionsLink": "Earlier versions of this page",
+        "errorIn": "{language}: {message}"
+      },
+      "versions": {
+        "title": "Earlier versions",
+        "heading": "Earlier versions: {title}",
+        "intro": "Every save of the page keeps a new version. An order links to the version the customer accepted when ordering.",
+        "listLabel": "The versions, newest first",
+        "item": "Version {n} · <d>{date}</d>",
+        "versionTitle": "Earlier version",
+        "meta": "Version {n}, in force from <d>{date}</d>",
+        "englishHeading": "The English text",
+        "backToList": "Back to all versions",
+        "backToEditor": "Back to editing the page"
+      },
+      "errors": {
+        "not_found": "The page was not found",
+        "title_required": "Please write a title",
+        "title_long": "The title is too long (up to 120 characters)",
+        "body_required": "Please write the page text",
+        "body_long": "The text is too long (up to 50,000 characters)",
+        "stale": "The page changed since it was opened here. So as not to overwrite the other change, reload it and add what you wrote again."
+      }
     }
   },
   "emails": {
@@ -1101,6 +1263,17 @@
       "note": "Note",
       "open": "Open the order in the admin"
     },
+    "contact": {
+      "subject": "New message from the site · {shopName}",
+      "title": "New message from the site",
+      "name": "Name",
+      "email": "Email",
+      "locale": "Site language",
+      "localeHe": "Hebrew",
+      "localeEn": "English",
+      "message": "Message",
+      "footer": "To reply, reply to this email."
+    },
     "paymentMismatch": {
       "subject": "Payment amount problem – {shopName}",
       "title": "The payment doesn't match the order",
@@ -1186,7 +1359,108 @@
       "home": "Back to the home page"
     }
   },
-  "consent": {},
-  "legal": {},
-  "contact": {}
+  "consent": {
+    "items": {
+      "cart": {
+        "purpose": "Keeps your shopping cart on your device.",
+        "duration": "Until you clear it; items you have not bought are removed after 90 days."
+      },
+      "locale": {
+        "purpose": "Remembers the language you chose. It is only set when you switch language.",
+        "duration": "One year."
+      },
+      "checkout": {
+        "purpose": "Keeps the details you entered at checkout while you go to the payment page and back.",
+        "duration": "Until you close the tab."
+      },
+      "admin": {
+        "purpose": "Keeps the shop owner signed in to the admin area. Only used by the shop owner.",
+        "duration": "Up to 12 hours."
+      },
+      "oauth": {
+        "purpose": "Ties the Google sign-in round trip to the browser. Only used by the shop owner.",
+        "duration": "10 minutes."
+      },
+      "consent": {
+        "purpose": "Remembers your cookie choice.",
+        "duration": "12 months."
+      },
+      "testOptional": {
+        "purpose": "A test cookie of the site. It exists only in the test setup, and only after you accept.",
+        "duration": "One year."
+      }
+    },
+    "banner": {
+      "title": "Cookies",
+      "text": "This site uses optional cookies only if you agree. You can choose, and change your choice at any time.",
+      "policyLink": "Cookie Policy",
+      "acceptAll": "Accept all",
+      "rejectAll": "Reject all",
+      "settings": "Settings",
+      "busy": "One moment…",
+      "skip": "Skip to cookie settings"
+    },
+    "dialog": {
+      "title": "Cookie settings",
+      "intro": "Choose which optional cookies to turn on. The necessary cookies always work.",
+      "necessaryName": "Necessary cookies",
+      "necessaryText": "Needed for the site to work: the cart, the language and your order details.",
+      "alwaysOn": "Always on",
+      "save": "Save",
+      "close": "Close"
+    },
+    "categories": {
+      "analytics": {
+        "name": "Statistics",
+        "description": "Cookies that help us understand how the site is used."
+      },
+      "marketing": {
+        "name": "Marketing",
+        "description": "Cookies used to tailor advertising."
+      }
+    },
+    "errors": {
+      "unavailable": "A cookie choice is not needed right now.",
+      "invalid": "That choice was not valid. Please try again.",
+      "failed": "We could not save your choice. Please try again."
+    }
+  },
+  "legal": {
+    "storage": {
+      "caption": "Items stored on your device",
+      "name": "Name",
+      "purpose": "What it is for",
+      "lifetime": "How long",
+      "where": "Where",
+      "adminOnly": "Admin area only",
+      "kind": {
+        "cookie": "Cookie",
+        "localStorage": "Local storage",
+        "sessionStorage": "Tab storage"
+      }
+    }
+  },
+  "contact": {
+    "detailsHeading": "Business details",
+    "formHeading": "Send a message",
+    "fields": {
+      "name": "Name",
+      "email": "Email",
+      "message": "Message"
+    },
+    "counter": "{count} of {max} characters",
+    "submit": "Send",
+    "busy": "One moment…",
+    "errorSummary": "Please fix a few details",
+    "sent": "Your message was sent. I'll reply by email soon.",
+    "errors": {
+      "name": "Please enter your name (at least 2 characters).",
+      "email": "Please enter a valid email address.",
+      "message_short": "The message is too short. Please write at least 10 characters.",
+      "message_long": "The message is too long. You can write up to 5,000 characters.",
+      "expired": "The form has expired. Please reload the page and try again.",
+      "rate_limited": "You've sent several messages in a row. Try again in {minutes, plural, one {1 minute} other {# minutes}}.",
+      "generic": "Something went wrong. Please try again."
+    }
+  }
 }

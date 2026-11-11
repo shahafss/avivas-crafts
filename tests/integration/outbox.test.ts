@@ -241,6 +241,9 @@ describe('drainOutbox', () => {
       textBody: 'secret body',
       replyTo: 'visitor@example.test',
     });
+    // The final failure time is recorded in next_attempt_at (003 R11: delete-old-outbox counts
+    // 30 days from it).
+    expect(row?.nextAttemptAt).toEqual(later);
     // A failed row is not picked up again.
     const driver = recordingDriver();
     await drainOutbox({ driver, now: new Date(later.getTime() + 3_600_000) });
@@ -368,6 +371,7 @@ describe('order email failures', () => {
       status: 'failed',
       attempts: 3,
       html: '<p>x</p>',
+      nextAttemptAt: new Date(t0 + 4.9 * MIN),
     });
   });
 

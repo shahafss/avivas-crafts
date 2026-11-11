@@ -11,9 +11,12 @@ export interface CheckboxProps
 }
 
 /**
- * The whole label row is the target (at least 44 px): the real input is transparent and stretched
- * over it. Links inside the label sit above the input (`[&_a]:relative [&_a]:z-10`), so they stay
- * clickable; the input itself must stay hittable, so the text span is not lifted as a whole.
+ * The real input is transparent and covers only a 44x44 px square centred on the 24 px box
+ * (storefront.md section 7.10, 003 FR-028), so a tap at the box toggles it. It has `z-10` because the
+ * check icon (opacity 0 until ticked) forms a stacking context that would otherwise paint above it. The label text toggles
+ * the box through `<label for>` (the row is at least 44 px high). Links inside the label are
+ * ordinary links: the input does not reach them, and browsers never toggle a checkbox when a link
+ * in its label is activated.
  */
 export function Checkbox({ id, label, hint, error, className, ...rest }: CheckboxProps) {
   const generated = useId();
@@ -29,7 +32,7 @@ export function Checkbox({ id, label, hint, error, className, ...rest }: Checkbo
           type="checkbox"
           id={fieldId}
           {...describe(fieldId, { hint, error })}
-          className="peer absolute inset-0 size-full cursor-pointer appearance-none opacity-0"
+          className="peer absolute -start-2.5 -top-px z-10 size-11 cursor-pointer appearance-none opacity-0"
         />
         <span
           className={cn(
@@ -40,7 +43,7 @@ export function Checkbox({ id, label, hint, error, className, ...rest }: Checkbo
         >
           <Icon name="check" size={16} />
         </span>
-        <span className="min-w-0 [&_a]:relative [&_a]:z-10">
+        <span className="min-w-0">
           <span className="block text-base leading-snug">{label}</span>
           {hint === undefined ? null : (
             <span id={hintId(fieldId)} className="block text-[13px] leading-snug text-ink-2">

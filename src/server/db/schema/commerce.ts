@@ -10,6 +10,7 @@ import {
   pgEnum,
   pgSequence,
   pgTable,
+  primaryKey,
   text,
   unique,
   uuid,
@@ -142,6 +143,36 @@ export const contentPage = pgTable(
     check('content_page_body_he_len', sql`char_length(${t.bodyHe}) <= 50000`),
     check(
       'content_page_body_en_len',
+      sql`${t.bodyEn} IS NULL OR char_length(${t.bodyEn}) <= 50000`,
+    ),
+  ],
+);
+
+/**
+ * Append-only copy of every version of the Terms and the Privacy Policy that became current
+ * (003 FR-011). `orders.terms_version` / `privacy_version` refer to `(slug, version)`. No code
+ * updates or deletes rows.
+ */
+export const contentPageVersion = pgTable(
+  'content_page_version',
+  {
+    slug: text('slug')
+      .notNull()
+      .references(() => contentPage.slug, { onDelete: 'restrict' }),
+    version: integer('version').notNull(),
+    titleHe: text('title_he').notNull(),
+    titleEn: text('title_en'),
+    bodyHe: text('body_he').notNull(),
+    bodyEn: text('body_en'),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.slug, t.version] }),
+    check('content_page_version_slug', sql`${t.slug} IN ('terms','privacy')`),
+    check('content_page_version_version', sql`${t.version} >= 1`),
+    check('content_page_version_body_he_len', sql`char_length(${t.bodyHe}) <= 50000`),
+    check(
+      'content_page_version_body_en_len',
       sql`${t.bodyEn} IS NULL OR char_length(${t.bodyEn}) <= 50000`,
     ),
   ],

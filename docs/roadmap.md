@@ -28,7 +28,7 @@ The vision (who the shop is for, what success means, principles, what is out of 
 |---|------|----------------|--------|------|
 | 001 | MVP: owner manages products; visitors browse, cart, guest checkout and pay | yes | Done (frozen record) | [specs/001-online-crafts-shop](../specs/001-online-crafts-shop/) |
 | 002 | Order handling | yes | Done (dev) | [specs/002-order-handling](../specs/002-order-handling/) |
-| 003 | Privacy, consent, legal and content pages | yes | Planned | — |
+| 003 | Privacy, consent, legal and content pages | yes | Done (dev) | [specs/003-privacy-legal-pages](../specs/003-privacy-legal-pages/) |
 | 004 | Admin security management | yes | Planned | — |
 | 005 | English version and language switch | yes | Planned | — |
 | 006 | Hosting and launch readiness | yes | Planned | — |

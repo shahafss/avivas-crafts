@@ -15,6 +15,13 @@
       "when": 1794154191315,
       "tag": "0001_deferrable_unique_constraints",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794257305623,
+      "tag": "0002_content_page_version",
+      "breakpoints": true
     }
   ]
 }

@@ -1,7 +1,8 @@
 import { defineConfig, devices } from '@playwright/test';
 import { CONSENT_PORT, E2E_PORT, serverEnv } from './tests/e2e/env';
 
-const STOREFRONT_SPECS = /(cart|checkout-.*|language|privacy|catalog|order-tracking)\.spec\.ts$/;
+const STOREFRONT_SPECS =
+  /(^|[\\/])(cart|checkout-.*|language|privacy|catalog|order-tracking|contact)\.spec\.ts$/;
 const CONSENT_SPEC = /consent\.spec\.ts$/;
 
 // The app is built once by `pnpm test:e2e`; the web servers only run `pnpm start`.

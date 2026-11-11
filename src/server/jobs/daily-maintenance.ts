@@ -8,6 +8,12 @@ import {
   expirePendingCheckoutsTask,
   paymentRecoverySweepTask,
 } from '@/server/orders/payment-tasks';
+import {
+  anonymizeOldOrders,
+  deleteOldActivity,
+  deleteOldConsent,
+  deleteOldOutbox,
+} from '@/server/privacy/retention';
 
 export interface JobTask {
   /** Stored as `job_run.job`. */
@@ -75,4 +81,8 @@ export const dailyTasks: JobTask[] = [
   deleteExpiredOauthFlows,
   deleteExpiredSessions,
   purgeDeletedImagesTask,
+  anonymizeOldOrders,
+  deleteOldActivity,
+  deleteOldConsent,
+  deleteOldOutbox,
 ];

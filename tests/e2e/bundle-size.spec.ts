@@ -124,6 +124,8 @@ const routes: {
     path: () => `/he/checkout/return?c=${randomBytes(32).toString('base64url')}&r=success`,
   },
   { name: 'order page', path: () => `/he/order/${orderToken}` },
+  { name: 'terms page', path: () => '/he/pages/terms' },
+  { name: 'contact page', path: () => '/he/contact' },
 ];
 
 for (const route of routes) {

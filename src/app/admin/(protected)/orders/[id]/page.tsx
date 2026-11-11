@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import type { ReactNode } from 'react';
 import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import { CustomerDetailsForm } from '@/components/admin/CustomerDetailsForm';
@@ -9,13 +10,14 @@ import { Icon } from '@/components/ui/Icon';
 import { LinkButton } from '@/components/ui/LinkButton';
 import { Notice } from '@/components/ui/Notice';
 import { Price } from '@/components/ui/Price';
-import { formatDateTime } from '@/lib/format-date';
+import { formatDate, formatDateTime } from '@/lib/format-date';
 import { pick } from '@/lib/i18n-fallback';
 import { formatMoney } from '@/lib/money';
 import { requireAdmin } from '@/server/auth/require-admin';
 import { orderStatusEnum } from '@/server/db/schema';
 import {
   getOrderDetail,
+  type AdminOrder,
   type AdminOrderLine,
   type HistoryEntry,
 } from '@/server/orders/admin-orders';
@@ -59,6 +61,7 @@ function historyWhat(t: T, entry: HistoryEntry): string {
     case 'payment_marked_paid':
     case 'refunded':
     case 'customer_edited':
+    case 'anonymized':
       return t(`history.${kind}`);
     case 'status_changed': {
       const from = asStatus(data.from);
@@ -93,6 +96,26 @@ function historyWho(t: T, entry: HistoryEntry): string {
     case 'system':
       return t('history.actor.system');
   }
+}
+
+/** Block 8a's marketing line (storefront.md §12.3): given, given and withdrawn, none, or cleared. */
+function marketingLine(t: T, order: AdminOrder) {
+  const d = (chunks: ReactNode) => <bdi className="tnum">{chunks}</bdi>;
+  if (order.anonymizedAt !== null) return t('detail.consent.marketingCleared');
+  if (order.marketingOptInAt !== null && order.marketingWithdrawnAt !== null) {
+    return t.rich('detail.consent.marketingWithdrawn', {
+      given: formatDate(order.marketingOptInAt, 'he'),
+      withdrawn: formatDate(order.marketingWithdrawnAt, 'he'),
+      d,
+    });
+  }
+  if (order.marketingOptIn && order.marketingOptInAt !== null) {
+    return t.rich('detail.consent.marketingGiven', {
+      date: formatDate(order.marketingOptInAt, 'he'),
+      d,
+    });
+  }
+  return t('detail.consent.marketingNone');
 }
 
 function Line({ line, currency, t }: { line: AdminOrderLine; currency: 'ILS' | 'USD'; t: T }) {
@@ -385,6 +408,44 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
                 })}
               </p>
             )}
+          </section>
+
+          <section
+            className={SECTION}
+            aria-labelledby="order-consent-title"
+            data-testid="order-consent"
+          >
+            <h2 id="order-consent-title" className={H2}>
+              {t('detail.consent.title')}
+            </h2>
+            <p className="text-[15px]">
+              {t.rich('detail.consent.terms', {
+                date: formatDateTime(order.termsAcceptedAt, 'he'),
+                d: (chunks) => <bdi className="tnum">{chunks}</bdi>,
+              })}
+            </p>
+            <p className="text-[15px] text-ink-2">
+              <Link
+                href={`/admin/content/terms/versions/${String(order.termsVersion)}`}
+                prefetch={false}
+                data-testid="order-terms-link"
+                className="inline-flex min-h-11 items-center underline underline-offset-[3px]"
+              >
+                {t('detail.consent.termsVersion', { n: order.termsVersion })}
+              </Link>{' '}
+              ·{' '}
+              <Link
+                href={`/admin/content/privacy/versions/${String(order.privacyVersion)}`}
+                prefetch={false}
+                data-testid="order-privacy-link"
+                className="inline-flex min-h-11 items-center underline underline-offset-[3px]"
+              >
+                {t('detail.consent.privacyVersion', { n: order.privacyVersion })}
+              </Link>
+            </p>
+            <p className="text-[15px]" data-testid="order-marketing">
+              {marketingLine(t, order)}
+            </p>
           </section>
 
           {order.trackingNumber === null || order.trackingNumber === '' ? null : (

@@ -174,7 +174,8 @@ export async function drainOutbox({
       const attempts = row.attempts + 1;
       let giveUp = givesUp(row, attempts, now);
       // The failed row keeps its bodies until it is deleted.
-      const failed = { status: 'failed', lockedUntil: null, attempts } as const;
+      // `nextAttemptAt` records the time of the final failure: `delete-old-outbox` counts 30 days from it.
+      const failed = { status: 'failed', lockedUntil: null, attempts, nextAttemptAt: now } as const;
       if (giveUp && row.orderId !== null && RECORDED_GIVE_UP_KINDS.includes(row.kind)) {
         const orderId = row.orderId;
         // One transaction: the event and the owner email exist only if this sender really

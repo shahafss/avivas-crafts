@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url';
 import postgres from 'postgres';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import * as schema from '@/server/db/schema';
@@ -24,7 +25,9 @@ const samples = ['development', 'test'].includes(appEnv) && !process.argv.includ
 const ssl = ['staging', 'production'].includes(appEnv) ? 'require' : false;
 const client = postgres(url, { max: 1, ssl, onnotice: () => undefined });
 try {
-  await runSeed(drizzle(client, { schema }), { samples });
+  // The supplied legal drafts live in docs/legal-drafts, next to this script's folder.
+  const contentDir = fileURLToPath(new URL('../docs/legal-drafts', import.meta.url));
+  await runSeed(drizzle(client, { schema }), { samples, contentDir });
   console.log(`Seed done (samples: ${String(samples)})`);
 } catch (error) {
   console.error('Seed failed:', error instanceof Error ? error.message : error);
