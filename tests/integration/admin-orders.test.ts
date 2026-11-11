@@ -333,6 +333,48 @@ describe('getOrderDetail', () => {
     expect(detail?.history[1]?.at).toEqual(minutes(10));
   });
 
+  it('shows an anonymized event as the system only when data.system is true (003 T028)', async () => {
+    const created = await makeOrder();
+    const actor = await makeActor(testDb.db, 'Aviva');
+    const gone = await makeActor(testDb.db, 'Gone');
+    await testDb.db.update(orderEvent).set({ createdAt: minutes(0) });
+    await testDb.db.insert(orderEvent).values([
+      // Aviva erased the customer on request: her name.
+      {
+        orderId: created.orderId,
+        adminId: actor.adminId,
+        kind: 'anonymized',
+        data: {},
+        createdAt: minutes(10),
+      },
+      // An admin who was removed since: a removed admin, not the system.
+      {
+        orderId: created.orderId,
+        adminId: gone.adminId,
+        kind: 'anonymized',
+        data: {},
+        createdAt: minutes(20),
+      },
+      // The 7-year task: no admin, the system marker.
+      {
+        orderId: created.orderId,
+        adminId: null,
+        kind: 'anonymized',
+        data: { system: true },
+        createdAt: minutes(30),
+      },
+    ]);
+    await testDb.db.delete(adminUser).where(eq(adminUser.id, gone.adminId ?? ''));
+
+    const detail = await getOrderDetail(created.orderId);
+    const anonymized = detail?.history.filter((entry) => entry.kind === 'anonymized');
+    expect(anonymized?.map((entry) => entry.actor)).toEqual([
+      { kind: 'system' },
+      { kind: 'removed_admin' },
+      { kind: 'admin', name: 'Aviva' },
+    ]);
+  });
+
   it('reads the failed-email events: confirmation flag, cancellation and refund list, system entries', async () => {
     const created = await makeOrder();
     const other = await makeOrder();

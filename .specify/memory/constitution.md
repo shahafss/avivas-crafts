@@ -1,15 +1,18 @@
 <!--
 Sync Impact Report
-- Version change: 1.4.0 → 1.4.1 (PATCH: where design documents live; maintainer decision 2026-11-09)
-- Modified principles: none
-- Modified sections:
-  - Development Workflow: features keep their own `data-model.md` and `contracts/` (Spec Kit's
-    convention) instead of shared living copies in docs/; the Drizzle schema is the source of truth
-    for the whole data model; `docs/design/storefront.md` stays as the shared design system; the
-    T087 exception to the spec 001 freeze is removed (T087 is done)
+- Version change: 1.4.1 → 2.0.0 (MAJOR: principle IV redefined; owner decision 2026-11-11)
+- Modified principles: IV. Security by Design (title kept)
+  - Admin access: Google sign-in only; the passkey second factor is no longer required; admins
+    are users with role `admin`, set by the owner; no admin management screens, recovery codes or
+    approval steps required
+  - Baseline: OWASP Top 10 only; ASVS Level 2 is no longer a hard minimum
+  - Intro and rationale reworded to fit a two-admin family shop
 - Added sections: none
 - Removed sections: none
 - Templates: plan/spec/tasks templates read this file at runtime; no template edits required
+- Follow-up: existing passkey, recovery-code and setup-link code (spec 001) and the passkey
+  re-check before export/anonymise (spec 003) now exceed the principle; removing them is roadmap
+  item 004. Frozen spec 001 is left as the historical record.
 - Deferred TODOs: none
 -->
 
@@ -52,21 +55,22 @@ Rationale: most shoppers arrive from a phone via a shared link; every extra step
 
 ### IV. Security by Design (NON-NEGOTIABLE)
 
-The shop is held to a high security standard regardless of its small size.
+The shop is secured to a level that fits a small family shop: solid web basics, no card data,
+and no machinery beyond what two admins need.
 
-- **Baseline**: the OWASP Application Security Verification Standard (ASVS) Level 2 and the
-  OWASP Top 10 are the minimum bar. Plans MUST state how each relevant area is met.
+- **Baseline**: the OWASP Top 10 is the minimum bar. Plans MUST state how each relevant item is
+  met. Formal standards such as OWASP ASVS are guidance, not requirements.
 - **Payments**: the shop MUST NOT receive, store, process, or log payment card details. Card
   entry happens only on the payment provider's hosted page or hosted fields. An order is marked
   paid only from the provider's side — a signature-verified confirmation, or the shop's own
   authenticated server-to-server status query to the provider — or by the owner marking it paid by
   hand; never from the browser.
-- **Admin access**: admin sign-in MUST require two factors, at least one of them
-  phishing-resistant (a passkey held by the shop). The other may be an approved identity provider
-  account (e.g., Google) with that provider's 2-step verification on, used instead of a shop
-  password. A passkey synced through that same provider's password manager is acceptable. If the shop ever stores passwords, it stores them only as modern salted hashes.
-  Sign-in is rate-limited and limited to an explicit list of approved admins. Sessions expire
-  after inactivity and can be revoked.
+- **Admin access**: admins sign in with an approved identity provider account (Google), whose
+  own 2-step verification protects it; the shop holds no passwords, passkeys or other second
+  factor. An admin is a user whose role is `admin`, set by the owner directly in the database or
+  deployment; no screens to manage admins, recovery codes or approval steps are required. Sign-in
+  is rate-limited and admitted only for admin users. Sessions expire after inactivity and can be
+  revoked (the owner may do so directly in the database).
 - **Web hardening**: HTTPS everywhere with HSTS; a strict Content Security Policy; secure,
   HttpOnly, SameSite cookies; CSRF protection on every state-changing request; server-side
   validation of all input and context-correct output encoding; no raw query building.
@@ -83,8 +87,10 @@ The shop is held to a high security standard regardless of its small size.
   confirmations) are logged without customers' personal data or secrets (recording which admin acted is fine). Data is backed up automatically,
   encrypted, and a restore is tested before launch.
 
-Rationale: a breach, a payment fraud, or a defaced shop would be costly and damaging for a
-small family business, and there is no security team to react after the fact.
+Rationale: a breach, a payment fraud, or a defaced shop would be costly for a small family
+business, so the basics are non-negotiable; but the shop has two admins who also own the code,
+the settings and the deployment, so access management stays as simple as signing in with Google
+(owner decision 2026-11-11).
 
 ### V. Simplicity and Low Running Cost
 
@@ -186,4 +192,4 @@ compliance is far cheaper to build in than to retrofit.
 - Versioning follows semantic versioning: MAJOR for removing or redefining a principle, MINOR for
   adding a principle or materially expanding guidance, PATCH for wording fixes.
 
-**Version**: 1.4.1 | **Ratified**: 2026-10-31 | **Last Amended**: 2026-11-09
+**Version**: 2.0.0 | **Ratified**: 2026-10-31 | **Last Amended**: 2026-11-11

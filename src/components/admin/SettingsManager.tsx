@@ -243,7 +243,8 @@ function PaymentSection({
   const t = useTranslations('admin.settings');
   const [online, setOnline] = useState(settings.onlinePaymentEnabled);
   const [offline, setOffline] = useState(settings.offlinePaymentEnabled);
-  // Until the Markdown editor of the content screens exists, plain text.
+  // Plain text on purpose (003 research R1): these texts are shown as plain text in the checkout,
+  // on the order page and in emails, so the Markdown editor of the content screens is not used.
   const [instructionsHe, setInstructionsHe] = useState(settings.offlineInstructionsHe ?? '');
   const [instructionsEn, setInstructionsEn] = useState(settings.offlineInstructionsEn ?? '');
   const { saving, errors, formError, save } = useSaver(notify);

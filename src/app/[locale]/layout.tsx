@@ -6,6 +6,8 @@ import { getMessages, getTranslations } from 'next-intl/server';
 import type { ReactNode } from 'react';
 import { AnnouncementBar } from '@/components/shop/AnnouncementBar';
 import { CartLink } from '@/components/shop/CartLink';
+import { ConsentRoot, ConsentSkipLink } from '@/components/shop/ConsentRoot';
+import { CookieSettingsButton } from '@/components/shop/CookieSettingsButton';
 import { Footer } from '@/components/shop/Footer';
 import { Header } from '@/components/shop/Header';
 import {
@@ -13,9 +15,11 @@ import {
   HeaderCategoryLinks,
   MenuCategories,
 } from '@/components/shop/HeaderCategories';
+import { StatsBeacon } from '@/components/shop/StatsBeacon';
 import type MessageFile from '@/i18n/messages/he.json';
 import { routing, type Locale } from '@/i18n/routing';
 import { listCategoriesWithProducts } from '@/server/catalog/public-queries';
+import { consentRequired } from '@/server/consent/config';
 import { getSettings, type Settings } from '@/server/settings/settings';
 import { heebo } from '../fonts';
 import '../globals.css';
@@ -53,7 +57,7 @@ export default async function LocaleLayout({
 
   // Reading request headers makes every page render per request (the CSP nonce changes each time;
   // Next.js picks the nonce up from the forwarded Content-Security-Policy header).
-  await headers();
+  const nonce = (await headers()).get('x-nonce') ?? '';
   const [settings, rawMessages, t, categories] = await Promise.all([
     getSettings(),
     getMessages(),
@@ -79,6 +83,7 @@ export default async function LocaleLayout({
         >
           {t('skipToContent')}
         </a>
+        <ConsentSkipLink locale={locale} />
         <NextIntlClientProvider locale={locale} messages={clientMessages}>
           <AnnouncementBar locale={locale} />
           <Header
@@ -96,7 +101,16 @@ export default async function LocaleLayout({
           <main id="main" className="mx-auto w-full max-w-[1240px] flex-1 px-3 pb-10 lg:px-6">
             {children}
           </main>
-          <Footer locale={locale} brand={brand} />
+          <Footer
+            locale={locale}
+            brand={brand}
+            settings={settings}
+            {...(consentRequired()
+              ? { cookieSettings: <CookieSettingsButton label={t('footer.cookieSettings')} /> }
+              : {})}
+          />
+          <StatsBeacon />
+          <ConsentRoot locale={locale} nonce={nonce} />
         </NextIntlClientProvider>
       </body>
     </html>

@@ -142,6 +142,15 @@ export interface AdminOrderDetail {
 /** Events the system writes itself: shown as "the system", never as a removed admin. */
 const SYSTEM_KINDS = new Set(['created', 'payment_confirmed', 'email_failed']);
 
+/**
+ * The 7-year retention task writes `anonymized` events with `data.system = true`. `anonymized` is
+ * deliberately not in `SYSTEM_KINDS`: an event whose admin was removed since (no data marker) must
+ * still show as a removed admin, never as the system (003 data-model › order_event).
+ */
+function isSystemAnonymisation(kind: string, data: Record<string, unknown>): boolean {
+  return kind === 'anonymized' && data.system === true;
+}
+
 function asRecord(value: unknown): Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
     ? (value as Record<string, unknown>)
@@ -170,17 +179,20 @@ export async function getOrderDetail(id: string): Promise<AdminOrderDetail | nul
       .orderBy(desc(orderEvent.createdAt), desc(orderEvent.id)),
   ]);
 
-  const history: HistoryEntry[] = events.map((event) => ({
-    at: event.at,
-    kind: event.kind,
-    data: asRecord(event.data),
-    actor:
-      event.adminId !== null && event.adminName !== null
-        ? { kind: 'admin', name: event.adminName }
-        : SYSTEM_KINDS.has(event.kind)
-          ? { kind: 'system' }
-          : { kind: 'removed_admin' },
-  }));
+  const history: HistoryEntry[] = events.map((event) => {
+    const data = asRecord(event.data);
+    return {
+      at: event.at,
+      kind: event.kind,
+      data,
+      actor:
+        event.adminId !== null && event.adminName !== null
+          ? { kind: 'admin', name: event.adminName }
+          : SYSTEM_KINDS.has(event.kind) || isSystemAnonymisation(event.kind, data)
+            ? { kind: 'system' }
+            : { kind: 'removed_admin' },
+    };
+  });
 
   const failedKinds = history
     .filter((entry) => entry.kind === 'email_failed')

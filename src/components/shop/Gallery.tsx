@@ -123,13 +123,16 @@ export function Gallery({ name, images }: { name: string; images: GalleryImage[]
         <div
           ref={track}
           data-testid="gallery-track"
-          className="flex aspect-[4/5] snap-x snap-mandatory overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="flex snap-x snap-mandatory overflow-x-auto overflow-y-hidden overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           {images.map((image, index) => (
+            // Each slide sets its own 4:5 box and the photo fills it absolutely: iPhone Safari does
+            // not resolve a child's percentage height against an aspect-ratio parent, so with
+            // h-full the photo grew to its own height and the strip scrolled vertically.
             <div
               key={image.id}
               data-index={index}
-              className="h-full w-full shrink-0 snap-center"
+              className="relative aspect-[4/5] w-full shrink-0 snap-center"
               onClick={(event) => {
                 openZoom(event.currentTarget);
               }}
@@ -145,7 +148,7 @@ export function Gallery({ name, images }: { name: string; images: GalleryImage[]
                 loading={index === 0 ? 'eager' : 'lazy'}
                 fetchPriority={index === 0 ? 'high' : undefined}
                 decoding="async"
-                className="size-full cursor-zoom-in object-cover"
+                className="absolute inset-0 size-full cursor-zoom-in object-cover"
               />
             </div>
           ))}

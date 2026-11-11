@@ -28,8 +28,8 @@ The vision (who the shop is for, what success means, principles, what is out of 
 |---|------|----------------|--------|------|
 | 001 | MVP: owner manages products; visitors browse, cart, guest checkout and pay | yes | Done (frozen record) | [specs/001-online-crafts-shop](../specs/001-online-crafts-shop/) |
 | 002 | Order handling | yes | Done (dev) | [specs/002-order-handling](../specs/002-order-handling/) |
-| 003 | Privacy, consent, legal and content pages | yes | Planned | — |
-| 004 | Admin security management | yes | Planned | — |
+| 003 | Privacy, consent, legal and content pages | yes | Done (dev) | [specs/003-privacy-legal-pages](../specs/003-privacy-legal-pages/) |
+| 004 | Simpler admin access | yes | Planned | — |
 | 005 | English version and language switch | yes | Planned | — |
 | 006 | Hosting and launch readiness | yes | Planned | — |
 
@@ -48,8 +48,8 @@ in the language they ordered in (plus an email when the order is cancelled or re
 follows the order on its page (progress, tracking number or pickup note, payment state); no other status
 or payment change sends an email. Aviva can also correct a customer's contact details.
 
-**Left for later**: customer search, data export and anonymisation (003); a view of the activity
-log (004).
+**Left for later**: customer search, data export and anonymisation (003). A view of the activity
+log was dropped (2026-11-11; see 004).
 
 **Why first**: without it Aviva cannot run the shop; orders already arrive (spec 001 built
 checkout and the order notification email).
@@ -69,16 +69,26 @@ are drafts and need review by a qualified legal professional before launch.
 
 **Source**: spec 001 › User Story 5; tasks.md Phase 7 (T100–T118); contracts/device-storage.md.
 
-### 004 — Admin security management
+### 004 — Simpler admin access
 
-**Goal**: screens to add and remove admins, approve or reject passkeys, use and regenerate
-recovery codes, see and end sessions, and read the activity log. Sign-in itself already exists
-(spec 001 Phase 2).
+**Goal**: admin sign-in is just "Sign in with Google". An admin is a user whose `role` is `admin`
+(the other value is `user`), set by the owner directly in the database or the deployment, with no
+screens for it. Passkeys are removed, and with them recovery codes, setup links, passkey approval
+by another admin and the fresh passkey check before export and anonymise. The admin management
+screens, the session list and the activity log viewer are not built. The `admin:add` /
+`admin:reset` scripts are removed or reduced to setting the role.
 
-**Why before launch**: constitution principle IV (non-negotiable): Aviva must be able to recover
-access, and a family helper needs their own admin account.
+**Decided (2026-11-11)**: the security rules from spec 001 went far beyond what this shop needs.
+Keep the essentials (HTTPS, safe cookies, CSRF, no card data, rate-limited sign-in); Google's own
+2-step verification protects the admins' accounts. Constitution principle IV was amended to
+match (v2.0.0, 2026-11-11).
 
-**Source**: spec 001 › FR-032–FR-035; tasks.md Phase 8 (T119–T122).
+**Why before launch**: less admin code to ship and maintain, and no recovery path that waits for
+an approval screen that does not exist.
+
+**Source**: spec 001 › FR-032–FR-035 and Phase 2 (sign-in), read as what to remove; spec 003's
+re-authentication for export and anonymise; the current code in `src/server/auth/` and
+`scripts/admin-*.ts`.
 
 ### 005 — English version and language switch
 

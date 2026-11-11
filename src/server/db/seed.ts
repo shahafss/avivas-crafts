@@ -1,5 +1,8 @@
 import { eq, sql } from 'drizzle-orm';
 import type { PgDatabase } from 'drizzle-orm/pg-core';
+import { loadDrafts } from '@/server/content/drafts';
+import { CONTENT_SLUGS, isVersionedSlug } from '@/server/content/slugs';
+import { recordVersion } from '@/server/content/versions';
 import { category, contentPage, shippingZone, shippingZoneCountry, shopSettings } from './schema';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -26,15 +29,8 @@ export const SEED_PLACEHOLDERS = {
   notificationEmails: ['notify@example.invalid'],
 } as const;
 
-export const CONTENT_SLUGS = [
-  'about',
-  'contact',
-  'privacy',
-  'terms',
-  'cookies',
-  'shipping-returns',
-  'accessibility',
-] as const;
+// Moved to a dependency-free module (003); re-exported for existing imports.
+export { CONTENT_SLUGS };
 
 const SAMPLE_CATEGORIES = [
   { slug: 'sample-candles', nameHe: 'נרות', nameEn: 'Candles' },
@@ -44,7 +40,7 @@ const SAMPLE_CATEGORIES = [
 export interface SeedOptions {
   /** Add sample categories (development and test only; the caller decides). */
   samples: boolean;
-  /** Folder with the legal content drafts (used from T112 on). */
+  /** Folder with the supplied content drafts (`<slug>.<he|en>.md`); see `loadDrafts`. */
   contentDir?: string;
 }
 
@@ -102,10 +98,19 @@ async function seedInTx(db: SeedDb, options: SeedOptions): Promise<void> {
     })
     .onConflictDoNothing({ target: shopSettings.id });
 
-  await db
-    .insert(contentPage)
-    .values(CONTENT_SLUGS.map((slug) => ({ slug, titleHe: 'טיוטה', bodyHe: 'טיוטה' })))
-    .onConflictDoNothing({ target: contentPage.slug });
+  if (options.contentDir === undefined) {
+    const inserted = await db
+      .insert(contentPage)
+      .values(CONTENT_SLUGS.map((slug) => ({ slug, titleHe: 'טיוטה', bodyHe: 'טיוטה' })))
+      .onConflictDoNothing({ target: contentPage.slug })
+      .returning();
+    // Every version an order can refer to has a copy, also in a database seeded without drafts.
+    for (const row of inserted) {
+      if (isVersionedSlug(row.slug)) await recordVersion(db, row);
+    }
+  } else {
+    await loadDrafts(db, options.contentDir);
+  }
 
   if (options.samples) {
     for (const sample of SAMPLE_CATEGORIES) {

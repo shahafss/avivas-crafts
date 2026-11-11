@@ -68,6 +68,9 @@ const REAUTH_ACTIONS = [
   'approvePasskey',
   'rejectPasskey',
   'clearSignInBlock',
+  // 003 FR-019a: the customer export and erase.
+  'exportCustomer',
+  'anonymizeCustomer',
 ];
 
 const INPUTS: unknown[][] = [
@@ -137,6 +140,26 @@ describe('the order Server Actions are among the discovered exports', () => {
   });
 });
 
+describe('the customer Server Actions are among the discovered exports', () => {
+  it('lists all four, so renaming or moving one cannot drop it from the re-check checks', async () => {
+    const file = actionFiles.find((entry) =>
+      relative(REPO_ROOT, entry).endsWith('customers/actions.ts'),
+    );
+    expect(file).toBeDefined();
+    const names = (await exportedActions(file ?? '')).map(([name]) => name);
+    for (const name of [
+      'searchCustomers',
+      'exportCustomer',
+      'withdrawMarketingConsent',
+      'anonymizeCustomer',
+    ]) {
+      expect(names).toContain(name);
+    }
+    // Both re-check names are in the list the stale-passkey test walks.
+    expect(REAUTH_ACTIONS).toEqual(expect.arrayContaining(['exportCustomer', 'anonymizeCustomer']));
+  });
+});
+
 describe('every admin Server Action guards itself first', () => {
   for (const [label, session] of [
     ['signed out', null],
@@ -179,6 +202,32 @@ describe('every admin Server Action guards itself first', () => {
         });
         expect(state.dbWrites, `${name} wrote to the database before the re-check`).toEqual([]);
       }
+    }
+  });
+});
+
+describe('search and marketing withdrawal need no passkey re-check (003 Q7)', () => {
+  it('do not answer admin.reauth_required when reauth_at is older than 5 minutes', async () => {
+    state.session = staleSession;
+    const file = actionFiles.find((entry) =>
+      relative(REPO_ROOT, entry).endsWith('customers/actions.ts'),
+    );
+    const actions = new Map(await exportedActions(file ?? ''));
+    for (const name of ['searchCustomers', 'withdrawMarketingConsent']) {
+      let result: unknown;
+      state.dbAccess.length = 0;
+      try {
+        // The database is a spy that throws: getting past the guard is what is checked.
+        result = await actions.get(name)?.({
+          q: 'nobody@example.test',
+          orderIds: [],
+          confirm: true,
+        });
+      } catch (error) {
+        result = error;
+      }
+      expect(result, name).not.toMatchObject({ formError: 'admin.reauth_required' });
+      expect(state.dbAccess.length, `${name} must reach the data layer`).toBeGreaterThan(0);
     }
   });
 });

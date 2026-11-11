@@ -1,10 +1,15 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { eq } from 'drizzle-orm';
+import { mkdtemp, rm, unlink, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { and, eq } from 'drizzle-orm';
 import { createTestDb, type TestDbHandle } from '../setup/pglite';
 import { exists, makeTestStorage, type TestStorage } from '../helpers/catalog';
 import {
   category,
   contentPage,
+  contentPageVersion,
   optionGroup,
   optionValue,
   product,
@@ -13,7 +18,7 @@ import {
   shippingZoneCountry,
   shopSettings,
 } from '@/server/db/schema';
-import { runSeed, SEED_DEFAULTS, SEED_PLACEHOLDERS } from '@/server/db/seed';
+import { CONTENT_SLUGS, runSeed, SEED_DEFAULTS, SEED_PLACEHOLDERS } from '@/server/db/seed';
 import {
   getEnabledZones,
   getSettings,
@@ -220,5 +225,148 @@ describe('settings', () => {
     const fields = placeholderFields(await getSettings());
     expect(fields).not.toContain('businessPhone');
     expect(fields).toContain('businessEmail');
+  });
+});
+
+describe('runSeed with supplied drafts (003 R7)', () => {
+  let contentDir: string;
+
+  /** Writes all 14 draft files; `overrides` replaces the body of `<slug>.<lang>`. */
+  async function writeDrafts(overrides: Record<string, string> = {}): Promise<void> {
+    for (const slug of CONTENT_SLUGS) {
+      for (const lang of ['he', 'en'] as const) {
+        const body = overrides[`${slug}.${lang}`] ?? `Body of ${slug} ${lang}`;
+        await writeFile(
+          join(contentDir, `${slug}.${lang}.md`),
+          `# Title ${slug} ${lang}\n\n${body}\n`,
+        );
+      }
+    }
+  }
+
+  beforeEach(async () => {
+    contentDir = await mkdtemp(join(tmpdir(), 'ac-drafts-'));
+  });
+  afterEach(async () => {
+    await rm(contentDir, { recursive: true, force: true });
+  });
+
+  const versions = (slug: string) =>
+    testDb.db
+      .select()
+      .from(contentPageVersion)
+      .where(eq(contentPageVersion.slug, slug))
+      .orderBy(contentPageVersion.version);
+
+  it('inserts missing pages at version 1 and one version copy for terms and privacy only', async () => {
+    await writeDrafts();
+    await runSeed(testDb.db, { samples: false, contentDir });
+    const pages = await testDb.db.select().from(contentPage);
+    expect(pages).toHaveLength(7);
+    expect(pages.every((p) => p.version === 1 && !p.ownerEdited)).toBe(true);
+    const terms = pages.find((p) => p.slug === 'terms');
+    expect(terms).toMatchObject({
+      titleHe: 'Title terms he',
+      bodyHe: 'Body of terms he',
+      titleEn: 'Title terms en',
+      bodyEn: 'Body of terms en',
+    });
+    const all = await testDb.db.select().from(contentPageVersion);
+    expect(all.map((v) => `${v.slug}:${String(v.version)}`).sort()).toEqual([
+      'privacy:1',
+      'terms:1',
+    ]);
+    expect((await versions('terms'))[0]).toMatchObject({
+      titleHe: 'Title terms he',
+      bodyEn: 'Body of terms en',
+    });
+  });
+
+  it('replaces a changed draft of a page that was never edited and bumps the version exactly once', async () => {
+    await writeDrafts();
+    await runSeed(testDb.db, { samples: false, contentDir });
+    await writeDrafts({ 'terms.he': 'New terms', 'about.en': 'New about' });
+    await runSeed(testDb.db, { samples: false, contentDir });
+    const [terms] = await testDb.db.select().from(contentPage).where(eq(contentPage.slug, 'terms'));
+    expect(terms).toMatchObject({ version: 2, bodyHe: 'New terms', ownerEdited: false });
+    const [about] = await testDb.db.select().from(contentPage).where(eq(contentPage.slug, 'about'));
+    expect(about).toMatchObject({ version: 2, bodyEn: 'New about' });
+    expect((await versions('terms')).map((v) => v.version)).toEqual([1, 2]);
+    expect((await versions('privacy')).map((v) => v.version)).toEqual([1]);
+    expect(await testDb.db.select().from(contentPageVersion)).toHaveLength(3);
+
+    // A second run with the same drafts changes nothing and adds no version row.
+    const before = await testDb.db.select().from(contentPage).orderBy(contentPage.slug);
+    await runSeed(testDb.db, { samples: false, contentDir });
+    expect(await testDb.db.select().from(contentPage).orderBy(contentPage.slug)).toEqual(before);
+    expect(await testDb.db.select().from(contentPageVersion)).toHaveLength(3);
+  });
+
+  it('never touches a page with owner_edited = true', async () => {
+    await writeDrafts();
+    await runSeed(testDb.db, { samples: false, contentDir });
+    await testDb.db
+      .update(contentPage)
+      .set({ bodyHe: 'Aviva wrote this', ownerEdited: true, version: 2 })
+      .where(eq(contentPage.slug, 'privacy'));
+    await writeDrafts({ 'privacy.he': 'A newer draft' });
+    await runSeed(testDb.db, { samples: false, contentDir });
+    const [privacy] = await testDb.db
+      .select()
+      .from(contentPage)
+      .where(eq(contentPage.slug, 'privacy'));
+    expect(privacy).toMatchObject({ bodyHe: 'Aviva wrote this', version: 2, ownerEdited: true });
+    expect((await versions('privacy')).map((v) => v.version)).toEqual([1]);
+  });
+
+  it('rejects when a draft file is missing', async () => {
+    await writeDrafts();
+    await unlink(join(contentDir, 'cookies.en.md'));
+    await expect(runSeed(testDb.db, { samples: false, contentDir })).rejects.toThrow(
+      /cookies\.en\.md/,
+    );
+  });
+
+  it('rejects a draft whose first line is not a title', async () => {
+    await writeDrafts();
+    await writeFile(join(contentDir, 'about.he.md'), 'no title here\n');
+    await expect(runSeed(testDb.db, { samples: false, contentDir })).rejects.toThrow(
+      /about\.he\.md/,
+    );
+  });
+
+  it('without contentDir keeps the placeholder pages and still leaves a version copy for terms and privacy', async () => {
+    await runSeed(testDb.db, { samples: false });
+    const pages = await testDb.db.select().from(contentPage);
+    expect(pages.every((p) => p.titleHe === 'טיוטה' && p.version === 1)).toBe(true);
+    const copies = await testDb.db.select().from(contentPageVersion);
+    expect(copies.map((v) => `${v.slug}:${String(v.version)}`).sort()).toEqual([
+      'privacy:1',
+      'terms:1',
+    ]);
+    await runSeed(testDb.db, { samples: false });
+    expect(await testDb.db.select().from(contentPageVersion)).toHaveLength(2);
+    const [copy] = await testDb.db
+      .select()
+      .from(contentPageVersion)
+      .where(and(eq(contentPageVersion.slug, 'terms'), eq(contentPageVersion.version, 1)));
+    expect(copy).toMatchObject({ titleHe: 'טיוטה', bodyHe: 'טיוטה' });
+  });
+});
+
+describe('the supplied legal drafts in docs/legal-drafts', () => {
+  it('load, and the five legal pages start with the draft notice in both languages', async () => {
+    const contentDir = fileURLToPath(new URL('../../docs/legal-drafts', import.meta.url));
+    await runSeed(testDb.db, { samples: false, contentDir });
+    const pages = await testDb.db.select().from(contentPage);
+    expect(pages).toHaveLength(7);
+    for (const page of pages) {
+      expect(page.titleHe.length).toBeGreaterThan(0);
+      expect(page.titleEn?.length ?? 0).toBeGreaterThan(0);
+      if (['about', 'contact'].includes(page.slug)) continue;
+      expect(page.bodyHe.startsWith('**טיוטה — נדרשת בדיקה משפטית.**')).toBe(true);
+      expect(page.bodyEn?.startsWith('**Draft — requires legal review.**')).toBe(true);
+    }
+    expect(await testDb.db.select().from(contentPageVersion)).toHaveLength(2);
   });
 });

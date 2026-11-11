@@ -141,7 +141,7 @@ test('the terms link opens the Terms of Sale in a new tab and does not tick the 
   await openCheckout(page);
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),
-    page.locator('a[href$="/pages/terms"]').click(),
+    page.getByTestId('checkout-form').locator('a[href$="/pages/terms"]').click(),
   ]);
   await expect.poll(() => popup.url()).toMatch(/\/he\/pages\/terms$/);
   await popup.close();

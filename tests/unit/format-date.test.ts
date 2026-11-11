@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatDate, formatDateTime } from '@/lib/format-date';
+import { formatDate, formatDateTime, isoDateInIsrael } from '@/lib/format-date';
 
 /** Strips Unicode bidi marks and normalises no-break spaces: ICU versions place them differently. */
 const clean = (value: string): string =>
@@ -39,5 +39,18 @@ describe('formatDate', () => {
   it('renders only the Israel-local date', () => {
     expect(clean(formatDate(new Date('2026-11-09T22:30:00Z'), 'he'))).toBe('10.11.2026');
     expect(clean(formatDate(new Date('2027-03-27T12:05:00Z'), 'en'))).toBe('27/03/2027');
+  });
+});
+
+describe('isoDateInIsrael', () => {
+  it('is the Israel-local day as YYYY-MM-DD', () => {
+    expect(isoDateInIsrael(new Date('2026-11-09T12:00:00Z'))).toBe('2026-11-09');
+    expect(isoDateInIsrael(new Date('2027-03-27T12:05:00Z'))).toBe('2027-03-27');
+  });
+
+  it('rolls over to the next Israel day late in the evening UTC, winter and summer', () => {
+    expect(isoDateInIsrael(new Date('2026-11-09T22:30:00Z'))).toBe('2026-11-10');
+    expect(isoDateInIsrael(new Date('2026-07-09T21:30:00Z'))).toBe('2026-07-10');
+    expect(isoDateInIsrael(new Date('2026-07-09T20:30:00Z'))).toBe('2026-07-09');
   });
 });

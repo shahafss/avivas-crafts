@@ -12,13 +12,21 @@ export interface ErrorSummaryProps {
   heading: string;
   items: ErrorSummaryItem[];
   'data-testid'?: string;
+  /** Replaces the default jump to the field, e.g. to reveal a field inside a hidden tab first. */
+  onSelect?: (fieldId: string) => void;
 }
 
 /**
  * Lists links to the invalid fields. Focusable (`tabIndex=-1`) so the form can move focus here
  * after a failed submit.
  */
-export function ErrorSummary({ id, heading, items, 'data-testid': testId }: ErrorSummaryProps) {
+export function ErrorSummary({
+  id,
+  heading,
+  items,
+  'data-testid': testId,
+  onSelect,
+}: ErrorSummaryProps) {
   if (items.length === 0) return null;
   return (
     <div
@@ -38,6 +46,14 @@ export function ErrorSummary({ id, heading, items, 'data-testid': testId }: Erro
           <li key={item.fieldId}>
             <a
               href={`#${item.fieldId}`}
+              onClick={
+                onSelect === undefined
+                  ? undefined
+                  : (event) => {
+                      event.preventDefault();
+                      onSelect(item.fieldId);
+                    }
+              }
               className="inline-flex min-h-11 items-center underline underline-offset-[3px]"
             >
               {item.message}

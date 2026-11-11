@@ -186,6 +186,32 @@ test('the product page head carries Open Graph and price tags', async ({ page, b
   expect(await meta('product:price:amount')).toBe('45.00');
 });
 
+test('the photo strip scrolls only sideways, so a vertical swipe on it scrolls the page', async ({
+  page,
+}) => {
+  await page.goto('/he/p/sample-clay-mug');
+  const track = page.getByTestId('gallery-track');
+  // overflow-x: auto alone computes overflow-y to auto, and iPhone Safari then gives vertical
+  // swipes that start on the photo to the strip instead of the page.
+  expect(await track.evaluate((element) => getComputedStyle(element).overflowY)).toBe('hidden');
+  // The photo fills its 4:5 slide exactly; nothing sticks out to scroll to.
+  const sizes = await track.evaluate((element) => {
+    const photo = element.querySelector('img');
+    return {
+      track: element.clientHeight,
+      content: element.scrollHeight,
+      photo: photo?.getBoundingClientRect().height ?? 0,
+      width: element.clientWidth,
+    };
+  });
+  expect(sizes.content).toBe(sizes.track);
+  expect(Math.abs(sizes.photo - sizes.track)).toBeLessThanOrEqual(1);
+  expect(Math.abs(sizes.track - (sizes.width * 5) / 4)).toBeLessThanOrEqual(1);
+  await track.hover();
+  await page.mouse.wheel(0, 400);
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+});
+
 test('an empty catalog and an empty category show friendly messages', async ({ page }) => {
   await resetDb({ samples: false });
   await sql`

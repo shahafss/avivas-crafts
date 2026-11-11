@@ -1,9 +1,12 @@
+import { readFileSync } from 'node:fs';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { eq, sql } from 'drizzle-orm';
 import { createTestDb, type TestDbHandle } from '../setup/pglite';
 import {
   adminUser,
   category,
+  contentPage,
+  contentPageVersion,
   orderLine,
   orders,
   product,
@@ -236,5 +239,84 @@ describe('check constraints', () => {
     }
     await testDb.db.insert(category).values({ slug: 'ok-slug-1', nameHe: 'ק', sortOrder: 50 });
     await testDb.db.insert(product).values({ slug: 'ok-slug-1', nameHe: 'מ' });
+  });
+});
+
+describe('content_page_version', () => {
+  const row = (overrides: Partial<typeof contentPageVersion.$inferInsert> = {}) => ({
+    slug: 'terms',
+    version: 1,
+    titleHe: 'תקנון',
+    bodyHe: 'טקסט',
+    ...overrides,
+  });
+
+  async function seedPage(slug = 'terms'): Promise<void> {
+    await testDb.db.insert(contentPage).values({ slug, titleHe: 'תקנון', bodyHe: 'טקסט' });
+  }
+
+  it('accepts terms and privacy versions and rejects other slugs', async () => {
+    await seedPage('terms');
+    await seedPage('about');
+    await testDb.db.insert(contentPageVersion).values(row());
+    await expect(
+      testDb.db.insert(contentPageVersion).values(row({ slug: 'about' })),
+    ).rejects.toThrow();
+  });
+
+  it('rejects version 0, a duplicate (slug, version) and a missing content page', async () => {
+    await seedPage('terms');
+    await expect(
+      testDb.db.insert(contentPageVersion).values(row({ version: 0 })),
+    ).rejects.toThrow();
+    await testDb.db.insert(contentPageVersion).values(row());
+    await expect(testDb.db.insert(contentPageVersion).values(row())).rejects.toThrow();
+    await expect(
+      testDb.db.insert(contentPageVersion).values(row({ slug: 'privacy' })),
+    ).rejects.toThrow();
+  });
+
+  it('limits bodies to 50,000 characters', async () => {
+    await seedPage('terms');
+    await expect(
+      testDb.db.insert(contentPageVersion).values(row({ bodyHe: 'x'.repeat(50_001) })),
+    ).rejects.toThrow();
+    await expect(
+      testDb.db.insert(contentPageVersion).values(row({ bodyEn: 'x'.repeat(50_001) })),
+    ).rejects.toThrow();
+    await testDb.db.insert(contentPageVersion).values(row({ bodyHe: 'x'.repeat(50_000) }));
+  });
+
+  it('restricts deleting a content page that has versions', async () => {
+    await seedPage('terms');
+    await testDb.db.insert(contentPageVersion).values(row());
+    await expect(
+      testDb.db.delete(contentPage).where(eq(contentPage.slug, 'terms')),
+    ).rejects.toThrow();
+  });
+
+  it('migration 0002 back-fills terms and privacy only, once', async () => {
+    const backfill = readFileSync(
+      new URL('../../src/server/db/migrations/0002_content_page_version.sql', import.meta.url),
+      'utf8',
+    )
+      .split('--> statement-breakpoint')
+      .at(-1);
+    if (backfill === undefined) throw new Error('back-fill statement missing');
+    await testDb.db.insert(contentPage).values([
+      { slug: 'terms', titleHe: 'תקנון', bodyHe: 'א', version: 3 },
+      { slug: 'privacy', titleHe: 'פרטיות', bodyHe: 'ב', version: 2 },
+      { slug: 'about', titleHe: 'אודות', bodyHe: 'ג' },
+    ]);
+    await testDb.client.exec(backfill);
+    await testDb.client.exec(backfill); // ON CONFLICT DO NOTHING: running it again adds nothing
+    const rows = await testDb.db
+      .select({ slug: contentPageVersion.slug, version: contentPageVersion.version })
+      .from(contentPageVersion)
+      .orderBy(contentPageVersion.slug);
+    expect(rows).toEqual([
+      { slug: 'privacy', version: 2 },
+      { slug: 'terms', version: 3 },
+    ]);
   });
 });

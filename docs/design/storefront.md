@@ -9,6 +9,12 @@
 > **Amended 2026-11-09 by `002-order-handling`**: §8.8 is now the customer's order status page, and
 > the document also designs the admin order screens ([§12](#12-admin-area)). New text qualifies
 > requirement ids as "002 FR-xxx" / "002 SC-xxx".
+>
+> **Amended 2026-11-09 by `003-privacy-legal-pages`**: content pages (§8.9), contact (§8.10),
+> the consent mechanism (§7.21), the footer (§7.20), `Checkbox` (§7.10), `ui/Markdown` and `Prose`
+> (§7.24), `StorageTable` (§7.25), the order page's consent block (§12.3 block 8a) and four new
+> admin screens (§12.5 Content list, §12.6 Content editor and versions, §12.7 Customers,
+> §12.8 Statistics). New text qualifies requirement ids as "003 FR-xxx".
 
 **Feature**: `001-online-crafts-shop` · **Status**: Approved by the user (2026-11-08); amended after plan-review rounds 1–2 the same day ·
 **Visual authority**: the approved sample `design/sample-product-page.src.html` (user approval
@@ -324,15 +330,19 @@ slow opacity pulse (static with reduced motion). Marked `aria-hidden`; the conta
   global focus outline; error = `alert` border, `aria-invalid="true"`, message under the control
   (13, `alert`, `alert` icon), linked with `aria-describedby`.
 - Correct `autocomplete`, `inputmode` and `type` per field (see checkout).
-- `Checkbox`: 24 px box, `field` border, checked = `ink` fill with white check icon; the whole
-  label row is the target (≥ 44 px).
+- `Checkbox`: 24 px box, `field` border, checked = `ink` fill with white check icon. The input's
+  hit area is a 44×44 px square centred on the 24 px box; the label text toggles the box through
+  `<label for>`. Links inside the label are plain links, not lifted above the input, so a tap on a
+  link opens the link and never toggles the box (003 FR-028; replaces the former "whole label row
+  is the target").
 - `RadioCard`: a full-width option card (white, 1.5 px `field` border, `rounded-chip`, padding 14–16);
   selected = `ink` border + inset ring + `sun-soft` fill; title 16/700 with the price at
   inline-end, description 14 `ink-2` below; native radio input visually hidden but focusable
   (focus ring drawn on the card).
 - `ErrorSummary`: an `alert` Notice at the top of the form with heading "יש לתקן כמה פרטים" /
   "Please fix a few details" and a list of links to each invalid field; receives focus after a
-  failed submit.
+  failed submit. An optional `onSelect` replaces the plain jump to the field (the content editor
+  uses it to show a field that sits in the other language tab first).
 - `FormField` (T054, admin) wraps the same primitives so admin and storefront share one set.
 
 ### 7.11 `shop/QuantityStepper` (island part)
@@ -482,21 +492,56 @@ Columns (stacked on mobile, `2fr 1fr 1fr` from 900 px):
    `<bdi dir="ltr">`) — FR-047, from `shop_settings`.
 2. "מידע" / "Info": About, Shipping & returns, Contact.
 3. "משפטי" / "Legal": Terms of use and sale, Privacy policy, Cookie policy, Accessibility
-   statement; plus "הגדרות עוגיות" / "Cookie settings" only when `consentRequired()`.
-Bottom row: language switch in full words and "© {year} {shop name}" (`shop_name_*`). Column headings are h2
-styled small (no skipped levels).
+   statement; plus "הגדרות עוגיות" / "Cookie settings" only when `consentRequired()`. It is a
+   `button` (not a link; `CookieSettingsButton`, §7.21, test id `footer-cookie-settings`) that
+   opens the consent settings dialog, and is absent from the page when consent is not required.
+Bottom row: language switch in full words (**added by roadmap item 005**; 003 does not build it)
+and "© {year} {shop name}" (`shop_name_*`). Column headings are h2
+styled small (no skipped levels). The two link lists are `nav` landmarks labelled "מידע על
+החנות" / "Information about the shop" and "מסמכים משפטיים" / "Legal documents".
 
-### 7.21 `shop/ConsentBanner` + settings dialog (island, dormant at launch)
+### 7.21 Consent: `ConsentRoot`, `ConsentLoader`, `ConsentBanner`, `ConsentGate`, `CookieSettingsButton` (dormant at launch)
 
-- Rendered only when `consentRequired()` (server decides, prop down) and loaded with
-  `next/dynamic` so its JS is not in the bundle at launch.
-- Bottom sheet: white, top corners 20 px, `shadow-float`, max width 40rem centred, padding 20;
-  heading "עוגיות" / "Cookies", one or two sentences, link to the cookie policy; buttons
-  **"אישור הכול" and "דחייה של הכול" are both `secondary`, same size, side by side** (equal
-  prominence, FR-037a); "הגדרות" / "Settings" as a quiet link opening a native `<dialog>` with
-  one switch per optional category (`role="switch"`, necessary shown as always on) and "שמירה".
-- Not a modal: the page stays usable; focus is not trapped; it sits at the end of the tab order
-  after a skip link "מעבר להגדרות העוגיות" at the start.
+Code shapes and test ids are fixed in `specs/003-privacy-legal-pages/contracts/consent.md`.
+
+- **`ConsentRoot`** (server, in the public layout) returns nothing unless `consentRequired()`.
+  Otherwise it renders the client `ConsentLoader` inside its own `NextIntlClientProvider` that
+  carries only the `consent` messages. At launch it renders nothing: no consent chunk is
+  requested, no footer button, no cookie.
+- **`ConsentLoader`** (client, tiny) does the split with `React.lazy` + `Suspense` (a dynamic
+  import inside a Server Component does not code-split a Client Component; `next/dynamic` is not
+  used because its runtime adds about 1.5 KB gzipped to every page's first load, which would push
+  the product route past its 150 KB budget) and loads `ConsentBanner` and
+  `ConsentGate` as separate chunks. `ConsentBanner` and `ConsentGate` load only through
+  `ConsentLoader`.
+- **`ConsentBanner`**: bottom sheet, white, top corners 20 px, `shadow-float`, max width 40rem
+  centred, padding 20; heading "עוגיות" / "Cookies", one or two sentences, link to the cookie
+  policy; buttons **"אישור הכול" and "דחייה של הכול" are both `secondary`, same size, side by
+  side** (equal prominence, 003 FR-021); "הגדרות" / "Settings" as a `quiet` button opening a native
+  `<dialog>` with one switch per optional category (`role="switch"`, necessary shown as always
+  on), a primary "שמירה" and a `quiet` "סגירה" that closes it without saving. The sheet shows only while the visitor still has to choose (no valid choice, or
+  a newer Cookie Policy version); the dialog also opens from the `ac:consent-settings` event.
+- **`ConsentSkipLink`** (server, exported from `ConsentRoot.tsx`, rendered at the start of the
+  page): the skip link "מעבר להגדרות העוגיות", only while the visitor still has to choose.
+- **`ConsentGate`**: appends the scripts of every category the visitor has accepted, once each.
+  **Nothing optional loads while a new Cookie Policy version awaits a choice** (003 FR-022): the
+  earlier choices only pre-set the switches in the dialog.
+- **`CookieSettingsButton`** (client, tiny; the footer's "הגדרות עוגיות" button): dispatches the
+  `ac:consent-settings` window event, and also marks `<html>` (`data-consent-settings-requested`)
+  so a banner chunk that is still loading opens the dialog when it mounts. Its label comes from
+  the server as a prop.
+- The bottom banner is not a modal: the page stays usable; focus is not trapped; it sits at the
+  end of the tab order after a skip link "מעבר להגדרות העוגיות" at the start. The settings
+  dialog, by contrast, is a modal native `<dialog>` (`showModal()`: focus trapped inside, `Esc`
+  closes it, the page behind is inert). After a choice is saved, if focus was inside the
+  banner or the dialog it moves to the footer "הגדרות עוגיות" button, because the banner that held
+  it is gone; otherwise focus stays where it was. Withdrawing a category that
+  is already running reloads the page, so its script stops at once. While a new choice is needed
+  (no valid choice, or a newer Cookie Policy version), optional cookies set under the earlier
+  version are expired at once, on the server.
+- Pinned test ids: `consent-banner`, `consent-accept-all`, `consent-reject-all`,
+  `consent-settings-open`, `consent-dialog`, `consent-switch-<categoryId>`, `consent-save`,
+  `footer-cookie-settings`.
 
 ### 7.22 `shop/CartLine` (inside the cart island)
 
@@ -516,15 +561,22 @@ reuses it.
 
 ### 7.24 `ui/Prose` (server)
 
-Wrapper for `Markdown` output on content pages: 17/1.75, measure 68ch, h2 22/800 with 32 px
-above and 8 px below, lists with logical padding, links `ink` underlined (offset 3 px), tables
-styled like `StorageTable`.
+Wrapper for Markdown output: 17/1.75, measure 68ch, h2 22/800 with 32 px above and 8 px below,
+h3 18/700 with 24 px above and 6 px below (already in `Prose`), lists with logical padding, links
+`ink` underlined (offset 3 px), tables styled like `StorageTable`.
+
+Markdown is rendered only by `renderMarkdown()` on the server and shown only through
+`ui/Markdown` inside `Prose` (public pages, the editor preview and the admin version page). `#`
+in the source renders as h2 (the page's own title is the h1), `##` as h2, `###` and deeper as h3.
+Images, tables, code, quotes and rules are not rendered (003 FR-003).
 
 ### 7.25 `shop/StorageTable` (server)
 
 Table of the device-storage registry. From 640 px a normal table (header row `photo` fill,
 `line` row dividers). Below 640 px each row becomes a stacked card using
-`td::before { content: attr(data-label) }` (labels from translations).
+`td::before { content: attr(data-label) }` (labels from translations). Admin-scope items (the
+admin sign-in cookies) come after the public rows, each marked "באזור הניהול בלבד" / "Admin area
+only".
 
 ### 7.26 `ui/ConfirmDialog` (island) and its secondary action (002)
 
@@ -820,6 +872,13 @@ no name, address, phone or email of the customer anywhere on the page; axe repor
 Read mode. Breadcrumbs (Home › Title) → h1 → `Prose` (68ch) in a single column on ground (no
 panel, generous block spacing). `cookies` adds `StorageTable` after the prose. Drafts show their
 "טיוטה" notice as the first paragraph (comes from the content). No sidebars, no images.
+- The slug `contact` is not served here: `/{locale}/pages/contact` is 404 (the contact page is
+  §8.10; its intro text lives in the `contact` content page).
+- On `/en`, a page with no English text shows the Hebrew title and body with `lang="he"
+  dir="auto"` (`fallbackAttrs()`); the surrounding page stays English.
+- Unknown slug → the storefront 404 (§8.12).
+- Accept: each of the six pages opens in both locales with one h1; the legal pages show the draft
+  notice; axe reports no violations.
 
 ### 8.10 Contact `/{locale}/contact`
 
@@ -827,10 +886,16 @@ h1 "יצירת קשר" / "Contact" + intro from the `contact` content page. From
 (white) + business details panel (white) at inline-end; stacked below 900 px with the form first.
 - Form: name, email (`dir="ltr"`), message (`TextArea`, 6 rows, 10–5,000 chars with a counter
   only near the limit), honeypot, primary "שליחה" / "Send".
-- Details panel: legal business name, email (`mailto:`), phone (`tel:`), address, "עוסק מורשה {n}" (FR-047).
+- Details panel (heading "פרטי העסק"; the form panel's heading is "שליחת הודעה"): legal business
+  name, address, "עוסק מורשה {n}", email (`mailto:`), phone (`tel:`) (FR-047).
 - Success: the form is replaced by a `status` panel with `check` icon "ההודעה נשלחה. אענה לכם
   במייל בהקדם." and focus moves to it. Errors as in checkout; rate limit → `alert` Notice "שלחתם
-  כמה הודעות ברצף. נסו שוב בעוד שעה."
+  כמה הודעות ברצף. נסו שוב בעוד {minutes, plural, one {דקה אחת} other {# דקות}}." / "You've sent several
+  messages in a row. Try again in {minutes, plural, one {1 minute} other {# minutes}}." (an ICU
+  plural, so one minute reads naturally; only messages actually sent count; the refusal says how long to
+  wait). An expired form (the signed form age) → a generic `alert` Notice "הטופס פג תוקף. נא לטעון
+  את הדף מחדש ולנסות שוב." / "The form has expired. Please reload the page and try again."
+- Accept: empty, with errors and sent states pass axe with no violations in both locales.
 
 ### 8.11 Header, footer, language switch
 
@@ -851,7 +916,7 @@ FR-047 details and all content links in both languages.
 
 ### 8.13 Consent banner (dormant)
 
-As [§7.21](#721-shopconsentbanner--settings-dialog-island-dormant-at-launch). At launch it never
+As [§7.21](#721-consent-consentroot-consentloader-consentbanner-consentgate-cookiesettingsbutton-dormant-at-launch). At launch it never
 renders and its code is not loaded. Accept (consent test project): both choices equal in size
 and style; nothing optional loads before acceptance.
 
@@ -869,7 +934,11 @@ and style; nothing optional loads before acceptance.
 | Payment return | — | checking spinner | failed / mismatch / expired / timeout panels | — |
 | Order | — | server-rendered | expired-link EmptyState (no "30 days" in the text; unknown token the same) | Cancelled: `info` Notice replaces progress and check circle |
 | Admin orders ([§12](#12-admin-area)) | list: "no orders match" EmptyState; home: "nothing waiting" | server-rendered; busy buttons | stale / not-allowed / field errors; email-failed alerts | order not found → admin 404 page |
-| Contact | — | busy submit | field errors, rate-limit Notice | — |
+| Contact | — | busy submit | field errors, rate-limit Notice, expired-form Notice | — |
+| Content page ([§8.9](#89-content-pages-localepagesslug)) | — | server-rendered | unknown slug and `contact` → 404 | English missing → Hebrew text marked `lang="he"` |
+| Admin content ([§12.5](#125-content-list-admincontent)–[§12.6](#126-content-editor-and-versions-admincontentslug)) | list always has the 7 pages | server-rendered; busy save | stale `alert` Notice; field errors | unknown slug or version → admin 404 |
+| Admin customers ([§12.7](#127-customers-admincustomers)) | "לא נמצאו לקוחות" EmptyState | busy search / action | stale result; passkey re-check; field error | — |
+| Admin statistics ([§12.8](#128-statistics-adminstats)) | "עוד אין נתונים" EmptyState | server-rendered | — | — |
 
 ---
 
@@ -877,8 +946,10 @@ and style; nothing optional loads before acceptance.
 
 - Server Components everywhere except these islands: `CartLink`, `LanguageSwitch`, `BuyBox`
   (price + options + stepper + add to cart), `Gallery` (scroll sync + zoom dialog), cart page body, checkout form, payment
-  return poller, `OrderCleanup` (order page, no markup), contact form, `StatsBeacon`, and
-  `ConsentBanner` (dynamic import, not loaded at launch).
+  return poller, `OrderCleanup` (order page, no markup), contact form, `StatsBeacon`, and the consent islands `ConsentLoader`, `ConsentGate` and
+  `CookieSettingsButton` (present only when consent is required; `ConsentBanner` and
+  `ConsentGate` are loaded only through `ConsentLoader` with `React.lazy` + `Suspense`, so none of their code
+  is downloaded at launch).
 - No client libraries beyond React/Next and next-intl. `libphonenumber-js` and `markdown-it`
   never reach the client. Shared Zod schemas used in a client island import only the light
   checks (or `zod/mini`), keeping the checkout page within budget.
@@ -1034,6 +1105,12 @@ malformed id → the admin 404 page, never an error. Order of blocks:
 7. **Customer's note**: `whitespace-pre-line`, `dir="auto"`; omitted when empty.
 8. **Payment**: method ("תשלום מאובטח באתר" / "תשלום ישיר אליי": the same wording as `checkout.payment.*`, copied into
    `admin.orders.paymentMethod.*`, not reused keys), state, and the paid / refunded date and time.
+8a. **הסכמות** (003; after Payment, shown on every order that has the data): "אישור התקנון:
+    {date and time}" with "תקנון גרסה {n}" and "מדיניות פרטיות גרסה {n}" (each is a link to
+    `/admin/content/{terms|privacy}/versions/{n}`, the version the customer accepted); marketing consent as
+    one line: "דיוור: אושר ב-{date}", "דיוור: אושר ב-{date}, בוטל ב-{date}" or "דיוור: לא אושר".
+    On an anonymised order the marketing line reads "דיוור: —" (the columns are cleared) while the
+    Terms line stays.
 9. **Tracking number / pickup note**: `<bdi dir="ltr">` for the number; the note `dir="auto"`,
    `whitespace-pre-line`. Omitted when there is none.
 10. **Customer details correction**: a `Disclosure` "תיקון פרטי הלקוח" holding the form (`FormField`
@@ -1043,7 +1120,9 @@ malformed id → the admin 404 page, never an error. Order of blocks:
 11. **History**: an `<ol>`, newest first, "{date} · {what} · {who}", where "who" is the admin's
     name, "מנהלת שהוסרה" when the admin was removed since, or "המערכת" for automatic entries (failed
     emails are system entries). Never any customer
-    text, tracking number or note.
+    text, tracking number or note. 003 adds the `anonymized` entry "פרטי הלקוח נמחקו", shown as
+    "המערכת" only for the 7-year task's events (`data.system = true`); an anonymisation Aviva
+    requested shows her name.
 
 States: **not found** (admin 404); **stale** and **not allowed** (Notice + refresh, above);
 **error** (no admin `error.tsx`; root `global-error.tsx`, which shows no admin header and links to the storefront); **anonymised** (info Notice, correction form replaced, status
@@ -1069,6 +1148,99 @@ second tab acted first; the customer's phone and email are one tap away; every d
   `attention` `Notice` "כדאי להשלים בהגדרות:" listing them, with a link "להגדרות" to the
   settings page.
 - Accept: the count equals the number of cards in the linked list; signed out it shows nothing.
+
+### 12.5 Content list `/admin/content`
+
+Added by 003. h1 "דפי תוכן" and a one-line explanation. A `<ul>` of seven cards (white,
+`rounded-card`, 1 px `line` border, padding 16; the whole card is one link to the editor, 44 px+):
+the page title; a badge, "טיוטה שסופקה עם האתר" (`sun-soft` fill) or "נערך" (`panel` fill, 1.5 px
+`field` border); "עודכן {date}" (`ink-2` 13). The Terms and Privacy cards add a quiet "גרסאות
+קודמות" link to their versions page (outside the card link).
+Accept: all seven pages are listed with the right badge; targets ≥ 44 px; no horizontal scroll at
+320 px; unreachable signed out; axe reports no violations.
+
+### 12.6 Content editor and versions `/admin/content/[slug]`
+
+Added by 003. h1 is the page title.
+- **Language tabs** "עברית" / "English" (44 px, `role="tablist"`). Each tab holds a title
+  `TextField` and the body.
+- **Toolbar**: four text-labelled `secondary` `Button`s, small but 44 px tall: "כותרת", "מודגש",
+  "רשימה", "קישור". No icons: the icon set has none for these and words are clearer for Aviva.
+- **Body** `TextArea`, 16 rows, `dir` per tab (`rtl` for עברית, `ltr` for English).
+- **Preview**: a `secondary` toggle "תצוגה מקדימה" that shows a `Prose` panel (rendered by
+  `ui/Markdown`) on `ground`.
+- **Save**: on phones a sticky bottom bar with the primary "שמירה"; field errors under the fields
+  (`ErrorSummary` when more than one; the editor switches to the tab of the first error); success
+  → `Toast` "הדף נשמר". Identical text saves nothing and says so ("לא היה מה לשמור: הטקסט זהה
+  לקיים"). Stale (the
+  page changed since it was opened) → `alert` `Notice` with a "לטעון מחדש" button.
+- Terms and Privacy also show a link "גרסאות קודמות של הדף" under the preview.
+- **Versions** `/admin/content/{terms|privacy}/versions`: a back link "חזרה לעריכת הדף", h1, a
+  one-line explanation, then an `<ol>`, newest first, each "גרסה {n} · {date}" as a link. One
+  version `/admin/content/{slug}/versions/{n}`: a back link "חזרה לכל הגרסאות", the Hebrew title
+  (h1) and a header line "גרסה {n}, בתוקף מ-{date}", then the Hebrew text in `Prose`; when the
+  version has an English text it follows under a rule with the English title as h2. Read only.
+  Unknown slug or version → admin 404.
+Accept: a save raises the version by one and is listed in the history (Terms and Privacy only);
+the preview matches the public page; both tabs are reachable by keyboard; targets ≥ 44 px; axe
+reports no violations with the preview open.
+
+### 12.7 Customers `/admin/customers`
+
+Added by 003. h1 "לקוחות" and a one-line explanation.
+- **Search**: `TextField` "מייל או טלפון" (`dir="ltr"`, `inputmode` not email) and a primary
+  "חיפוש". The term never goes into the URL (Server Action).
+- **Result**: a summary line ("נמצאו 2 הזמנות, תשלום אחד שלא הושלם, 5 מיילים"); order cards like
+  §12.2 without the customer name; a line "פרטים נוספים שהופיעו בהזמנות האלה:" listing the other
+  emails and phones used on those orders, each a quiet button that searches it.
+- **Action row**: `secondary` "הורדת הנתונים"; `secondary` "הפסקת דיוור" (only when any order has
+  marketing consent); `secondary` "מחיקת הפרטים" (only when orders or stored emails
+  were found: unfinished checkouts alone expire by themselves; existing button variants only; no
+  danger style).
+  The last two open a `ConfirmDialog`:
+  - Withdraw: title "להפסיק דיוור ללקוח?" / "Stop marketing emails to this customer?"; body
+    "הלקוח לא יקבל מהחנות מיילים שיווקיים. ההזמנות נשארות כמו שהן, ותאריך ההסכמה המקורי נשמר." /
+    "The customer will get no marketing emails from the shop. The orders stay as they are, and
+    the original consent date is kept."; confirm "הפסקת דיוור" / "Stop marketing emails".
+  - Anonymise: title "למחוק את פרטי הלקוח?" / "Erase this customer's details?"; body "השם, הטלפון,
+    המייל והכתובת יימחקו מ-{count} הזמנות. ההזמנות עצמן (סכומים ופריטים) נשמרות לצורכי מס. אי
+    אפשר לבטל את הפעולה." / "Name, phone, email and address will be erased from {count} orders.
+    The orders themselves (amounts and items) are kept for tax records. This cannot be undone.";
+    when an order is still open, an `attention` line "יש כאן הזמנה שעוד לא הושלמה. אחרי המחיקה לא
+    תוכלי ליצור קשר עם הלקוח לגביה." / "One of these orders is still open. After erasing, you
+    won't be able to contact the customer about it."; confirm "מחיקת הפרטים" / "Erase details".
+    When the search found no orders, only stored emails, the body reads "המיילים השמורים של
+    הלקוח יימחקו. אי אפשר לבטל את הפעולה." / "The customer's stored emails will be erased. This
+    cannot be undone."
+- **After anonymising**, or when the search found only unfinished checkouts, an `info` `Notice`:
+  "לא נמחקו {count} תשלומים שעדיין בתהליך. הם יימחקו אוטומטית תוך 48 שעות, או עד 24 שעות
+  מאוחר יותר אם אי אפשר להגיע לחברת הסליקה לבדיקה הסופית של התשלום (כלומר עד 72 שעות; או 30 יום
+  אם יש פער בסכום). אם הלקוח ישלים תשלום, תופיע הזמנה חדשה עם הפרטים שלו, ולכן כדאי לחפש שוב
+  בעוד שלושה ימים." / "{count} payments still in progress were not erased. They are deleted
+  automatically within 48 hours, or up to 24 hours later if the payment provider cannot be reached
+  for the final status check (so up to 72 hours; or 30 days if the amount did not match). If the
+  customer completes a payment, a new order with their details will appear, so search again in 3
+  days."
+- **Export and anonymise** ask for the passkey again unless it was confirmed in the last 5 minutes
+  (the existing re-check gate); search and marketing withdrawal do not.
+- **No results**: `EmptyState` "לא נמצאו לקוחות". Stale result (orders changed since the search):
+  `alert` `Notice` and a fresh search.
+Accept: search by email or phone finds the orders; both dialogs state their consequence; focus
+starts on Cancel; targets ≥ 44 px; no personal data in the URL; axe reports no violations with the
+results and with each dialog open.
+
+### 12.8 Statistics `/admin/stats`
+
+Added by 003. h1 "סטטיסטיקה". A period `ChipRow` (7 / 30 / 90 days, current chip
+`aria-current="page"`). "ביקורים ביום" bar chart: SVG, bars `ink`, today's bar `sun`, axis labels
+13 `ink-2`, `role="img"` with an `aria-label` summary, and a `Disclosure` "הצגה כטבלה" with the same
+numbers. Two ranked lists, "המוצרים הנצפים ביותר" and "מאיפה הגיעו" (`(direct)` is shown as "כניסה
+ישירה"; a list with no entries in the period reads "אין נתונים בתקופה הזאת"). The period chips are
+links (`?days=7|30|90`). The chart keeps time running left to right even on the right-to-left admin page (oldest day left, today right), with the
+top value, the first and the last date as axis labels; the table lists the days newest first. No
+data at all → `EmptyState` "עוד אין נתונים". The statistics hold no identifiers.
+Accept: the chart and its table agree; the period chips change the range; unreachable signed out;
+axe reports no violations.
 
 ---
 
