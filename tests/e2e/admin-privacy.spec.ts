@@ -5,7 +5,7 @@ import { expect, resetDb, signInAsAdmin, sql, test, waitForFormAge } from './fix
 
 // 003 US3 (tasks.md T024; storefront.md §12.7, §12.3 block 8a): Aviva handles a customer's
 // request about their data. Phone project only; one offline order with marketing consent is
-// placed through the storefront, then found, exported (after the passkey re-check), its marketing
+// placed through the storefront, then found, exported, its marketing
 // consent withdrawn and its details erased. Tests run in order on shared state.
 
 test.describe.configure({ mode: 'serial' });
@@ -19,7 +19,6 @@ const STREET = 'הרצל 5';
 
 let orderId = '';
 let orderNumber = 0;
-let adminId = '';
 
 async function expectNoViolations(page: Page): Promise<void> {
   const results = await new AxeBuilder({ page })
@@ -103,7 +102,7 @@ test.beforeAll(async ({ browser }, testInfo) => {
 test('the email in capitals finds the order, the address stays /admin/customers, axe is clean', async ({
   page,
 }) => {
-  adminId = await signInAsAdmin(page);
+  await signInAsAdmin(page);
   await openCustomers(page);
   await expect(page.getByRole('heading', { level: 1, name: 'לקוחות' })).toBeVisible();
   await search(page, EMAIL.toUpperCase());
@@ -138,20 +137,14 @@ test('a phone written another way finds the same order', async ({ page }) => {
   await expect(page.getByText('נא להזין מייל או מספר טלפון')).toBeVisible();
 });
 
-test('"הורדת הנתונים" asks for the passkey again when it is older than 5 minutes, then downloads a .json with the email', async ({
-  page,
-}) => {
+test('"הורדת הנתונים" downloads a .json with the email, with no second check', async ({ page }) => {
   await signInAsAdmin(page);
   await openCustomers(page);
   await search(page, EMAIL);
   await expect(page.getByTestId('customer-order-card')).toHaveCount(1);
 
-  await sql`UPDATE admin_session SET reauth_at = now() - interval '10 minutes'
-            WHERE admin_id = ${adminId}`;
   const downloading = page.waitForEvent('download');
   await page.getByTestId('customer-export').click();
-  await expect(page.getByTestId('admin-reauth-confirm')).toBeVisible();
-  await page.getByTestId('admin-reauth-confirm').click();
   const download = await downloading;
   expect(download.suggestedFilename()).toMatch(/^customer-\d{4}-\d{2}-\d{2}\.json$/);
   const path = await download.path();
@@ -220,12 +213,8 @@ test('"מחיקת הפרטים" warns the order is open; after the confirmation 
   await expect(page.getByTestId('confirm-dialog-cancel')).toBeFocused();
   await expectNoViolations(page);
 
-  // The passkey was confirmed by the export; age it again so the erase asks too.
-  await sql`UPDATE admin_session SET reauth_at = now() - interval '10 minutes'
-            WHERE admin_id = ${adminId}`;
+  // The confirmation is the only check: no passkey prompt follows it.
   await page.getByTestId('confirm-dialog-confirm').click();
-  await expect(page.getByTestId('admin-reauth-confirm')).toBeVisible();
-  await page.getByTestId('admin-reauth-confirm').click();
   await expect(dialog).toBeHidden({ timeout: 20_000 });
 
   await page.goto(`/admin/orders/${orderId}`);
@@ -258,9 +247,6 @@ test('erasing stored emails alone (no order found) confirms with the toast', asy
   await expect(page.getByTestId('customer-order-card')).toHaveCount(0);
   await page.getByTestId('customer-erase').click();
   await page.getByTestId('confirm-dialog-confirm').click();
-  // The passkey was confirmed by the previous test and is still recent; if it is asked, confirm.
-  const reauth = page.getByTestId('admin-reauth-confirm');
-  if (await reauth.isVisible({ timeout: 1500 }).catch(() => false)) await reauth.click();
   await expect(page.getByText('פרטי הלקוח נמחקו', { exact: true })).toBeVisible({
     timeout: 20_000,
   });

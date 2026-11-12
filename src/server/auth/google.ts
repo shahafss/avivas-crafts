@@ -1,6 +1,6 @@
 import 'server-only';
 import { createHash, timingSafeEqual } from 'node:crypto';
-import { and, eq, gt, isNull } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 import {
   allowInsecureRequests,
   authorizationCodeGrant,
@@ -14,7 +14,7 @@ import {
 } from 'openid-client';
 import { cookies, headers } from 'next/headers';
 import { db } from '@/server/db/client';
-import { adminSession, adminUser, oauthFlow } from '@/server/db/schema';
+import { adminUser, oauthFlow } from '@/server/db/schema';
 import { logActivity } from '@/server/activity/log';
 import { kickOutbox } from '@/server/email/sender';
 import { getEnv } from '@/server/env';
@@ -22,20 +22,11 @@ import { getClientIp } from '@/server/security/client-ip';
 import { notifyAdmins } from '@/server/security/notify';
 import { safeAdminNext } from './next-path';
 import { createSession } from './session';
-import { findAdminBySetupToken, hashSetupToken } from './setup-links';
 import { googleStartAllowed } from './throttle';
 
 /** Holds the OAuth `state` between the redirect to Google and the callback. */
 export const OAUTH_COOKIE = '__Host-ac_oauth';
 const FLOW_TTL_MS = 10 * 60_000;
-
-export type GooglePurpose = 'sign_in' | 'recovery' | 'setup';
-
-const REDIRECT_PATHS: Record<GooglePurpose, string> = {
-  sign_in: '/admin/sign-in/passkey',
-  recovery: '/admin/sign-in/recovery',
-  setup: '/admin/setup',
-};
 
 function sha256(value: string): Buffer {
   return createHash('sha256').update(value).digest();
@@ -78,27 +69,15 @@ function redirectUri(): string {
   return `${getEnv().APP_ORIGIN}/api/auth/google/callback`;
 }
 
-export type StartResult =
-  { ok: true; url: string } | { ok: false; error: 'rate_limited' | 'invalid_setup' };
+export type StartResult = { ok: true; url: string } | { ok: false; error: 'rate_limited' };
 
 /**
  * Creates the `oauth_flow` row (state hash, PKCE verifier, nonce, validated `next`), sets the
  * `__Host-ac_oauth` cookie and returns Google's authorisation URL. Rate limited per IP.
  */
-export async function startGoogleFlow(
-  purpose: GooglePurpose,
-  setupToken?: string,
-  next?: string,
-): Promise<StartResult> {
+export async function startGoogleFlow(next?: string): Promise<StartResult> {
   const ip = getClientIp(await headers());
   if (!(await googleStartAllowed(ip))) return { ok: false, error: 'rate_limited' };
-
-  let setupTokenHash: Buffer | null = null;
-  if (purpose === 'setup') {
-    const admin = setupToken === undefined ? null : await findAdminBySetupToken(setupToken);
-    if (admin === null || setupToken === undefined) return { ok: false, error: 'invalid_setup' };
-    setupTokenHash = hashSetupToken(setupToken);
-  }
 
   const config = await getConfiguration();
   const state = randomState();
@@ -108,8 +87,6 @@ export async function startGoogleFlow(
     stateHash: sha256(state),
     codeVerifier,
     nonce,
-    purpose,
-    setupTokenHash,
     nextPath: safeAdminNext(next),
     expiresAt: new Date(Date.now() + FLOW_TTL_MS),
   });
@@ -160,8 +137,8 @@ async function reject(now: Date): Promise<CompleteResult> {
 /**
  * Callback step. `url` is the full callback URL on `APP_ORIGIN`, `cookie` the value of
  * `__Host-ac_oauth`. Validates state (single use, bound to the cookie), PKCE, nonce and the ID
- * token, requires `email_verified`, checks the allow-list and the `google_sub` binding, and
- * creates a `pending_passkey` session.
+ * token, requires `email_verified`, looks the user up by email and checks the `google_sub` binding,
+ * requires role `admin`, then creates the session, logs `signin.success` and returns where to go.
  */
 export async function completeGoogleFlow(
   url: URL,
@@ -198,24 +175,8 @@ export async function completeGoogleFlow(
   const email = typeof claims.email === 'string' ? claims.email.toLowerCase() : null;
   if (email === null || claims.email_verified !== true) return reject(now);
 
-  let admin;
-  if (flow.purpose === 'setup') {
-    if (flow.setupTokenHash === null) return { ok: false, error: 'invalid' };
-    [admin] = await db
-      .select()
-      .from(adminUser)
-      .where(
-        and(
-          eq(adminUser.setupTokenHash, flow.setupTokenHash),
-          gt(adminUser.setupTokenExpiresAt, now),
-        ),
-      );
-    if (!admin) return { ok: false, error: 'expired' };
-    if (admin.googleEmail !== email) return reject(now);
-  } else {
-    [admin] = await db.select().from(adminUser).where(eq(adminUser.googleEmail, email));
-    if (!admin) return reject(now);
-  }
+  const [admin] = await db.select().from(adminUser).where(eq(adminUser.googleEmail, email));
+  if (!admin || admin.role !== 'admin') return reject(now);
 
   if (admin.googleSub === null) {
     try {
@@ -226,33 +187,23 @@ export async function completeGoogleFlow(
         .returning({ id: adminUser.id });
       if (bound.length === 0) return await reject(now); // bound by a concurrent sign-in
     } catch {
-      return await reject(now); // this sub already belongs to another admin
+      return await reject(now); // this sub already belongs to another user
     }
   } else if (admin.googleSub !== claims.sub) {
     return reject(now);
   }
 
-  const adminId = admin.id;
   const created = await db.transaction(async (tx) => {
-    // A sign-in that never reached `full` is only marked, so the abandoned-sessions task counts it.
-    await tx
-      .update(adminSession)
-      .set({ endedAt: now })
-      .where(
-        and(
-          eq(adminSession.adminId, adminId),
-          eq(adminSession.stage, 'pending_passkey'),
-          isNull(adminSession.endedAt),
-        ),
-      );
-    return createSession(adminId, 'pending_passkey', {
-      now,
-      purpose: flow.purpose,
-      nextPath: safeAdminNext(flow.nextPath),
-      tx,
+    const session = await createSession(admin.id, { now, tx });
+    await logActivity(tx, {
+      adminId: admin.id,
+      actorKind: 'admin',
+      actorLabel: admin.displayName,
+      action: 'signin.success',
     });
+    return session;
   });
-  return { ok: true, token: created.token, redirectTo: REDIRECT_PATHS[flow.purpose] };
+  return { ok: true, token: created.token, redirectTo: safeAdminNext(flow.nextPath) ?? '/admin' };
 }
 
 export function clearOauthCookie(): Promise<void> {

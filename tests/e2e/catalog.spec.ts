@@ -188,6 +188,7 @@ test('the product page head carries Open Graph and price tags', async ({ page, b
 
 test('the photo strip scrolls only sideways, so a vertical swipe on it scrolls the page', async ({
   page,
+  browserName,
 }) => {
   await page.goto('/he/p/sample-clay-mug');
   const track = page.getByTestId('gallery-track');
@@ -207,6 +208,9 @@ test('the photo strip scrolls only sideways, so a vertical swipe on it scrolls t
   expect(sizes.content).toBe(sizes.track);
   expect(Math.abs(sizes.photo - sizes.track)).toBeLessThanOrEqual(1);
   expect(Math.abs(sizes.track - (sizes.width * 5) / 4)).toBeLessThanOrEqual(1);
+  // Playwright cannot send a mouse wheel (or a touch swipe) in mobile WebKit; there the
+  // computed overflow-y and size checks above are what guard the iPhone behaviour.
+  if (browserName === 'webkit') return;
   await track.hover();
   await page.mouse.wheel(0, 400);
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);

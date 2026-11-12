@@ -1,7 +1,7 @@
 'use server';
 
 import { z } from 'zod';
-import { requireAdmin, requireRecentAuth } from '@/server/auth/require-admin';
+import { requireAdmin } from '@/server/auth/require-admin';
 import {
   actorOf,
   fieldFailure,
@@ -19,9 +19,8 @@ import {
 import { exportCustomer as exportRecord } from '@/server/privacy/export';
 
 // Thin wrappers: the rules and the work live in src/server/privacy/* (data-access layer).
-// `exportCustomer` and `anonymizeCustomer` are passkey re-check actions (FR-019a): they start with
-// `requireRecentAuth()` and answer `admin.reauth_required`, writing nothing, when the passkey is
-// older than 5 minutes.
+// Every action starts with `requireAdmin()`. Export and anonymise need only the confirmation the
+// screen asks for (no second check).
 
 const query = z.string().min(3).max(254);
 const refShape = { q: query, orderIds: z.array(z.uuid()).max(500) };
@@ -48,8 +47,7 @@ export async function exportCustomer(input: {
   q: string;
   orderIds: string[];
 }): Promise<ActionResult<{ filename: string; content: string }>> {
-  const context = await requireRecentAuth();
-  if (!context.ok) return context;
+  const context = await requireAdmin();
   const parsed = refSchema.safeParse(input);
   if (!parsed.success) return invalid(parsed.error);
   return exportRecord(actorOf(context), parsed.data);
@@ -71,8 +69,7 @@ export async function anonymizeCustomer(input: {
   orderIds: string[];
   confirm: true;
 }): Promise<ActionResult<{ count: number; skipped: number; keptCheckouts: number }>> {
-  const context = await requireRecentAuth();
-  if (!context.ok) return context;
+  const context = await requireAdmin();
   const parsed = confirmedSchema.safeParse(input);
   if (!parsed.success) return invalid(parsed.error);
   return anonymizePerson(actorOf(context), parsed.data);

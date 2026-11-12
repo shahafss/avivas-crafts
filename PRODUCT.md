@@ -34,7 +34,7 @@ Success means:
 - **Shopping:** phone-first, Hebrew RTL by default, with an English LTR version and a language switch on every page. Each language has its own shareable link.
 - **Checkout:** collects only the fields an order needs. The visitor chooses shipping (flat fee, free above an amount Aviva sets) or free self-pickup, then pays online (Israeli cards, plus Bit where the provider supports it, on the provider's hosted page) or offline (Bit, PayBox, bank transfer, or cash on pickup, which Aviva confirms by hand).
 - **Running the shop:** Aviva takes photos on her phone and uploads them. The admin area is Hebrew-only and mobile-first. She moves each order through New → In preparation → Shipped / Ready for pickup → Completed, or Cancelled. Customers get emails in the language they ordered in.
-- **Admin sign-in:** Google account (approved list only) plus a passkey unlocked with the device's PIN. No passwords, and fingerprint or Face ID is never required.
+- **Admin sign-in:** a Google account whose role in the shop is `admin` (set with `pnpm admin:role`), protected by that account's own Google 2-step verification. One step, no passkey, no passwords stored in the shop.
 - **Product range:** a few hundred products at most, grouped in categories Aviva manages (e.g. wool dolls, animals, accessories). A few products come in options such as hair color, sometimes at a different price.
 
 ## Capabilities and Constraints

@@ -24,8 +24,10 @@ beforeEach(async () => {
     .update(shopSettings)
     .set({ notificationEmails: ['Owner@Example.test', 'second@example.test'] });
   await testDb.db.insert(adminUser).values([
-    { displayName: 'Aviva', googleEmail: 'aviva@example.test' },
-    { displayName: 'Dana', googleEmail: 'owner@example.test' },
+    { displayName: 'Aviva', googleEmail: 'aviva@example.test', role: 'admin' },
+    { displayName: 'Dana', googleEmail: 'owner@example.test', role: 'admin' },
+    // A user without the admin role never gets security alerts.
+    { displayName: 'Guest', googleEmail: 'guest@example.test', role: 'user' },
   ]);
 });
 afterAll(() => testDb.close());
@@ -34,9 +36,9 @@ const t0 = new Date('2026-11-08T10:00:00Z');
 const rows = () => testDb.db.select().from(emailOutbox);
 
 describe('notifyAdmins', () => {
-  it('emails every admin Google address and notification address once', async () => {
+  it('emails every admin Google address and notification address once, and no user without the admin role', async () => {
     const queued = await notifyAdmins(
-      'admin_added',
+      'google_rejected',
       { at: t0, adminName: 'Dana' },
       { activityId: 'act-1', now: t0 },
     );
@@ -52,7 +54,7 @@ describe('notifyAdmins', () => {
 
   it('puts the admin name in the body only, never in the subject', async () => {
     await notifyAdmins(
-      'passkey_added',
+      'google_rejected',
       { at: t0, adminName: 'SentinelAdminName' },
       { activityId: 'act-2', now: t0 },
     );
@@ -69,28 +71,12 @@ describe('notifyAdmins', () => {
     expect(await notifyAdmins('google_rejected', { at: t0 }, { now: t0 })).toBe(3);
     const soon = new Date(t0.getTime() + 5 * 60_000);
     expect(await notifyAdmins('google_rejected', { at: soon }, { now: soon })).toBe(0);
-    // Another kind has its own throttle.
-    expect(await notifyAdmins('blocked', { at: soon }, { now: soon })).toBe(3);
     const later = new Date(t0.getTime() + 16 * 60_000);
     expect(await notifyAdmins('google_rejected', { at: later }, { now: later })).toBe(3);
     expect(
       (await rows()).filter((r) => r.dedupeKey.startsWith('security:google_rejected:')),
     ).toHaveLength(6);
-    expect(await testDb.db.select().from(notificationThrottle)).toHaveLength(2);
-  });
-
-  it('always sends the other kinds, one email per recipient per activity', async () => {
-    const kinds = ['admin_added', 'admin_removed', 'recovery_used', 'recovery_pending'] as const;
-    for (const kind of kinds) {
-      expect(await notifyAdmins(kind, { at: t0 }, { activityId: `a-${kind}`, now: t0 })).toBe(3);
-      expect(await notifyAdmins(kind, { at: t0 }, { activityId: `b-${kind}`, now: t0 })).toBe(3);
-    }
-    expect(await rows()).toHaveLength(24);
-    expect(await testDb.db.select().from(notificationThrottle)).toHaveLength(0);
-    // The same activity twice is a no-op.
-    expect(
-      await notifyAdmins('admin_added', { at: t0 }, { activityId: 'a-admin_added', now: t0 }),
-    ).toBe(0);
+    expect(await testDb.db.select().from(notificationThrottle)).toHaveLength(1);
   });
 
   it('rolls back with the caller transaction', async () => {

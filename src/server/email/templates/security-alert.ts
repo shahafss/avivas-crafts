@@ -2,31 +2,12 @@ import 'server-only';
 import { emailT } from '../t';
 import { escapeHtml, renderEmail } from '../layout';
 
-export const SECURITY_ALERT_KINDS = [
-  'google_rejected',
-  'blocked',
-  'passkey_abandoned',
-  'admin_added',
-  'admin_removed',
-  'admin_reset',
-  'passkey_added',
-  'passkey_removed',
-  'recovery_used',
-  'recovery_regenerated',
-  'recovery_refused',
-  'recovery_pending',
-  'recovery_approved',
-  'recovery_rejected',
-] as const;
+export const SECURITY_ALERT_KINDS = ['google_rejected'] as const;
 
 export type SecurityAlertKind = (typeof SECURITY_ALERT_KINDS)[number];
 
 /** Repeatable sign-in kinds: at most one email per kind per 15 minutes. */
-export const THROTTLED_KINDS: readonly SecurityAlertKind[] = [
-  'google_rejected',
-  'blocked',
-  'passkey_abandoned',
-];
+export const THROTTLED_KINDS: readonly SecurityAlertKind[] = ['google_rejected'];
 
 export interface SecurityAlertData {
   at: Date;

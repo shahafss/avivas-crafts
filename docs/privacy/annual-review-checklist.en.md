@@ -13,10 +13,9 @@ Do once a year, and after any severe incident or large change. Date: [date]. Don
 
 ## Access
 
-- [ ] Every person on the approved-admin list still needs access; everyone who left is removed.
-- [ ] Every registered passkey belongs to a device still in use; unknown or old ones are removed.
+- [ ] Every user with role `admin` (`admin_user`) still needs access; everyone who left has role `user`.
 - [ ] Hosting, storage and repository access lists contain only the maintainer.
-- [ ] Admins' Google accounts have 2-Step Verification on; recovery codes are held safely.
+- [ ] Admins' Google accounts have 2-Step Verification on.
 
 ## Activity and incidents
 

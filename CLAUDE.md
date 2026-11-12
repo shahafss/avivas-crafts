@@ -44,4 +44,5 @@ specific to this project. The binding rules are in `.specify/memory/constitution
 ## Local ports
 
 - Dev server 3001 (3000 belongs to another project), E2E 3100/3101 (`E2E_PORT`/`CONSENT_PORT`),
-  mock OIDC 4011.
+  mock OIDC 4011 for dev and 4012 for E2E (`OIDC_PORT`). E2E uses its own mock-user file
+  (`tests/fixtures/oidc/user.e2e.json`), so E2E runs no longer clash with a running `pnpm dev`.

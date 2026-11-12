@@ -15,7 +15,6 @@ import type { ActionResult } from '@/server/catalog/result';
 import type { SearchResult } from '@/server/privacy/customers';
 import { OrderBadgesClient } from './OrderBadgesClient';
 import { useHydrated } from './useHydrated';
-import { useReauthGate } from './ReauthGate';
 
 /** The Server Actions of `customers/actions.ts`, passed in by the page. */
 export interface CustomerSearchApi {
@@ -65,7 +64,6 @@ export function CustomerSearch({ actions }: { actions: CustomerSearchApi }) {
   const t = useTranslations('admin.customers');
   const messages = useTranslations();
   const hydrated = useHydrated();
-  const reauth = useReauthGate();
   const busyRef = useRef(false);
 
   const [text, setText] = useState('');
@@ -134,9 +132,10 @@ export function CustomerSearch({ actions }: { actions: CustomerSearchApi }) {
     if (shown === null) return;
     const { q, data } = shown;
     void guarded('export', async () => {
-      const result = await reauth.run(() =>
-        actions.exportCustomer({ q, orderIds: data.orders.map((order) => order.id) }),
-      );
+      const result = await actions.exportCustomer({
+        q,
+        orderIds: data.orders.map((order) => order.id),
+      });
       if (!result.ok) {
         fail(result);
         return;
@@ -176,13 +175,11 @@ export function CustomerSearch({ actions }: { actions: CustomerSearchApi }) {
     if (shown === null) return;
     const { q, data } = shown;
     void guarded('erase', async () => {
-      const result = await reauth.run(() =>
-        actions.anonymizeCustomer({
-          q,
-          orderIds: data.orders.map((order) => order.id),
-          confirm: true,
-        }),
-      );
+      const result = await actions.anonymizeCustomer({
+        q,
+        orderIds: data.orders.map((order) => order.id),
+        confirm: true,
+      });
       setDialog(null);
       if (!result.ok) {
         fail(result);
@@ -396,7 +393,6 @@ export function CustomerSearch({ actions }: { actions: CustomerSearchApi }) {
         </div>
       </ConfirmDialog>
 
-      {reauth.dialog}
       <Toast message={toast} onDismiss={dismissToast} />
     </div>
   );

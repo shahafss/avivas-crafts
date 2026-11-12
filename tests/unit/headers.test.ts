@@ -111,8 +111,7 @@ describe('admin bounce', () => {
     ['missing Sec-Fetch-Site', { secFetchSite: null }],
     ['POST', { method: 'POST' }],
     ['sign-in', { pathname: '/admin/sign-in' }],
-    ['sign-in subpath', { pathname: '/admin/sign-in/passkey' }],
-    ['setup', { pathname: '/admin/setup' }],
+    ['sign-in subpath', { pathname: '/admin/sign-in/extra' }],
     ['non-navigation fetch', { secFetchMode: 'cors' }],
     ['a public page', { pathname: '/he/cart' }],
   ])('does not bounce: %s', (_name, override) => {

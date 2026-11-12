@@ -4,7 +4,7 @@ import { routing } from '@/i18n/routing';
 import { getEnv } from '@/server/env';
 import {
   isAdminPath,
-  isSignInOrSetupPath,
+  isSignInPath,
   sameSiteNavigationPage,
   shouldBounceAdminRequest,
 } from '@/server/security/admin-bounce';
@@ -33,7 +33,7 @@ export default function proxy(request: NextRequest): Response {
     paymentHost: env.PAYPLUS_PAYMENT_HOST,
     imageOrigin: env.IMAGE_PUBLIC_ORIGIN,
     optionalScriptHosts: [],
-    oidcOrigin: isSignInOrSetupPath(pathname) ? new URL(env.OIDC_ISSUER).origin : undefined,
+    oidcOrigin: isSignInPath(pathname) ? new URL(env.OIDC_ISSUER).origin : undefined,
     dev: process.env.NODE_ENV === 'development',
     upgradeInsecureRequests: https,
   });

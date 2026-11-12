@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-/** Centered card for the sign-in, recovery and setup screens. */
+/** Centered card for the sign-in screen. */
 export function AuthCard({ title, children }: { title: string; children: ReactNode }) {
   return (
     <main id="main" className="mx-auto grid min-h-dvh w-full max-w-md content-center px-4 py-10">

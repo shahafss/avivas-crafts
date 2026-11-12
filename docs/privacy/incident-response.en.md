@@ -4,7 +4,7 @@
 
 A severe incident is one where personal data in the database was, or may have been, accessed,
 copied, changed, lost or made unavailable without authorisation, for example a stolen admin
-device or passkey, an unapproved sign-in, a leaked backup or key, a provider breach, or data sent to
+device, an unapproved sign-in, a leaked backup or key, a provider breach, or data sent to
 the wrong person. [to be completed: legal reviewer to confirm the exact notification duties and
 deadlines of the Privacy Protection Law and its regulations for this database.]
 
@@ -17,9 +17,9 @@ The owner leads. The maintainer carries out technical steps. Contact details: [t
 1. **Detect and report.** Anyone who notices something odd (a security alert email, an unfamiliar
    sign-in or activity-log entry, a lost device, a message from a provider) tells the owner and the
    maintainer at once. Note the time.
-2. **Contain.** Stop further harm first: sign out of all devices; remove the affected passkeys or
-   admin; rotate the affected secrets (provider keys, the HMAC key, database credentials); block
-   the affected account at Google; for a lost device remove its passkeys. Do not delete evidence
+2. **Contain.** Stop further harm first: sign out of all devices (delete the `admin_session` rows);
+   set the affected admin's role to `user` with `pnpm admin:role`; rotate the affected secrets (provider keys, the HMAC key, database credentials); block
+   the affected account at Google; for a lost device the step above is enough. Do not delete evidence
    (logs, the activity log, provider logs).
 3. **Assess.** Decide what happened: which data, whose, how many people, since when, whether it
    left the system, whether it is still happening, and the likely harm. Use the activity log, the

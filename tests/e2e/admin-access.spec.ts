@@ -8,10 +8,10 @@ import {
   REPO_ROOT,
   routeUrl,
 } from '../helpers/admin-files';
-import { expect, resetDb, sql, test } from './fixtures';
+import { expect, resetDb, signInAsAdmin, sql, test } from './fixtures';
 
-// Every admin page and admin API route must refuse a signed-out visitor and a visitor who only
-// finished the Google step (`pending_passkey`), and must reveal none of the shop's private data.
+// Every admin page and admin API route must refuse a signed-out visitor and a visitor whose user
+// has role `user`, and must reveal none of the shop's private data.
 // The lists come from the file tree, so routes added by later phases are covered automatically.
 
 const SENTINELS = [
@@ -27,7 +27,8 @@ const SESSION_COOKIE = '__Host-ac_admin';
 
 let productId = '';
 let orderId = '';
-let pendingToken = '';
+let userToken = '';
+let userId = '';
 
 test.beforeAll(async () => {
   await resetDb();
@@ -48,20 +49,21 @@ test.beforeAll(async () => {
        'pickup', 'offline', 10000, 10000, now(), 1, 1, 'SENTINEL-ORDER-NOTE')
     RETURNING id`;
   orderId = order?.id ?? '';
-  const [admin] = await sql<{ id: string }[]>`
-    INSERT INTO admin_user (display_name, google_email, google_sub)
-    VALUES ('Access Admin', 'access-admin@example.test', 'sub-access-admin')
+  const [user] = await sql<{ id: string }[]>`
+    INSERT INTO admin_user (display_name, google_email, google_sub, role)
+    VALUES ('Access User', 'access-user@example.test', 'sub-access-user', 'user')
     RETURNING id`;
-  pendingToken = randomBytes(32).toString('base64url');
-  await sql`
-    INSERT INTO admin_session (token_hash, admin_id, stage, expires_at, purpose)
-    VALUES (${createHash('sha256').update(pendingToken).digest()}, ${admin?.id ?? ''}, 'pending_passkey',
-            now() + interval '12 hours', 'sign_in')`;
+  userId = user?.id ?? '';
+  userToken = randomBytes(32).toString('base64url');
 });
 
-// The pending session idles out after 5 minutes: keep it alive so the "pending" runs stay meaningful.
+// A session of a user without the admin role is deleted the first time it is used: put it back
+// before every test so each "user role" run starts with a live row.
 test.beforeEach(async () => {
-  await sql`UPDATE admin_session SET last_seen_at = now(), ended_at = NULL WHERE stage = 'pending_passkey'`;
+  await sql`DELETE FROM admin_session WHERE admin_id = ${userId}`;
+  await sql`
+    INSERT INTO admin_session (token_hash, admin_id, expires_at)
+    VALUES (${createHash('sha256').update(userToken).digest()}, ${userId}, now() + interval '12 hours')`;
 });
 
 const fill = (segment: string): string => (segment.startsWith('[...') ? 'unknown/page' : productId);
@@ -92,8 +94,8 @@ const routes = apiRouteFiles().flatMap((file) =>
 );
 
 const states = [
-  { name: 'signed out', withPendingSession: false },
-  { name: 'with only a pending_passkey session', withPendingSession: true },
+  { name: 'signed out', withUserSession: false },
+  { name: 'with a session of a user whose role is user', withUserSession: true },
 ];
 
 test.describe('the lists of admin routes', () => {
@@ -106,7 +108,7 @@ test.describe('the lists of admin routes', () => {
 
 for (const state of states) {
   const headersFor = (): Record<string, string> =>
-    state.withPendingSession ? { Cookie: `${SESSION_COOKIE}=${pendingToken}` } : {};
+    state.withUserSession ? { Cookie: `${SESSION_COOKIE}=${userToken}` } : {};
 
   test.describe(state.name, () => {
     for (const page of pages) {
@@ -151,23 +153,41 @@ for (const state of states) {
   });
 }
 
-test.describe('the sign-in pages', () => {
-  test('are admin responses too: no-store and noindex', async ({ request }) => {
-    for (const url of ['/admin/sign-in', '/admin/setup']) {
-      const response = await request.get(url, { maxRedirects: 0 });
-      expect(response.status(), url).toBe(200);
-      expect(response.headers()['cache-control'], url).toContain('no-store');
-      expect(response.headers()['x-robots-tag'], url).toContain('noindex');
+test.describe('the sign-in page', () => {
+  test('is an admin response too: no-store and noindex', async ({ request }) => {
+    const response = await request.get('/admin/sign-in', { maxRedirects: 0 });
+    expect(response.status()).toBe(200);
+    expect(response.headers()['cache-control']).toContain('no-store');
+    expect(response.headers()['x-robots-tag']).toContain('noindex');
+  });
+});
+
+test.describe('a signed-in admin whose access is taken away', () => {
+  test('is sent to sign-in on the next navigation when the role is set to user', async ({
+    page,
+  }) => {
+    const adminId = await signInAsAdmin(page, { key: 'b' });
+    await page.goto('/admin/orders');
+    await expect(page).toHaveURL(/\/admin\/orders$/);
+    try {
+      await sql`UPDATE admin_user SET role = 'user' WHERE id = ${adminId}`;
+      await page.goto('/admin/orders');
+      await page.waitForURL((url) => url.pathname === '/admin/sign-in');
+      await page.goto('/admin');
+      await page.waitForURL((url) => url.pathname === '/admin/sign-in');
+    } finally {
+      await sql`UPDATE admin_user SET role = 'admin' WHERE id = ${adminId}`;
     }
   });
 
-  test('the passkey and recovery steps need the Google step first', async ({ request }) => {
-    for (const url of ['/admin/sign-in/passkey', '/admin/sign-in/recovery']) {
-      const response = await request.get(url, { maxRedirects: 0 });
-      expect([302, 303, 307, 308], url).toContain(response.status());
-      expect(new URL(response.headers().location ?? '', 'http://localhost').pathname).toBe(
-        '/admin/sign-in',
-      );
-    }
+  test('is sent to sign-in on the next navigation when the sessions are deleted', async ({
+    page,
+  }) => {
+    const adminId = await signInAsAdmin(page, { key: 'b' });
+    await page.goto('/admin/orders');
+    await expect(page).toHaveURL(/\/admin\/orders$/);
+    await sql`DELETE FROM admin_session WHERE admin_id = ${adminId}`;
+    await page.goto('/admin/orders');
+    await page.waitForURL((url) => url.pathname === '/admin/sign-in');
   });
 });

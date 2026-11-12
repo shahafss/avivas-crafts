@@ -29,7 +29,7 @@ The vision (who the shop is for, what success means, principles, what is out of 
 | 001 | MVP: owner manages products; visitors browse, cart, guest checkout and pay | yes | Done (frozen record) | [specs/001-online-crafts-shop](../specs/001-online-crafts-shop/) |
 | 002 | Order handling | yes | Done (dev) | [specs/002-order-handling](../specs/002-order-handling/) |
 | 003 | Privacy, consent, legal and content pages | yes | Done (dev) | [specs/003-privacy-legal-pages](../specs/003-privacy-legal-pages/) |
-| 004 | Simpler admin access | yes | Planned | — |
+| 004 | Simpler admin access | yes | Done (dev) | [specs/004-simpler-admin-access](../specs/004-simpler-admin-access/) |
 | 005 | English version and language switch | yes | Planned | — |
 | 006 | Hosting and launch readiness | yes | Planned | — |
 
@@ -105,7 +105,16 @@ out in the language of the order. Empty English product text falls back to Hebre
 **Goal**: production on Render (Frankfurt) with Cloudflare R2, Resend and PayPlus; encrypted
 off-site database backups; security headers, accessibility and storefront layout tests;
 performance pass (first-load JS ≤ 150 KB gzipped); image metadata check; threat model; Hebrew
-owner guide; launch checklist (domain, DNS, legal review, security scan); final walk-through.
+owner guide; launch checklist (domain, DNS, legal review, security scan, Google OAuth client);
+final walk-through.
+
+**Google OAuth client (owner decision 2026-11-12)**: admin sign-in runs against a mock Google
+locally and in tests; production needs a real one. In Google Cloud Console: a project, an OAuth
+consent screen (External, Testing mode, test users = the admins' Gmail addresses, basic scopes
+only), and an OAuth client of type "Web application" with the redirect URI
+`https://<shop domain>/api/auth/google/callback` (plus `http://localhost:3001/api/auth/google/callback`
+for trying it locally). Set `OIDC_ISSUER=https://accounts.google.com`, `GOOGLE_CLIENT_ID` and
+`GOOGLE_CLIENT_SECRET` on Render, then `pnpm admin:role <gmail> admin` for each admin.
 
 **Deployment decision (2026-11-09)**: production only, deployed from `main` by Render's own
 auto-deploy set to "after CI checks pass". No staging environment for now: a second web service

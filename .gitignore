@@ -8,3 +8,4 @@ playwright-report
 .data/
 *.tsbuildinfo
 tests/fixtures/oidc/user.json
+tests/fixtures/oidc/user.e2e.json
