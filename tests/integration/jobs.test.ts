@@ -134,7 +134,7 @@ describe('job loop', () => {
 });
 
 describe('daily maintenance tasks', () => {
-  it('deletes expired rate limit buckets, OAuth flows and finished sessions only', async () => {
+  it('deletes expired rate limit buckets, OAuth flows and expired or idle sessions only', async () => {
     const now = t0;
     const past = new Date(now.getTime() - 1000);
     const future = new Date(now.getTime() + 3_600_000);
@@ -147,33 +147,34 @@ describe('daily maintenance tasks', () => {
         stateHash: Buffer.from('old'),
         codeVerifier: 'v',
         nonce: 'n',
-        purpose: 'sign_in',
         expiresAt: past,
       },
       {
         stateHash: Buffer.from('new'),
         codeVerifier: 'v',
         nonce: 'n',
-        purpose: 'sign_in',
         expiresAt: future,
       },
     ]);
     const [admin] = await testDb.db
       .insert(adminUser)
-      .values({ displayName: 'A', googleEmail: 'a@example.test' })
+      .values({ displayName: 'A', googleEmail: 'a@example.test', role: 'admin' })
       .returning();
     const adminId = admin?.id ?? '';
     await testDb.db.insert(adminSession).values([
-      { tokenHash: Buffer.from('full-old'), adminId, stage: 'full', expiresAt: past },
-      { tokenHash: Buffer.from('full-new'), adminId, stage: 'full', expiresAt: future },
+      { tokenHash: Buffer.from('past-lifetime'), adminId, lastSeenAt: now, expiresAt: past },
       {
-        tokenHash: Buffer.from('pend-done'),
+        tokenHash: Buffer.from('idle'),
         adminId,
-        stage: 'pending_passkey',
+        lastSeenAt: new Date(now.getTime() - 31 * 60_000),
         expiresAt: future,
-        abandonProcessedAt: past,
       },
-      { tokenHash: Buffer.from('pend-open'), adminId, stage: 'pending_passkey', expiresAt: past },
+      {
+        tokenHash: Buffer.from('active'),
+        adminId,
+        lastSeenAt: new Date(now.getTime() - 29 * 60_000),
+        expiresAt: future,
+      },
     ]);
 
     const tasks: TaskSet = { minute: [], fiveMinute: [], daily: dailyTasks };
@@ -188,6 +189,6 @@ describe('daily maintenance tasks', () => {
       (await testDb.db.select().from(adminSession))
         .map((r) => Buffer.from(r.tokenHash).toString())
         .sort(),
-    ).toEqual(['full-new', 'pend-open']);
+    ).toEqual(['active']);
   });
 });

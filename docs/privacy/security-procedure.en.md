@@ -12,18 +12,16 @@ The owner is responsible for the database. The maintainer carries out the techni
 
 ## 2. Access control
 
-- The admin area is the only way to read customer data. It needs two steps: Sign in with Google for
-  an account on the approved-admin list, then a passkey registered in the shop (unlocked by the
-  device's screen lock). The shop stores no admin passwords.
-- Until both steps are done, the admin area shows no drafts, orders, settings or customer data.
-- Repeated failed passkey attempts and sign-ins from unapproved accounts are blocked for a time and
-  the owner is emailed.
-- Sessions expire after a period of inactivity; an admin can end one session or sign out of all
-  devices.
-- Security changes (adding or removing an admin or passkey, new recovery codes, approving a
-  recovery passkey, customer data exports and anonymisation) ask for the passkey again unless it
-  was used in the last 5 minutes.
-- A passkey registered with a recovery code works only after the other admin approves it.
+- The admin area is the only way to read customer data. It needs a Google sign-in with an account that has
+  the role `admin` in the shop (set by the maintainer with `pnpm admin:role`), protected by that
+  Google account's 2-step verification. The shop stores no admin passwords.
+- Until then, the admin area shows no drafts, orders, settings or customer data.
+- Sign-ins from unapproved accounts are refused and logged, the sign-in start is rate limited, and
+  the owner is emailed (at most one email per 15 minutes).
+- The role is checked on every request: setting a user's role to `user` ends their access and
+  deletes their sessions at once.
+- Sessions end after 30 minutes of inactivity or 12 hours in all; an admin can sign out. To sign
+  everyone out, delete the `admin_session` rows.
 - Everyone with access uses a device protected by a screen lock and updated software, and a Google
   account with 2-Step Verification (accepted as a launch step and a documented residual risk, since
   the shop cannot verify it).
@@ -81,14 +79,14 @@ activity, old cookie-choice records and old emails. The maintainer checks yearly
 ## 8. Devices and the workplace
 
 Devices used for the admin area: updated operating system and browser, screen lock, no shared
-accounts, lost devices reported at once so their passkeys and sessions can be removed. Do not leave
+accounts, lost devices reported at once so their sessions can be removed. Do not leave
 the admin area open on an unattended device.
 
 ## 9. People
 
 The two admins and the maintainer are told the content of this procedure and of the incident
-procedure when they get access and yearly. A person who leaves is removed from the admin list at
-once (their passkeys and sessions end).
+procedure when they get access and yearly. A person who leaves has their role set to `user` at
+once (their sessions end).
 
 ## 10. Incidents
 

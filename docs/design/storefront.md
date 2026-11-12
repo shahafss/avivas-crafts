@@ -937,7 +937,7 @@ and style; nothing optional loads before acceptance.
 | Contact | — | busy submit | field errors, rate-limit Notice, expired-form Notice | — |
 | Content page ([§8.9](#89-content-pages-localepagesslug)) | — | server-rendered | unknown slug and `contact` → 404 | English missing → Hebrew text marked `lang="he"` |
 | Admin content ([§12.5](#125-content-list-admincontent)–[§12.6](#126-content-editor-and-versions-admincontentslug)) | list always has the 7 pages | server-rendered; busy save | stale `alert` Notice; field errors | unknown slug or version → admin 404 |
-| Admin customers ([§12.7](#127-customers-admincustomers)) | "לא נמצאו לקוחות" EmptyState | busy search / action | stale result; passkey re-check; field error | — |
+| Admin customers ([§12.7](#127-customers-admincustomers)) | "לא נמצאו לקוחות" EmptyState | busy search / action | stale result; field error | — |
 | Admin statistics ([§12.8](#128-statistics-adminstats)) | "עוד אין נתונים" EmptyState | server-rendered | — | — |
 
 ---
@@ -989,6 +989,10 @@ email also `dir="ltr"`); numbers use `tnum`. No `style` attribute. Admin screens
   navigation pills (44 px high, `rounded-pill`, `hover:bg-sun-soft`; "הזמנות" is already one of
   them; no current-page marker), and a `max-w-5xl` `<main id="main">` with 16 px side gutters and
   24 px block padding. The two-column order page (§12.3) switches at 900 px inside this main.
+- **Sign-in** (`/admin/sign-in`, 004): one `AuthCard` with a single "Sign in with Google" button and
+  nothing else; no passkey, recovery or setup screens exist. The only errors, shown in the card's
+  `alert` Notice, are `not_allowed` (generic refusal for any unapproved account), `expired`, `error`
+  and `rate_limited`.
 - **Page title**: h1 28/800, `ink`, `text-wrap: balance`; one h1 per page.
 - **Status badges** (`admin/OrderStatusBadge`, `rounded-pill`, 13/700, padding 4×12, text label
   always present, so colour is never the only signal):
@@ -1221,8 +1225,8 @@ Added by 003. h1 "לקוחות" and a one-line explanation.
   for the final status check (so up to 72 hours; or 30 days if the amount did not match). If the
   customer completes a payment, a new order with their details will appear, so search again in 3
   days."
-- **Export and anonymise** ask for the passkey again unless it was confirmed in the last 5 minutes
-  (the existing re-check gate); search and marketing withdrawal do not.
+- **Export and anonymise** need only the confirmation dialog below (no second sign-in check, 004);
+  they, search and marketing withdrawal all require a signed-in admin.
 - **No results**: `EmptyState` "לא נמצאו לקוחות". Stale result (orders changed since the search):
   `alert` `Notice` and a fresh search.
 Accept: search by email or phone finds the orders; both dialogs state their consequence; focus

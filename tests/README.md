@@ -76,4 +76,5 @@ await pg.close();
 The E2E app servers use ports 3100 (app) and 3101 (consent). When another process holds them, set
 `E2E_PORT` and/or `CONSENT_PORT` for the run, e.g. `E2E_PORT=3200 CONSENT_PORT=3201 pnpm exec
 playwright test`. `baseURL`, `APP_ORIGIN`, `IMAGE_PUBLIC_ORIGIN` and the helpers' `serverEnv()` all
-follow them (`tests/e2e/env.ts`). The mock OIDC port (4011) is fixed.
+follow them (`tests/e2e/env.ts`). E2E mock OIDC runs on 4012 (`OIDC_PORT` overrides; 4011 is the dev mock) and uses its own
+user file `tests/fixtures/oidc/user.e2e.json`, so E2E never changes the `pnpm dev` sign-in identity.

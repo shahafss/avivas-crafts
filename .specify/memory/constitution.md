@@ -1,5 +1,14 @@
 <!--
 Sync Impact Report
+- Version change: 2.0.0 → 2.0.1 (PATCH: wording; owner decision 2026-11-12)
+- Modified principles: VI. Tested Critical Paths: "admin authentication (including two-factor),
+  access control on every admin route" → "admin authentication and access control on every admin
+  route" (two-factor no longer exists since principle IV v2.0.0 / feature 004)
+- Added/removed sections: none
+- Templates: no template edits required
+- Deferred TODOs: none
+
+Previous report (2.0.0):
 - Version change: 1.4.1 → 2.0.0 (MAJOR: principle IV redefined; owner decision 2026-11-11)
 - Modified principles: IV. Security by Design (title kept)
   - Admin access: Google sign-in only; the passkey second factor is no longer required; admins
@@ -108,7 +117,7 @@ Rationale: there is no operations team; the system must run cheaply and quietly 
 
 - Automated tests MUST cover the critical paths: placing an order (cart → checkout →
   payment → confirmation), payment confirmation handling, admin product create/edit/delete,
-  admin authentication (including two-factor), access control on every admin route, cookie
+  admin authentication and access control on every admin route, cookie
   consent behavior, and language switching.
 - A feature is not done until its critical-path tests pass.
 
@@ -192,4 +201,4 @@ compliance is far cheaper to build in than to retrofit.
 - Versioning follows semantic versioning: MAJOR for removing or redefining a principle, MINOR for
   adding a principle or materially expanding guidance, PATCH for wording fixes.
 
-**Version**: 2.0.0 | **Ratified**: 2026-10-31 | **Last Amended**: 2026-11-11
+**Version**: 2.0.1 | **Ratified**: 2026-10-31 | **Last Amended**: 2026-11-12

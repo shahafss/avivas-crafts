@@ -1,10 +1,10 @@
 // pnpm dev: one command for local development. In order it
 //   1. creates .env.local from .env.example when it is missing,
 //   2. checks that the port of APP_ORIGIN is free (fails instead of silently moving to another
-//      port: the setup links and image URLs are built from APP_ORIGIN),
+//      port: image URLs and the sign-in redirect are built from APP_ORIGIN),
 //   3. starts the database container (docker compose, left running on exit),
 //   4. applies the migrations and the seed (both idempotent),
-//   5. creates the first admin when there is none and prints the one-time setup link,
+//   5. makes the mock Google user an admin (role `admin`) when there is no admin yet,
 //   6. starts the mock Google (OIDC) issuer in this process, unless port 4011 is already served,
 //   7. starts `next dev`, and stops the mock and next on Ctrl+C.
 import { spawn, spawnSync } from 'node:child_process';
@@ -69,13 +69,18 @@ if (!databaseUrl) fail('DATABASE_URL is not set in .env.local.');
 const client = postgres(databaseUrl, { max: 1, onnotice: () => undefined });
 let hasAdmin: boolean;
 try {
-  const rows = await client`select 1 from admin_user limit 1`;
+  const rows = await client`select 1 from admin_user where role = 'admin' limit 1`;
   hasAdmin = rows.length > 0;
 } finally {
   await client.end();
 }
 if (!hasAdmin) {
-  runStep('Creating the first admin', 'pnpm', ['admin:add', mockUserEmail(), 'Local Admin']);
+  runStep('Creating the first admin', 'pnpm', [
+    'admin:role',
+    mockUserEmail(),
+    'admin',
+    'Local Admin',
+  ]);
 }
 
 // 3. Mock OIDC issuer.
@@ -84,7 +89,9 @@ if (await portIsFree(OIDC_MOCK_PORT)) {
   mock = await startOidcMock();
   console.log(`Mock Google (OIDC) running at ${mock.issuer}`);
 } else {
-  console.log(`Port ${String(OIDC_MOCK_PORT)} is already in use: reusing the mock OIDC issuer there.`);
+  console.log(
+    `Port ${String(OIDC_MOCK_PORT)} is already in use: reusing the mock OIDC issuer there.`,
+  );
 }
 
 console.log(`\nShop and admin: ${origin.origin}   Emails: pnpm dev:outbox\n`);

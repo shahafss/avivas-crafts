@@ -614,82 +614,14 @@
     "auth": {
       "signIn": {
         "title": "Sign in to the shop admin",
-        "intro": "Sign-in has two steps: your Google account first, then the passkey on your device.",
+        "intro": "Sign in with the admin's Google account.",
         "google": "Sign in with Google",
         "errors": {
           "not_allowed": "This account is not allowed to manage the shop.",
           "expired": "The link expired or was already used. Try signing in again.",
           "error": "Sign-in did not work. Try again.",
-          "rate_limited": "Too many sign-in attempts. Try again in a few minutes.",
-          "blocked": "Sign-in is temporarily blocked after failed attempts. Try again in 15 minutes."
+          "rate_limited": "Too many sign-in attempts. Try again in a few minutes."
         }
-      },
-      "passkey": {
-        "title": "Confirm with your passkey",
-        "intro": "Step two: confirm it is you with your device's passkey.",
-        "pinHint": "The phone's screen-lock PIN or pattern is enough. No fingerprint or face scan is needed.",
-        "button": "Confirm with passkey",
-        "busy": "Checking...",
-        "lostPasskey": "I lost my passkey",
-        "blockedTitle": "Sign-in is temporarily blocked",
-        "blocked": "There were too many failed attempts. Try again in 15 minutes, or ask the other admin to clear the block.",
-        "backToSignIn": "Back to sign-in"
-      },
-      "recovery": {
-        "title": "Recover access",
-        "intro": "Enter one of the recovery codes you saved. After it is accepted you can add a new passkey, which only works once the other admin approves it.",
-        "codeLabel": "Recovery code",
-        "codeHint": "12 characters, dashes or spaces are fine",
-        "submit": "Check the code",
-        "invalid": "The code is wrong or was already used.",
-        "blocked": "Too many attempts. Try again in 15 minutes.",
-        "failed": "That did not work. Try again.",
-        "needsOtherTitle": "Recovery needs another admin",
-        "needsOther": "Recovery needs another admin with an active passkey, and there is none right now. Please contact the person who maintains the site.",
-        "end": "I understand, end sign-in",
-        "registerTitle": "Add a new passkey",
-        "registerIntro": "The code was accepted. Name the device and confirm the passkey.",
-        "deviceLabel": "Device name",
-        "devicePlaceholder": "For example: Aviva's phone",
-        "register": "Add passkey",
-        "waitingTitle": "Waiting for approval",
-        "waiting": "The new passkey is waiting for the other admin's approval. You can sign in once they approve it.",
-        "toSignIn": "To the sign-in page"
-      },
-      "setup": {
-        "title": "First sign-in setup",
-        "intro": "Before the first sign-in, connect your Google account and add a passkey for this device.",
-        "google": "Continue with Google",
-        "missingToken": "The setup link is missing or invalid. Ask for a new one.",
-        "registerTitle": "Add a passkey",
-        "registerIntro": "Name the device and confirm the passkey.",
-        "deviceLabel": "Device name",
-        "devicePlaceholder": "For example: Aviva's phone",
-        "register": "Add passkey",
-        "codesTitle": "Your recovery codes",
-        "codesIntro": "Keep these codes somewhere safe, for example printed. Each code works once and they will not be shown again.",
-        "codesWarning": "Recovering with a code also needs the other admin's approval.",
-        "copy": "Copy the codes",
-        "copied": "Codes copied",
-        "print": "Print",
-        "saved": "I saved the codes",
-        "codesList": "Recovery codes"
-      },
-      "passkeyButton": {
-        "cancelled": "The confirmation was cancelled or not completed. You can try again.",
-        "unsupported": "This browser does not support passkeys.",
-        "failed": "The confirmation did not work. Try again.",
-        "blocked": "Sign-in is temporarily blocked after failed attempts. Try again in 15 minutes.",
-        "sessionExpired": "The sign-in expired. Start again.",
-        "noOtherAdmin": "A passkey cannot be added right now because no other admin has an active passkey.",
-        "alreadyRegistered": "This passkey is already registered.",
-        "needLabel": "Please name the device."
-      },
-      "reauth": {
-        "title": "Confirm with your passkey",
-        "text": "This is a security action, so please confirm again with your passkey.",
-        "confirm": "Confirm with passkey",
-        "cancel": "Cancel"
       }
     },
     "confirm_required": "Please confirm the action before it is carried out.",
@@ -997,7 +929,6 @@
         "threshold": "The amount isn't valid (a number, 0 or more, or empty)."
       }
     },
-    "reauth_required": "Please confirm with your passkey again to continue.",
     "customers": {
       "title": "Customers",
       "intro": "Look up a customer by email or phone: download their data, stop marketing emails or erase their details.",
@@ -1147,71 +1078,6 @@
           "title": "Sign-in with an unapproved Google account",
           "what": "Someone tried to sign in to the shop admin with a Google account that is not an approved admin.",
           "todo": "No action is needed: the account got no access. If this keeps happening, secure the admins' Google accounts."
-        },
-        "blocked": {
-          "title": "Passkey sign-in blocked",
-          "what": "Passkey sign-in was blocked after several failed attempts.",
-          "todo": "If this was not you, secure the admin's Google account. Another admin can clear the block in the admin area."
-        },
-        "passkey_abandoned": {
-          "title": "Sign-in not completed with the passkey",
-          "what": "Someone signed in with an admin's Google account but did not finish the passkey step.",
-          "todo": "If this was not you, secure the admin's Google account."
-        },
-        "admin_added": {
-          "title": "An admin was added",
-          "what": "A new admin was added to the shop.",
-          "todo": "If you did not expect this, check the admin list and remove anyone who should not be there."
-        },
-        "admin_removed": {
-          "title": "An admin was removed",
-          "what": "An admin was removed from the shop.",
-          "todo": "If you did not expect this, check the admin list and contact the maintainer."
-        },
-        "admin_reset": {
-          "title": "An admin's access was reset",
-          "what": "An admin's access was reset by the maintainer.",
-          "todo": "If you did not expect this, contact the maintainer."
-        },
-        "passkey_added": {
-          "title": "A passkey was added",
-          "what": "A passkey was added to an admin account.",
-          "todo": "If you did not expect this, remove the passkey in the admin area and secure the Google account."
-        },
-        "passkey_removed": {
-          "title": "A passkey was removed",
-          "what": "A passkey was removed from an admin account.",
-          "todo": "If you did not expect this, check the passkeys in the admin area."
-        },
-        "recovery_used": {
-          "title": "A recovery code was used",
-          "what": "A recovery code was used to sign in.",
-          "todo": "If this was not you, secure the admin's Google account. A new passkey is waiting for approval by another admin."
-        },
-        "recovery_regenerated": {
-          "title": "Recovery codes were regenerated",
-          "what": "An admin's recovery codes were regenerated.",
-          "todo": "If you did not expect this, secure the admin's Google account."
-        },
-        "recovery_refused": {
-          "title": "A recovery request was refused",
-          "what": "A recovery request was refused because there is no other admin who could approve it.",
-          "todo": "If you did not ask for a recovery, secure the admin's Google account. If you did, contact the maintainer."
-        },
-        "recovery_pending": {
-          "title": "A passkey is waiting for approval",
-          "what": "A new passkey created during a recovery is waiting for approval by another admin.",
-          "todo": "Sign in to the admin area, check that the request is from the admin you expect, and approve or reject it."
-        },
-        "recovery_approved": {
-          "title": "A recovery passkey was approved",
-          "what": "A passkey created during a recovery was approved.",
-          "todo": "If you did not expect this, remove the passkey in the admin area."
-        },
-        "recovery_rejected": {
-          "title": "A recovery passkey was rejected",
-          "what": "A passkey created during a recovery was rejected.",
-          "todo": "If you did not expect this, secure the admin's Google account."
         }
       }
     },
@@ -1374,7 +1240,7 @@
         "duration": "Until you close the tab."
       },
       "admin": {
-        "purpose": "Keeps the shop owner signed in to the admin area. Only used by the shop owner.",
+        "purpose": "Keeps the shop owner signed in to the admin area after signing in with Google. Only used by the shop owner.",
         "duration": "Up to 12 hours."
       },
       "oauth": {

@@ -16,8 +16,6 @@ function base(extra: Record<string, string | undefined> = {}): Record<string, st
     PAYMENT_PROVIDER: 'fake',
     GOOGLE_CLIENT_ID: 'id',
     GOOGLE_CLIENT_SECRET: 'secret',
-    WEBAUTHN_RP_ID: 'localhost',
-    WEBAUTHN_RP_NAME: 'Test',
     ...extra,
   };
 }

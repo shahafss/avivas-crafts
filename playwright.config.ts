@@ -29,7 +29,8 @@ export default defineConfig({
       testIgnore: CONSENT_SPEC,
     },
     {
-      // Storefront specs only: admin sign-in needs Chromium's virtual authenticator.
+      // Storefront specs only. Historical: admin sign-in used to need Chromium's virtual authenticator
+      // (passkeys, removed in 004); it no longer does, so the owner may widen this list.
       name: 'webkit-mobile',
       use: { ...devices['iPhone 14'] },
       testMatch: STOREFRONT_SPECS,

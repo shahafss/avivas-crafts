@@ -1,20 +1,19 @@
 import 'server-only';
 import { createHash, randomBytes } from 'node:crypto';
-import { and, desc, eq, isNull } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { cookies, headers } from 'next/headers';
 import { db } from '@/server/db/client';
+import { logActivity } from '@/server/activity/log';
 import { adminSession, adminUser } from '@/server/db/schema';
 import type { DbLike } from '@/server/db/types';
 
 export const SESSION_COOKIE = '__Host-ac_admin';
 
-export const PENDING_IDLE_MS = 5 * 60_000;
-export const FULL_IDLE_MS = 30 * 60_000;
+export const IDLE_MS = 30 * 60_000;
 export const ABSOLUTE_MS = 12 * 60 * 60_000;
 
 export type AdminRow = typeof adminUser.$inferSelect;
 export type SessionRow = typeof adminSession.$inferSelect;
-export type SessionStage = SessionRow['stage'];
 
 export interface SessionContext {
   admin: AdminRow;
@@ -71,14 +70,8 @@ async function requestUserAgent(): Promise<string | null> {
 }
 
 export interface CreateSessionOptions {
-  purpose?: 'sign_in' | 'recovery' | 'setup' | undefined;
-  nextPath?: string | null | undefined;
   /** Raw User-Agent; defaults to the current request's header. */
   userAgent?: string | null | undefined;
-  /** Already reduced summary (used when a session is rotated). */
-  userAgentSummary?: string | undefined;
-  /** A passkey assertion just happened: starts with `reauth_at = now`. */
-  reauth?: boolean | undefined;
   now?: Date | undefined;
   tx?: DbLike | undefined;
 }
@@ -86,29 +79,22 @@ export interface CreateSessionOptions {
 /** Creates a session and returns its token. The caller sets the cookie (`setSessionCookie`). */
 export async function createSession(
   adminId: string,
-  stage: SessionStage,
   options: CreateSessionOptions = {},
 ): Promise<{ token: string; session: SessionRow }> {
   const now = options.now ?? new Date();
   const token = randomBytes(32).toString('base64url');
-  const summary =
-    options.userAgentSummary ??
-    summarizeUserAgent(
-      options.userAgent === undefined ? await requestUserAgent() : options.userAgent,
-    );
+  const summary = summarizeUserAgent(
+    options.userAgent === undefined ? await requestUserAgent() : options.userAgent,
+  );
   const [session] = await (options.tx ?? db)
     .insert(adminSession)
     .values({
       tokenHash: hashToken(token),
       adminId,
-      stage,
       createdAt: now,
       lastSeenAt: now,
       expiresAt: new Date(now.getTime() + ABSOLUTE_MS),
       userAgentSummary: summary,
-      purpose: stage === 'pending_passkey' ? (options.purpose ?? null) : null,
-      nextPath: stage === 'pending_passkey' ? (options.nextPath ?? null) : null,
-      reauthAt: options.reauth === true ? now : null,
     })
     .returning();
   if (!session) throw new Error('Session was not created');
@@ -152,15 +138,14 @@ export function cookieSourceFromRequest(request: Request): CookieSource {
 
 export interface GetSessionOptions {
   now?: Date | undefined;
-  /** Writes nothing (no touch, no marking): for admin GET pages that only look. */
+  /** Writes nothing (no touch, no deleting): for admin GET pages that only look. */
   readOnly?: boolean | undefined;
 }
 
 /**
- * The live session behind the cookie, or null. Applies the idle checks (pending 5 min, full
- * 30 min) and the 12 h absolute lifetime. A full session that expired is deleted; a pending one
- * is only marked `ended_at` so the abandoned-sessions task can still count it. A live session is
- * touched (`last_seen_at`) unless `readOnly`.
+ * The live session behind the cookie, or null. A session ends (and its row is deleted) after
+ * 30 minutes idle, 12 hours in all, or when the user's role is no longer `admin` (logged once as
+ * `signin.role_refused`). A live session is touched (`last_seen_at`) unless `readOnly`.
  */
 export async function getSession(
   source?: CookieSource,
@@ -176,22 +161,30 @@ export async function getSession(
     .from(adminSession)
     .innerJoin(adminUser, eq(adminUser.id, adminSession.adminId))
     .where(eq(adminSession.tokenHash, tokenHash));
-  if (!row || row.session.endedAt !== null) return null;
+  if (!row) return null;
 
   const { session, admin } = row;
-  const idleMs = session.stage === 'pending_passkey' ? PENDING_IDLE_MS : FULL_IDLE_MS;
   const expired =
-    now.getTime() - session.lastSeenAt.getTime() > idleMs ||
+    now.getTime() - session.lastSeenAt.getTime() > IDLE_MS ||
     now.getTime() >= session.expiresAt.getTime();
   if (expired) {
+    if (!readOnly) await db.delete(adminSession).where(eq(adminSession.tokenHash, tokenHash));
+    return null;
+  }
+  if (admin.role !== 'admin') {
     if (!readOnly) {
-      if (session.stage === 'pending_passkey') {
-        await db
-          .update(adminSession)
-          .set({ endedAt: now })
-          .where(and(eq(adminSession.tokenHash, tokenHash), isNull(adminSession.endedAt)));
-      } else {
-        await db.delete(adminSession).where(eq(adminSession.tokenHash, tokenHash));
+      // Delete first: only the request that really removed the row logs the refusal.
+      const removed = await db
+        .delete(adminSession)
+        .where(eq(adminSession.tokenHash, tokenHash))
+        .returning({ tokenHash: adminSession.tokenHash });
+      if (removed.length > 0) {
+        await logActivity(db, {
+          adminId: admin.id,
+          actorKind: 'admin',
+          actorLabel: admin.displayName,
+          action: 'signin.role_refused',
+        });
       }
     }
     return null;
@@ -212,80 +205,10 @@ export async function touchSession(
   return { ...session, lastSeenAt: now };
 }
 
-/** Replaces `old` with a new session of the given stage (the old row is deleted). */
-export async function rotateSession(
-  old: SessionRow,
-  stage: SessionStage,
-  options: Omit<CreateSessionOptions, 'tx' | 'userAgentSummary'> = {},
-): Promise<{ token: string; session: SessionRow }> {
-  return db.transaction(async (tx) => {
-    await tx.delete(adminSession).where(eq(adminSession.tokenHash, old.tokenHash));
-    return createSession(old.adminId, stage, {
-      ...options,
-      userAgentSummary: old.userAgentSummary,
-      tx,
-    });
-  });
-}
-
-/**
- * Ends a pending session without deleting it (so the abandoned-sessions task can count it).
- * `processed` also sets `abandon_processed_at`: use it when the ending is not an abandoned
- * sign-in (recovery registration, `no_other_admin` refusal).
- */
-export async function endPendingSession(
-  session: SessionRow,
-  {
-    processed = false,
-    now = new Date(),
-    tx = db,
-  }: { processed?: boolean; now?: Date; tx?: DbLike } = {},
-): Promise<void> {
-  await tx
-    .update(adminSession)
-    .set({ endedAt: session.endedAt ?? now, ...(processed ? { abandonProcessedAt: now } : {}) })
-    .where(eq(adminSession.tokenHash, session.tokenHash));
-}
-
 export async function deleteSession(session: SessionRow): Promise<void> {
   await db.delete(adminSession).where(eq(adminSession.tokenHash, session.tokenHash));
 }
 
 export async function signOutEverywhere(adminId: string): Promise<void> {
   await db.delete(adminSession).where(eq(adminSession.adminId, adminId));
-}
-
-export interface SessionListItem {
-  /** Opaque id for `revokeSession` (the stored hash, which cannot be turned back into a cookie). */
-  id: string;
-  createdAt: Date;
-  lastSeenAt: Date;
-  expiresAt: Date;
-  userAgentSummary: string;
-}
-
-/** The admin's full sessions, newest first. */
-export async function listSessions(adminId: string): Promise<SessionListItem[]> {
-  const rows = await db
-    .select()
-    .from(adminSession)
-    .where(and(eq(adminSession.adminId, adminId), eq(adminSession.stage, 'full')))
-    .orderBy(desc(adminSession.createdAt));
-  return rows.map((row) => ({
-    id: Buffer.from(row.tokenHash).toString('hex'),
-    createdAt: row.createdAt,
-    lastSeenAt: row.lastSeenAt,
-    expiresAt: row.expiresAt,
-    userAgentSummary: row.userAgentSummary,
-  }));
-}
-
-export async function markReauthenticated(
-  session: SessionRow,
-  now: Date = new Date(),
-): Promise<void> {
-  await db
-    .update(adminSession)
-    .set({ reauthAt: now })
-    .where(eq(adminSession.tokenHash, session.tokenHash));
 }

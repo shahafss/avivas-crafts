@@ -11,8 +11,8 @@
  * `large.heic`, which must be refused). The script stops at the first candidate that passes: no
  * OOM kill and a peak (`memory.peak`) of at most 460 MB.
  *
- * It uses the Docker dev database (host.docker.internal:5433) and creates a temporary admin with a
- * `full` session and a draft product there; both are removed afterwards. It refuses to run unless
+ * It uses the Docker dev database (host.docker.internal:5433) and creates a temporary admin (role
+ * `admin`) with a session and a draft product there; both are removed afterwards. It refuses to run unless
  * APP_ENV=development. The dependencies are installed inside the container (the host's
  * node_modules are for macOS); `node_modules` and `.next` live in named Docker volumes.
  */
@@ -64,8 +64,6 @@ const APP_ENV_VARS: Record<string, string> = {
   OIDC_ISSUER: 'http://localhost:4011',
   GOOGLE_CLIENT_ID: 'local-google-client-id',
   GOOGLE_CLIENT_SECRET: 'local-google-client-secret',
-  WEBAUTHN_RP_ID: 'localhost',
-  WEBAUTHN_RP_NAME: 'Aviva Crafts (dev)',
 };
 const ENV_FLAGS = Object.entries(APP_ENV_VARS).flatMap(([key, value]) => ['-e', `${key}=${value}`]);
 
@@ -229,11 +227,11 @@ async function runCandidate(heicFile: string, jpeg: Buffer): Promise<CandidateRe
   const reasons: string[] = [];
   try {
     const [admin] = await sql<{ id: string }[]>`
-      INSERT INTO admin_user (display_name, google_email) VALUES ('Measure', ${email}) RETURNING id`;
+      INSERT INTO admin_user (display_name, google_email, role) VALUES ('Measure', ${email}, 'admin') RETURNING id`;
     adminId = admin?.id ?? '';
     await sql`
-      INSERT INTO admin_session (token_hash, admin_id, stage, expires_at)
-      VALUES (${createHash('sha256').update(token).digest()}, ${adminId}, 'full', now() + interval '2 hours')`;
+      INSERT INTO admin_session (token_hash, admin_id, expires_at)
+      VALUES (${createHash('sha256').update(token).digest()}, ${adminId}, now() + interval '2 hours')`;
     const [row] = await sql<{ id: string }[]>`
       INSERT INTO product (slug, name_he) VALUES (${`measure-${randomBytes(4).toString('hex')}`}, 'מדידה') RETURNING id`;
     productId = row?.id ?? '';

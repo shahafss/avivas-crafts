@@ -87,6 +87,20 @@ describe('logActivity', () => {
     expect((await rows())[0]?.details).toEqual(details);
   });
 
+  it('keeps the label of a system actor (a fixed command name) and the allow-listed role detail', async () => {
+    await logActivity(testDb.db, {
+      adminId: null,
+      actorKind: 'system',
+      actorLabel: 'admin:role',
+      action: 'admin.role_set',
+      details: { role: 'admin' },
+    });
+    expect((await rows())[0]).toMatchObject({
+      actorLabel: 'admin:role',
+      details: { role: 'admin' },
+    });
+  });
+
   it('stores an unknown actor as unapproved_account with a null label and no admin', async () => {
     await logActivity(testDb.db, {
       adminId: null,

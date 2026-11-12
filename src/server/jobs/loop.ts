@@ -5,7 +5,7 @@ import { jobRun } from '@/server/db/schema';
 import type { DbLike } from '@/server/db/types';
 import { drainOutbox } from '@/server/email/sender';
 import { log } from '@/server/security/logger';
-import { dailyTasks, fiveMinuteTasks, minuteTasks, type JobTask } from './daily-maintenance';
+import { dailyTasks, fiveMinuteTasks, type JobTask } from './daily-maintenance';
 
 const MINUTE_MS = 60_000;
 const FIVE_MINUTES_MS = 5 * MINUTE_MS;
@@ -27,7 +27,7 @@ export interface TaskSet {
 }
 
 export function defaultTasks(): TaskSet {
-  return { minute: [outboxTask, ...minuteTasks], fiveMinute: fiveMinuteTasks, daily: dailyTasks };
+  return { minute: [outboxTask], fiveMinute: fiveMinuteTasks, daily: dailyTasks };
 }
 
 export function utcDayStart(now: Date): Date {

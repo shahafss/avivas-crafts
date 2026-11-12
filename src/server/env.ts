@@ -69,8 +69,6 @@ const baseSchema = z.object({
   ),
   GOOGLE_CLIENT_ID: text,
   GOOGLE_CLIENT_SECRET: text,
-  WEBAUTHN_RP_ID: text,
-  WEBAUTHN_RP_NAME: text,
   CONSENT_TEST_CATEGORY: optional(text),
 });
 

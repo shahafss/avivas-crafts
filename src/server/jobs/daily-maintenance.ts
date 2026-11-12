@@ -1,6 +1,6 @@
 import 'server-only';
-import { and, eq, isNotNull, lt, or } from 'drizzle-orm';
-import { abandonedPasskeySessionsTask } from '@/server/auth/throttle';
+import { lt, or } from 'drizzle-orm';
+import { IDLE_MS } from '@/server/auth/session';
 import { purgeDeletedImagesTask } from '@/server/catalog/images';
 import { adminSession, oauthFlow, rateLimitBucket } from '@/server/db/schema';
 import type { DbLike } from '@/server/db/types';
@@ -23,9 +23,6 @@ export interface JobTask {
   /** Returns a short, non-personal summary for `job_run.last_result`. */
   run: (db: DbLike, now: Date) => Promise<string | undefined>;
 }
-
-/** Run every minute (after the outbox drain). */
-export const minuteTasks: JobTask[] = [abandonedPasskeySessionsTask];
 
 /** Run every five minutes. */
 export const fiveMinuteTasks: JobTask[] = [expirePendingCheckoutsTask, paymentRecoverySweepTask];
@@ -52,10 +49,7 @@ export const deleteExpiredOauthFlows: JobTask = {
   },
 };
 
-/**
- * Expired `full` sessions, and `pending_passkey` sessions whose abandonment was already handled.
- * Unprocessed pending sessions stay for the abandoned-sessions task.
- */
+/** Sessions past their 12 h lifetime or idle for more than 30 minutes. */
 export const deleteExpiredSessions: JobTask = {
   name: 'cleanup-admin-session',
   async run(db, now) {
@@ -63,11 +57,8 @@ export const deleteExpiredSessions: JobTask = {
       .delete(adminSession)
       .where(
         or(
-          and(eq(adminSession.stage, 'full'), lt(adminSession.expiresAt, now)),
-          and(
-            eq(adminSession.stage, 'pending_passkey'),
-            isNotNull(adminSession.abandonProcessedAt),
-          ),
+          lt(adminSession.expiresAt, now),
+          lt(adminSession.lastSeenAt, new Date(now.getTime() - IDLE_MS)),
         ),
       )
       .returning({ hash: adminSession.tokenHash });

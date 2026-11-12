@@ -9,6 +9,7 @@ How to prove the feature works. Contracts and rules are in [contracts/](contract
   database, applies the migrations and the seed (there is **no new migration** in 002), creates
   the first admin when there is none (printing its one-time setup link; open it to set up a
   passkey), starts the mock OIDC on **4011**, and serves the app on port **3001**.
+  Since 004: no setup link or passkey; see specs/004-simpler-admin-access/quickstart.md.
 - E2E uses ports 3100/3101. On this machine run **single spec files** only; leave the full E2E
   run to CI (project CLAUDE.md).
 
