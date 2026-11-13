@@ -23,6 +23,7 @@ import {
   type PublicProduct,
 } from '@/server/catalog/public-queries';
 import { getEnv } from '@/server/env';
+import { alternates } from '@/server/seo';
 import { getSettings, getZoneForCountry } from '@/server/settings/settings';
 
 type Params = Promise<{ locale: string; slug: string }>;
@@ -56,13 +57,7 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   return {
     title: name,
     description: text,
-    alternates: {
-      canonical: `${origin}/${locale}/p/${product.slug}`,
-      languages: {
-        he: `${origin}/he/p/${product.slug}`,
-        en: `${origin}/en/p/${product.slug}`,
-      },
-    },
+    alternates: alternates(`/p/${product.slug}`, locale),
     openGraph: {
       title: name,
       description: text,

@@ -291,6 +291,22 @@ export async function listCategoriesWithProducts(): Promise<PublicCategory[]> {
   }));
 }
 
+/** What the sitemap lists: published products and the categories that hold one. */
+export async function listSitemapEntries(): Promise<{
+  products: { slug: string; updatedAt: Date }[];
+  categorySlugs: string[];
+}> {
+  const [products, categories] = await Promise.all([
+    db
+      .select({ slug: product.slug, updatedAt: product.updatedAt })
+      .from(product)
+      .where(eq(product.state, 'published'))
+      .orderBy(asc(product.slug)),
+    listCategoriesWithProducts(),
+  ]);
+  return { products, categorySlugs: categories.map((item) => item.slug) };
+}
+
 /** `null` for draft, hidden and missing products. Deduplicated within one request. */
 export const getPublishedProductBySlug = cache(
   async (slug: string): Promise<PublicProduct | null> => {

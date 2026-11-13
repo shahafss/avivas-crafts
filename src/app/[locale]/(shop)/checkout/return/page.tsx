@@ -6,6 +6,7 @@ import { ReturnView } from '@/components/shop/ReturnView';
 import type MessageFile from '@/i18n/messages/he.json';
 import { routing } from '@/i18n/routing';
 import { getSettings } from '@/server/settings/settings';
+import { alternates } from '@/server/seo';
 
 export async function generateMetadata({
   params,
@@ -15,7 +16,11 @@ export async function generateMetadata({
   const { locale } = await params;
   if (!hasLocale(routing.locales, locale)) return {};
   const t = await getTranslations({ locale, namespace: 'checkout.return' });
-  return { title: t('title'), robots: { index: false, follow: false } };
+  return {
+    title: t('title'),
+    robots: { index: false, follow: false },
+    alternates: alternates('/checkout/return', locale),
+  };
 }
 
 // Where the payment provider sends the visitor back to (`c` = the resume token). The page never

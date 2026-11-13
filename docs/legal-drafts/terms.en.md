@@ -4,7 +4,7 @@
 
 ## Who the seller is
 
-The site is operated by a licensed dealer (עוסק מורשה). The business name, VAT registration number and address are shown at the bottom of every page and on the [Contact](/en/contact) page, and are not repeated here. When you order on the site you are contracting with this business.
+The site is operated by a licensed dealer (an Israeli VAT-registered business). The business name, VAT registration number and address are shown at the bottom of every page and on the [Contact](/en/contact) page, and are not repeated here. When you order on the site you are contracting with this business.
 
 ## Made-to-order goods
 

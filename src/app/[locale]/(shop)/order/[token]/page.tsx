@@ -14,6 +14,7 @@ import { fallbackAttrs, pick } from '@/lib/i18n-fallback';
 import { cn } from '@/lib/cn';
 import { getOrderByToken } from '@/server/orders/public-order';
 import type { OrderStatus } from '@/server/orders/status';
+import { alternates } from '@/server/seo';
 import { getSettings } from '@/server/settings/settings';
 
 const CONTACT_LINK = 'inline-flex min-h-11 items-center font-bold underline underline-offset-[3px]';
@@ -31,12 +32,16 @@ const ORDER_TEST_IDS = { root: 'order-summary', line: 'order-line', prep: 'order
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ locale: string }>;
+  params: Promise<{ locale: string; token: string }>;
 }): Promise<Metadata> {
-  const { locale } = await params;
+  const { locale, token } = await params;
   if (!hasLocale(routing.locales, locale)) return {};
   const t = await getTranslations({ locale, namespace: 'order' });
-  return { title: t('title'), robots: { index: false, follow: false } };
+  return {
+    title: t('title'),
+    robots: { index: false, follow: false },
+    alternates: alternates(`/order/${token}`, locale),
+  };
 }
 
 // The order status page (storefront.md §8.8), reached through an unguessable link that works while

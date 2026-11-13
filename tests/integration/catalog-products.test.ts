@@ -24,6 +24,7 @@ import {
 import { addImage } from '@/server/catalog/images';
 import { listOptionGroups, upsertOptionGroup } from '@/server/catalog/options';
 import { NEW_PRODUCT_NAME_HE } from '@/lib/validation/product';
+import { listAdminProducts } from '@/server/catalog/admin-queries';
 import {
   createProduct,
   deleteProduct,
@@ -740,5 +741,40 @@ describe('categories', () => {
       .from(product)
       .where(and(eq(product.id, id), eq(product.categoryId, keep)));
     expect(row).toBeDefined();
+  });
+});
+
+describe('listAdminProducts › missingEnglish', () => {
+  async function flag(fields: {
+    nameEn?: string | null;
+    descriptionHe?: string | null;
+    descriptionEn?: string | null;
+  }): Promise<boolean> {
+    const { id } = await ok(createProduct(actor, { nameHe: 'בובה' }));
+    await testDb.db.update(product).set(fields).where(eq(product.id, id));
+    const row = (await listAdminProducts()).find((item) => item.id === id);
+    if (!row) throw new Error('missing row');
+    return row.missingEnglish;
+  }
+
+  it('is true when the English name is empty or only spaces', async () => {
+    expect(await flag({ nameEn: null })).toBe(true);
+    expect(await flag({ nameEn: '   ' })).toBe(true);
+  });
+
+  it('is true when a Hebrew description has no English one (empty or only spaces)', async () => {
+    expect(await flag({ nameEn: 'Doll', descriptionHe: 'תיאור', descriptionEn: null })).toBe(true);
+    expect(await flag({ nameEn: 'Doll', descriptionHe: 'תיאור', descriptionEn: '  ' })).toBe(true);
+  });
+
+  it('is false when both English fields are filled', async () => {
+    expect(await flag({ nameEn: 'Doll', descriptionHe: 'תיאור', descriptionEn: 'Text' })).toBe(
+      false,
+    );
+  });
+
+  it('is false when the name is filled and both descriptions are empty', async () => {
+    expect(await flag({ nameEn: 'Doll', descriptionHe: null, descriptionEn: null })).toBe(false);
+    expect(await flag({ nameEn: 'Doll', descriptionHe: '  ', descriptionEn: null })).toBe(false);
   });
 });

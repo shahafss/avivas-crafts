@@ -7,9 +7,22 @@ import { Notice } from '@/components/ui/Notice';
 import { routing } from '@/i18n/routing';
 import { formatMoney } from '@/lib/money';
 import { fakeProviderAvailable, isFakePageId, readFakePage } from '@/server/payments/fake';
+import { alternates } from '@/server/seo';
 import { submitFakePayment } from './actions';
 
-export const metadata: Metadata = { robots: { index: false, follow: false } };
+// A page cannot export both `metadata` and `generateMetadata`; this one keeps noindex.
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  if (!hasLocale(routing.locales, locale)) return {};
+  return {
+    robots: { index: false, follow: false },
+    alternates: alternates('/checkout/fake-pay', locale),
+  };
+}
 
 // Development and test only (PAYMENT_PROVIDER=fake, never in production): stands in for the
 // provider's hosted payment page.
