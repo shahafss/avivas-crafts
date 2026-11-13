@@ -79,11 +79,26 @@ async function ProductRow({ item }: { item: AdminProductListRow }) {
                 {t('notOrderable')}
               </span>
             )}
+            {item.missingEnglish ? (
+              <span
+                className={cn(
+                  BADGE,
+                  'border-[1.5px] border-dashed border-field bg-panel text-ink-2',
+                )}
+              >
+                {t('noEnglish')}
+              </span>
+            ) : null}
           </span>
         </span>
       </Link>
     </li>
   );
+}
+
+export async function generateMetadata() {
+  const t = await getTranslations('admin.products');
+  return { title: t('title') };
 }
 
 export default async function ProductsPage({

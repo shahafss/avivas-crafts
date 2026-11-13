@@ -63,7 +63,7 @@
       },
       "gridLabel": "Pieces",
       "emptyTitle": "No pieces here yet",
-      "emptyText": "You can write to me and ask about an order.",
+      "emptyText": "Write to me if you'd like to ask about an order.",
       "emptyAction": "Write to me",
       "categoriesLabel": "Categories",
       "all": "All"
@@ -92,9 +92,9 @@
       "payOnlineAlt": "Or pay me directly: details at checkout",
       "payOffline": "Pay me directly: details at checkout",
       "shippingTitle": "Shipping and pickup",
-      "shippingText": "I make every order after you place it, and then you can have it delivered or collect it.",
+      "shippingText": "I make every piece after you order, then ship it to you or hold it for pickup.",
       "returnsTitle": "Cancellations and returns",
-      "returnsText": "You can read the cancellation and return rules on the shipping and returns page.",
+      "returnsText": "The cancellation and return rules are on the shipping and returns page.",
       "readMore": "Go to shipping and returns",
       "related": "More <cat>{category}</cat>",
       "relatedLabel": "More pieces"
@@ -111,14 +111,14 @@
     },
     "notAvailable": {
       "title": "This piece isn't available any more",
-      "text": "Maybe you will find something else here that you like:",
+      "text": "Maybe something else here will catch your eye:",
       "listLabel": "Pieces you may like"
     },
     "category": {
       "breadcrumbs": "Breadcrumb",
       "count": "{count, plural, one {# piece} other {# pieces}}",
       "emptyTitle": "No pieces in this category yet",
-      "emptyText": "You can look at all the pieces.",
+      "emptyText": "Have a look at all the pieces instead.",
       "emptyAction": "All pieces"
     },
     "search": {
@@ -127,9 +127,9 @@
       "label": "What are you looking for?",
       "button": "Search",
       "results": "{count, plural, one {# piece} other {# pieces}} for “<q>{query}</q>”",
-      "noResultsTitle": "I couldn't find pieces for “<q>{query}</q>”",
+      "noResultsTitle": "I couldn't find any pieces for “<q>{query}</q>”",
       "noResultsText": "Try another word, or go to one of the categories.",
-      "tooLong": "You can search up to 80 characters.",
+      "tooLong": "Searches can be up to 80 characters long.",
       "prompt": "Search by name or description, or go to one of the categories."
     }
   },
@@ -148,7 +148,7 @@
       "label": "Quantity",
       "decrease": "Remove one",
       "increase": "Add one",
-      "atMin": "You can't order fewer than one.",
+      "atMin": "The minimum is one.",
       "atMax": "You can order up to {max} of each item."
     },
     "add": {
@@ -206,7 +206,7 @@
     },
     "title": "Finish your order",
     "loading": "Loading…",
-    "quoting": "Working it out…",
+    "quoting": "Calculating…",
     "busy": "One moment…",
     "backToCart": "Back to the cart",
     "backToShop": "Back to the shop",
@@ -215,8 +215,8 @@
     "rate_limited": "Too many requests. Please try again in a few minutes.",
     "form_expired": "I couldn't send the form. Reload the page and try again.",
     "shop_not_ready": "The shop isn't open for orders yet. Please try again later.",
-    "payment_unavailable_method": "The payment method you chose isn't available right now. Choose another one.",
-    "delivery_unavailable": "The delivery option you chose isn't available right now. Choose another one.",
+    "payment_unavailable_method": "The payment method you chose isn't available right now. Please choose another one.",
+    "delivery_unavailable": "The delivery option you chose isn't available right now. Please choose another one.",
     "lines_unavailable": "Some items in your order can't be ordered right now.",
     "payment_unavailable": "Online payment isn't available right now. Try again, or choose to pay me directly.",
     "link_expired": "This link is no longer active.",
@@ -253,7 +253,7 @@
       "online": "Secure payment on the site",
       "onlineHint": "By credit card, on the payment company's secure page",
       "offline": "Pay me directly",
-      "offlineHint": "After you order you'll get the payment details: transfer, Bit, PayBox or cash on pickup"
+      "offlineHint": "After you order, you'll get the payment details (bank transfer, Bit, PayBox, or cash on pickup)"
     },
     "note": {
       "toggle": "Add a note (optional)",
@@ -267,7 +267,7 @@
       "label": "I'd like to get updates by email",
       "hint": "Consent to receive updates and promotional emails. You can withdraw it at any time."
     },
-    "collection": "The details are needed to handle your order and to contact you about it. You aren't legally required to provide them, but without them an order can't be placed. Who receives them and how they are kept: <privacy>Privacy Policy</privacy>.",
+    "collection": "I need these details to handle your order and contact you about it. You aren't legally required to provide them, but without them I can't take your order. Who receives them and how they are kept is described in the <privacy>Privacy Policy</privacy>.",
     "seller": "{name} · Reg. no. {regNumber}",
     "summary": {
       "label": "Order summary",
@@ -296,11 +296,11 @@
       "switchOffline": "Pay me directly instead",
       "totalChanged": "The price has changed since you started your order. The new total is {total}.",
       "confirmContinue": "Confirm and continue",
-      "switched": "Your order continues as direct payment to me. All the details were emailed to you.",
+      "switched": "Your order will continue as a direct payment to me. I've emailed you all the details.",
       "mismatch": "There was a problem with the payment amount. I'll contact you soon.",
       "expired": "This link is no longer active",
       "toCart": "To the cart",
-      "timeout": "The payment is still being checked. A confirmation will reach you by email."
+      "timeout": "I'm still checking your payment. You'll get a confirmation by email."
     },
     "fakePay": {
       "title": "Fake payment page",
@@ -352,7 +352,7 @@
     "howToPay": "How to pay",
     "quoteNumber": "When you transfer, write the order number <n>{number}</n>.",
     "pickup": "Self-pickup",
-    "madePaid": "Now I start crocheting.",
+    "madePaid": "Now I'll start crocheting.",
     "madeInPreparation": "I'm crocheting your order right now.",
     "madeAwaiting": "I got your order and will start on it soon.",
     "summary": {
@@ -712,6 +712,7 @@
         "hidden": "Hidden"
       },
       "notOrderable": "Not available to order",
+      "noEnglish": "No English",
       "noPhoto": "No photo",
       "noPrice": "No price",
       "listLabel": "Product list",
@@ -1112,7 +1113,7 @@
       "howToPay": "How to pay",
       "quoteNumber": "When you transfer, write the order number {number}.",
       "cancellation": "Cancelling an order",
-      "cancellationText": "You may cancel a purchase as the law and the shop's cancellation policy allow. Pieces made specially for you fall under the exception in the law. Full details on the shipping, returns and cancellation page:",
+      "cancellationText": "You can cancel a purchase as the law and my cancellation policy allow. Pieces made specially for you are covered by an exception in the law. The full details are on the shipping, returns and cancellation page:",
       "seller": "Seller details",
       "regNumber": "Reg. no. {number}",
       "followIntro": "This link shows where your order stands at any time.",
@@ -1213,7 +1214,7 @@
   "errors": {
     "notFound": {
       "title": "Page not found",
-      "text": "The link may be old or the page may have moved. You can search here, or go to all pieces.",
+      "text": "The link may be old, or the page may have moved. Try searching, or browse all pieces.",
       "searchLabel": "Search",
       "searchPlaceholder": "What are you looking for?",
       "searchButton": "Search"
@@ -1278,7 +1279,7 @@
     "categories": {
       "analytics": {
         "name": "Statistics",
-        "description": "Cookies that help us understand how the site is used."
+        "description": "Cookies that help me understand how the site is used."
       },
       "marketing": {
         "name": "Marketing",
@@ -1287,8 +1288,8 @@
     },
     "errors": {
       "unavailable": "A cookie choice is not needed right now.",
-      "invalid": "That choice was not valid. Please try again.",
-      "failed": "We could not save your choice. Please try again."
+      "invalid": "That choice wasn't valid. Please try again.",
+      "failed": "I couldn't save your choice. Please try again."
     }
   },
   "legal": {

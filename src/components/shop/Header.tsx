@@ -45,16 +45,16 @@ export async function Header({
         <Link
           href={base}
           lang={brand.lang}
-          className="inline-flex min-h-11 items-center text-[clamp(16px,4.6vw,20px)] font-extrabold tracking-tight whitespace-nowrap"
+          className="inline-flex min-h-11 min-w-0 items-center text-[clamp(16px,4.6vw,20px)] font-extrabold tracking-tight whitespace-nowrap"
         >
-          {brand.text}
+          <span className="truncate">{brand.text}</span>
         </Link>
         {categoryLinks === undefined ? null : (
           <div className="hidden flex-1 items-center gap-5 ps-6 text-[15px] font-medium lg:flex">
             {categoryLinks}
           </div>
         )}
-        <div className="flex items-center">
+        <div className="flex shrink-0 items-center">
           {languageSwitch}
           <IconButton href={`${base}/search`} label={t('search')}>
             <Icon name="search" />
@@ -73,7 +73,7 @@ export async function Header({
         id={MENU_ID}
         popover="auto"
         aria-label={t('menuNav')}
-        className="m-0 hidden w-[min(22rem,calc(100vw-1.5rem))] inset-auto end-3 top-[76px] rounded-card bg-panel p-4 text-ink shadow-float popover-open:block"
+        className="m-0 hidden w-[min(22rem,calc(100vw-1.5rem))] inset-auto end-3 top-[76px] rounded-card bg-panel p-4 text-ink shadow-float open:block"
       >
         {menuCategories}
         <ul className="grid gap-1 text-base font-medium">

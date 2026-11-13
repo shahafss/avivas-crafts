@@ -17,7 +17,14 @@ export interface AdminProductListRow {
   categoryNameHe: string | null;
   /** Same-origin URL of the main photo (400 px), or null. */
   imageUrl: string | null;
+  /**
+   * The English name is empty, or a Hebrew description exists without an English one (a draft
+   * with no Hebrew description is not asked for an English one; spec 005 FR-017).
+   */
+  missingEnglish: boolean;
 }
+
+const blank = (value: string | null): boolean => value === null || value.trim() === '';
 
 /** Newest first; `state` and `categoryId` narrow the list. */
 export async function listAdminProducts(
@@ -37,6 +44,9 @@ export async function listAdminProducts(
       orderable: product.orderable,
       categoryNameHe: category.nameHe,
       imageKey: productImage.storageKey,
+      nameEn: product.nameEn,
+      descriptionHe: product.descriptionHe,
+      descriptionEn: product.descriptionEn,
     })
     .from(product)
     .leftJoin(category, eq(category.id, product.categoryId))
@@ -50,9 +60,10 @@ export async function listAdminProducts(
     )
     .where(and(...conditions))
     .orderBy(desc(product.createdAt), asc(product.id));
-  return rows.map(({ imageKey, ...row }) => ({
+  return rows.map(({ imageKey, nameEn, descriptionHe, descriptionEn, ...row }) => ({
     ...row,
     imageUrl: imageKey === null ? null : adminImageUrl(imageKey, 400),
+    missingEnglish: blank(nameEn) || (!blank(descriptionHe) && blank(descriptionEn)),
   }));
 }
 

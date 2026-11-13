@@ -15,6 +15,7 @@ import {
   HeaderCategoryLinks,
   MenuCategories,
 } from '@/components/shop/HeaderCategories';
+import { LanguageSwitch } from '@/components/shop/LanguageSwitch';
 import { StatsBeacon } from '@/components/shop/StatsBeacon';
 import type MessageFile from '@/i18n/messages/he.json';
 import { routing, type Locale } from '@/i18n/routing';
@@ -90,6 +91,8 @@ export default async function LocaleLayout({
             locale={locale}
             brand={brand}
             cartLink={<CartLink />}
+            languageSwitch={<LanguageSwitch variant="compact" />}
+            menuLanguageSwitch={<LanguageSwitch variant="full" />}
             menuOnDesktop={categories.length > HEADER_CATEGORY_LIMIT}
             {...(categories.length === 0
               ? {}
@@ -105,6 +108,7 @@ export default async function LocaleLayout({
             locale={locale}
             brand={brand}
             settings={settings}
+            languageSwitch={<LanguageSwitch variant="full" />}
             {...(consentRequired()
               ? { cookieSettings: <CookieSettingsButton label={t('footer.cookieSettings')} /> }
               : {})}

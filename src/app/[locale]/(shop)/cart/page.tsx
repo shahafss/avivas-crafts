@@ -6,6 +6,7 @@ import { CartView } from '@/components/shop/CartView';
 import type MessageFile from '@/i18n/messages/he.json';
 import { routing } from '@/i18n/routing';
 import { defaultZone } from '@/server/checkout/zones';
+import { alternates } from '@/server/seo';
 
 export async function generateMetadata({
   params,
@@ -15,7 +16,11 @@ export async function generateMetadata({
   const { locale } = await params;
   if (!hasLocale(routing.locales, locale)) return {};
   const t = await getTranslations({ locale, namespace: 'cart' });
-  return { title: t('title'), robots: { index: false, follow: true } };
+  return {
+    title: t('title'),
+    robots: { index: false, follow: true },
+    alternates: alternates('/cart', locale),
+  };
 }
 
 export default async function CartPage({ params }: { params: Promise<{ locale: string }> }) {

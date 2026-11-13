@@ -10,6 +10,7 @@ import { routing } from '@/i18n/routing';
 import { fallbackAttrs } from '@/lib/i18n-fallback';
 import { renderMarkdown } from '@/server/content/markdown';
 import { getPage } from '@/server/content/pages';
+import { alternates } from '@/server/seo';
 
 type Params = Promise<{ locale: string; slug: string }>;
 
@@ -27,7 +28,9 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   const { locale, slug } = await params;
   if (!hasLocale(routing.locales, locale) || !PAGE_SLUGS.includes(slug)) return {};
   const page = await getPage(slug, locale);
-  return page === null ? {} : { title: page.title.text };
+  return page === null
+    ? {}
+    : { title: page.title.text, alternates: alternates(`/pages/${slug}`, locale) };
 }
 
 // A content page (storefront.md §8.9): breadcrumbs, the owner-written title as the only h1 and the

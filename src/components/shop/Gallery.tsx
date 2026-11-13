@@ -123,7 +123,11 @@ export function Gallery({ name, images }: { name: string; images: GalleryImage[]
         <div
           ref={track}
           data-testid="gallery-track"
-          className="flex snap-x snap-mandatory overflow-x-auto overflow-y-hidden overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          // A scrollable region needs a keyboard stop (axe scrollable-region-focusable, WCAG 2.1.1).
+          tabIndex={0}
+          role="group"
+          aria-label={t('label', { product: name })}
+          className="peer flex snap-x snap-mandatory overflow-x-auto overflow-y-hidden focus-visible:outline-none overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           {images.map((image, index) => (
             // Each slide sets its own 4:5 box and the photo fills it absolutely: iPhone Safari does
@@ -153,6 +157,13 @@ export function Gallery({ name, images }: { name: string; images: GalleryImage[]
             </div>
           ))}
         </div>
+        {/* The keyboard focus ring: a positioned overlay after the strip, because the photos are
+            positioned and would paint over an outline on the strip itself. */}
+        <span
+          data-testid="gallery-focus-ring"
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 rounded-card peer-focus-visible:-outline-offset-4 peer-focus-visible:outline-3 peer-focus-visible:outline-ink peer-focus-visible:outline-solid"
+        />
         {total > 1 ? (
           <span
             className={cn(

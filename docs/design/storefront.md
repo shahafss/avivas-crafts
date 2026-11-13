@@ -410,7 +410,11 @@ stepper and add to cart with the cart store in US2.
 - **Main**: a horizontal scroll-snap track of all photos inside a 4:5 `photo` well with
   `rounded-card` (swipe works natively on touch, also without JS). Overlays: counter
   "1 / 4" (pill, white 94 %, 13/700, inline-start bottom) and a zoom `IconButton` (white 94 %,
-  inline-end bottom, label "הגדלת התמונה" / "Enlarge photo").
+  inline-end bottom, label "הגדלת התמונה" / "Enlarge photo"). The track is a focusable, labelled
+  group (`role="group"`, "Photos of {product}", `tabIndex=0`: a scrollable region needs a keyboard
+  stop). Its focus ring (3 px `ink`, inside, `-outline-offset-4`) is drawn by a positioned
+  `aria-hidden` overlay after the track (`peer-focus-visible`), because the photos are positioned
+  and would paint over an outline on the track, and the well clips outside it.
 - **Thumbnails** (when ≥ 2 photos): row of 72×90 buttons, `rounded-chip`, below the main image,
   horizontally scrollable; each labelled "תמונה {n} מתוך {N}"; the shown one has
   `aria-current="true"` and a 3 px `sun` ring **plus a 1.5 px `ink` inner ring** (WCAG 1.4.11;
@@ -464,6 +468,8 @@ dismissible (nothing stored on the device), not sticky, not a link.
   popover: light dismiss, `Esc`, no JS). Sheet anchored under the header, white,
   `rounded-card`, `shadow-float`, max width 22rem at inline-end; lists categories, then About,
   Shipping & returns, Contact, then the language switch in full words.
+- When the header is too narrow the brand truncates with an ellipsis; the language switch and the
+  icons never shrink or hide.
 - `CartLink` island: cart `IconButton` with label "סל קניות, {count, plural, …}" /
   "Cart, {count} items"; `sun` badge (min 18 px, 11/800, inline-end top) only when count > 0.
   Server-renders without a badge; the island reads `ac_cart_v1` after hydration.
@@ -477,8 +483,8 @@ dismissible (nothing stored on the device), not sticky, not a link.
 - Rendered as a plain `<a>`, **never** a Next/next-intl `<Link>`: a prefetch would call
   `/api/locale` and set `NEXT_LOCALE` without a click.
 - Header variant: compact pill, 36 px tall bordered box (1.5 px `ink`), 13/700, text "EN" on Hebrew
-  pages and "עב" on English pages, `lang` set to the target language, `aria-label` "English" /
-  "עברית", hover `sun-soft`; the 44×44 hit area comes from a transparent `::before` that extends
+  pages and "עב" on English pages, `lang` set to the target language, `aria-label` "EN – English" /
+  "עב – עברית" (it starts with the visible text, WCAG 2.5.3), hover `sun-soft`; the 44×44 hit area comes from a transparent `::before` that extends
   past the border (padding would grow the visible box). The menu and footer use the full-word
   variant ("English" / "עברית").
 
@@ -495,8 +501,8 @@ Columns (stacked on mobile, `2fr 1fr 1fr` from 900 px):
    statement; plus "הגדרות עוגיות" / "Cookie settings" only when `consentRequired()`. It is a
    `button` (not a link; `CookieSettingsButton`, §7.21, test id `footer-cookie-settings`) that
    opens the consent settings dialog, and is absent from the page when consent is not required.
-Bottom row: language switch in full words (**added by roadmap item 005**; 003 does not build it)
-and "© {year} {shop name}" (`shop_name_*`). Column headings are h2
+Bottom row: the language switch in full words ("English" / "עברית", the `LanguageSwitch` island,
+§7.19), then "© {year} {shop name}" (`shop_name_*`). Column headings are h2
 styled small (no skipped levels). The two link lists are `nav` landmarks labelled "מידע על
 החנות" / "Information about the shop" and "מסמכים משפטיים" / "Legal documents".
 
@@ -1245,6 +1251,17 @@ top value, the first and the last date as axis labels; the table lists the days 
 data at all → `EmptyState` "עוד אין נתונים". The statistics hold no identifiers.
 Accept: the chart and its table agree; the period chips change the range; unreachable signed out;
 axe reports no violations.
+
+### 12.9 Products list `/admin/products`
+
+Added by 005. Besides the state badge and the "not orderable" badge, a row shows a third badge
+"אין אנגלית" when the product's English name is empty, or when its Hebrew description is filled
+and its English description is empty (a draft with no Hebrew description is not asked for an
+English one). The badge has a dashed 1.5 px `field` border on a `panel` background with `ink-2`
+text, and comes after the state badges, so it cannot be mistaken for a state. Only the name and
+the description count: options and image descriptions do not.
+Accept: the badge shows on a product with no English name and not on a product with both English
+fields; axe reports no violations.
 
 ---
 

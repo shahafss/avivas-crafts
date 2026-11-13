@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { hasLocale } from 'next-intl';
 import { getTranslations } from 'next-intl/server';
@@ -13,9 +14,21 @@ import {
   listPublishedProducts,
   type ProductSort,
 } from '@/server/catalog/public-queries';
+import { alternates } from '@/server/seo';
 import { getSettings } from '@/server/settings/settings';
 
 const SORTS: ProductSort[] = ['newest', 'price-asc', 'price-desc'];
+
+// The layout supplies the title; the home page adds its canonical and language versions.
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  if (!hasLocale(routing.locales, locale)) return {};
+  return { alternates: alternates('', locale) };
+}
 
 export default async function CatalogPage({
   params,
@@ -38,7 +51,7 @@ export default async function CatalogPage({
   const shopName = pick(locale, settings.shopNameHe, settings.shopNameEn);
 
   return (
-    <div className="grid gap-5 pt-4 lg:gap-6 lg:pt-6">
+    <div className="grid grid-cols-1 gap-5 pt-4 lg:gap-6 lg:pt-6">
       <div className="grid gap-1.5">
         <h1
           {...fallbackAttrs(shopName)}

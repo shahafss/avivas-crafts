@@ -10,6 +10,7 @@ import { db } from '@/server/db/client';
 import { shippingZoneCountry } from '@/server/db/schema';
 import { issueFormToken } from '@/server/checkout/form-token';
 import { getEnabledZones, getSettings } from '@/server/settings/settings';
+import { alternates } from '@/server/seo';
 
 export async function generateMetadata({
   params,
@@ -19,7 +20,11 @@ export async function generateMetadata({
   const { locale } = await params;
   if (!hasLocale(routing.locales, locale)) return {};
   const t = await getTranslations({ locale, namespace: 'checkout' });
-  return { title: t('title'), robots: { index: false, follow: false } };
+  return {
+    title: t('title'),
+    robots: { index: false, follow: false },
+    alternates: alternates('/checkout', locale),
+  };
 }
 
 async function countryOptions(locale: Locale): Promise<CheckoutConfig['countries']> {
@@ -73,10 +78,7 @@ export default async function CheckoutPage({ params }: { params: Promise<{ local
       <h1 className="text-[28px] leading-[1.15] font-extrabold tracking-tight text-balance lg:text-[34px]">
         {t('title')}
       </h1>
-      <NextIntlClientProvider
-        locale={locale}
-        messages={{ checkout: messages.checkout }}
-      >
+      <NextIntlClientProvider locale={locale} messages={{ checkout: messages.checkout }}>
         <CheckoutForm config={config} />
       </NextIntlClientProvider>
     </div>

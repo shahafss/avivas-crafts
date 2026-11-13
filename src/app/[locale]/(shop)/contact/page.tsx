@@ -12,6 +12,7 @@ import { fallbackAttrs, pick } from '@/lib/i18n-fallback';
 import { issueFormToken } from '@/server/checkout/form-token';
 import { renderMarkdown } from '@/server/content/markdown';
 import { getPage } from '@/server/content/pages';
+import { alternates } from '@/server/seo';
 import { getSettings } from '@/server/settings/settings';
 
 type Params = Promise<{ locale: string }>;
@@ -22,7 +23,9 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   const { locale } = await params;
   if (!hasLocale(routing.locales, locale)) return {};
   const page = await getPage('contact', locale);
-  return page === null ? {} : { title: page.title.text };
+  return page === null
+    ? {}
+    : { title: page.title.text, alternates: alternates('/contact', locale) };
 }
 
 // The contact page (storefront.md §8.10): the owner-written intro, the business details and the

@@ -5,24 +5,28 @@ import type { Locale } from '@/i18n/routing';
 import { fallbackAttrs, pick } from '@/lib/i18n-fallback';
 import type { Settings } from '@/server/settings/settings';
 
+const NAME_MARK = '\u0001';
 const LINK = 'flex min-h-11 items-center hover:underline';
 
 /**
  * The footer on every public page (storefront.md §7.20, 003 FR-005): the business details from
- * the shop settings, the "Info" and "Legal" link lists and the copyright line. The language switch
- * is added by roadmap item 005. `cookieSettings` is the "Cookie settings" button, passed only when
- * visitors must be asked for consent.
+ * the shop settings, the "Info" and "Legal" link lists and the bottom row: the language switch
+ * (`languageSwitch`, full words) beside the copyright line. `cookieSettings` is the "Cookie
+ * settings" button, passed only when visitors must be asked for consent.
  */
 export async function Footer({
   locale,
   brand,
   settings,
   cookieSettings,
+  languageSwitch,
 }: {
   locale: Locale;
   brand: { text: string; lang?: 'he' };
   settings: Settings;
   cookieSettings?: ReactNode;
+  /** `LanguageSwitch` island, full variant. */
+  languageSwitch?: ReactNode;
 }) {
   const t = await getTranslations({ locale, namespace: 'common.footer' });
   const base = `/${locale}`;
@@ -40,6 +44,12 @@ export async function Footer({
     { href: `${base}/pages/accessibility`, label: t('accessibility') },
   ];
   const heading = 'text-sm font-extrabold';
+  // The copyright message keeps its `{shopName}` placeholder; the name is put in its own element
+  // so it can carry `lang="he"` when an English page falls back to the Hebrew name.
+  const [before = '', after = ''] = t('copyright', {
+    year: new Date().getFullYear(),
+    shopName: NAME_MARK,
+  }).split(NAME_MARK);
   return (
     <footer className="rounded-t-[28px] bg-peach px-5 py-8 text-sm lg:px-6 lg:py-12">
       <div className="mx-auto grid max-w-[1240px] gap-8 lg:grid-cols-[2fr_1fr_1fr]">
@@ -104,9 +114,20 @@ export async function Footer({
           </ul>
         </nav>
       </div>
-      <p className="mx-auto mt-6 max-w-[1240px] text-ink-2">
-        {t('copyright', { year: new Date().getFullYear(), shopName: brand.text })}
-      </p>
+      <div className="mx-auto mt-6 flex max-w-[1240px] flex-wrap items-center justify-between gap-x-6 gap-y-1">
+        {languageSwitch}
+        <p className="text-ink-2">
+          {before}
+          {brand.lang === undefined ? (
+            brand.text
+          ) : (
+            <span lang={brand.lang} dir="auto">
+              {brand.text}
+            </span>
+          )}
+          {after}
+        </p>
+      </div>
     </footer>
   );
 }
