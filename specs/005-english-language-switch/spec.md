@@ -241,8 +241,9 @@ text and approves it.
 **The switch**
 
 - **FR-001**: Every public page MUST show a language switch in the header: a compact control that
-  reads "EN" on Hebrew pages and "עב" on English pages, named "English" / "עברית" for assistive
-  technology and marked with the target language. The site menu and the footer MUST show the same
+  reads "EN" on Hebrew pages and "עב" on English pages, named "EN – English" / "עב – עברית" for
+  assistive technology (the name starts with the visible text, WCAG 2.5.3; owner decision
+  2026-11-13) and marked with the target language. The site menu and the footer MUST show the same
   switch in full words ("English" / "עברית"). Its look follows design/storefront.md §7.19.
 - **FR-002**: Pressing the switch MUST show the same page in the other language, keeping the rest
   of the address (product, category, order, content page) and its query (sort, search, page
