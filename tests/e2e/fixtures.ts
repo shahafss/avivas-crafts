@@ -50,9 +50,21 @@ export async function setMockGoogleUser(
 
 export type AdminKeyName = 'a' | 'b' | 'c';
 
-/** Waits until the page is at least `minMs` old, so the minimum-form-age check passes. */
-export async function waitForFormAge(page: Page, minMs: number = MIN_FORM_AGE_MS): Promise<void> {
-  const age = await page.evaluate(() => Date.now() - performance.timeOrigin);
+/**
+ * Waits until the form is at least `minMs` old, so the minimum-form-age check passes. By default
+ * the age is that of the document, which only matches the form after a full page load
+ * (`page.goto`). After a client-side navigation the server stamped the form when it rendered it,
+ * so pass `since`: the `Date.now()` taken when the form appeared.
+ */
+export async function waitForFormAge(
+  page: Page,
+  minMs: number = MIN_FORM_AGE_MS,
+  since?: number,
+): Promise<void> {
+  const age =
+    since === undefined
+      ? await page.evaluate(() => Date.now() - performance.timeOrigin)
+      : Date.now() - since;
   if (age < minMs) await page.waitForTimeout(minMs - age);
 }
 

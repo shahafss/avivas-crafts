@@ -14,7 +14,7 @@ The owner of the business is the database controller and is responsible for the 
 - **Marketing emails**: only if you tick the box at checkout. We keep the tick and the date of consent (and the date of withdrawal, if you withdraw) as proof under the Communications Law. You can stop marketing emails at any time.
 - **Messages through the contact form**: name, email and the message, so we can reply. The message is erased from the system as soon as it has been sent to us.
 - **Browsing data**: we count page visits without identifying you: no IP address, cookie or other identifier is stored (see the [Cookie Policy](/en/pages/cookies)). An IP address is kept only as a one-way hash with a key that changes daily, to protect against abuse, for 24 hours at most.
-- **Payment details**: card details are given only to the payment provider on its secure page. They do not pass through our site and we do not store them.
+- **Payment details**: payment is made directly to the seller, outside the site (bank transfer, Bit, PayBox or cash on pickup). The site does not collect payment details.
 
 ## Whether you must provide the data
 
@@ -35,7 +35,6 @@ We use the following providers. Each receives only the data needed for its servi
 
 - **Render**: hosting of the site and the database (Europe).
 - **Cloudflare**: the site's DNS, storage and delivery of product images, and encrypted backups (European region). When images load, the provider sees visitors' IP addresses. [to be completed: check Render's sub-processor list to see whether Cloudflare also carries the site's traffic.]
-- **PayPlus**: card payment processing (Israel).
 - **Resend**: sending emails about orders and messages (Europe).
 - **Google**: only for the shop administrators' sign-in. Google receives no customer data.
 

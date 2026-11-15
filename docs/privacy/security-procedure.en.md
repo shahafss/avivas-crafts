@@ -38,7 +38,7 @@ tokens). The daily anonymisation task writes its own entry as the system.
 
 - All traffic is encrypted (HTTPS, HSTS). Pages are served with a strict Content Security Policy,
   and forms are protected against cross-site requests.
-- Card data is entered only on the payment provider's page and never reaches the shop.
+- The site collects no payment details: payment is made directly to the seller, outside the site.
 - Public forms (checkout, contact) are rate-limited and filtered against bots without puzzles. IP
   addresses are stored only as a daily-rotating keyed hash, 24 hours at most.
 - Private product and order images are served only to a signed-in admin.

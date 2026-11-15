@@ -11,6 +11,18 @@ import { expect, resetDb, sql, test } from './fixtures';
 const DEFAULT_LIMIT_KB = 150;
 const limitBytes = (kb: number): number => kb * 1024;
 
+// Strings that must not be in any script the storefront loads. The libphonenumber marker is the
+// source text of the Ascension Island (AC) number pattern in its metadata, found in the built
+// server chunk with `grep -lF '[2-467])\\d{4}' .next/server/chunks/*.js` (two backslashes in the
+// file); no other code has it. Pinned by `libphonenumber-js` 1.13.x.
+const FORBIDDEN_IN_SCRIPTS: { name: string; text: string }[] = [
+  { name: 'the consent banner', text: 'consent-banner' },
+  { name: 'libphonenumber metadata', text: String.raw`(?:[01589]\\d|[2-467])\\d{4}` },
+  // A second marker without backslashes, in case the minifier changes how the first is escaped:
+  // the metadata object's key, in libphonenumber's code and data only (server chunk only today).
+  { name: 'libphonenumber metadata (key)', text: 'country_calling_codes' },
+];
+
 test.beforeEach(({}, testInfo) => {
   test.skip(testInfo.project.name !== 'chromium-desktop', 'Measured once, in desktop Chromium');
 });
@@ -48,12 +60,19 @@ test.beforeAll(async () => {
     VALUES (${order?.id ?? ''}, ${item?.id ?? ''}, 'פריט', 6500, 1, 6500)`;
 });
 
-/** Gzipped size of every distinct same-origin script the route loads in a fresh context. */
-async function firstLoadBytes(
+interface FirstLoad {
+  /** Gzipped size of every distinct same-origin script. */
+  bytes: number;
+  /** The text of those scripts. */
+  scripts: string[];
+}
+
+/** Every distinct same-origin script the route loads in a fresh context. */
+async function firstLoad(
   browserPage: Page,
   path: string,
   prepare?: (page: Page) => Promise<void>,
-): Promise<number> {
+): Promise<FirstLoad> {
   const context = await browserPage
     .context()
     .browser()
@@ -69,6 +88,7 @@ async function firstLoadBytes(
     if (prepare) await prepare(page);
 
     const sizes = new Map<string, number>();
+    const texts = new Map<string, string>();
     const pending: Promise<void>[] = [];
     const origin = new URL(String(test.info().project.use.baseURL)).origin;
     page.on('response', (response) => {
@@ -78,6 +98,7 @@ async function firstLoadBytes(
         response.body().then(
           (body) => {
             sizes.set(url.pathname, gzipSync(body).length);
+            texts.set(url.pathname, body.toString('utf8'));
           },
           () => undefined,
         ),
@@ -86,7 +107,10 @@ async function firstLoadBytes(
     await page.goto(path, { waitUntil: 'networkidle' });
     await page.waitForTimeout(500);
     await Promise.all(pending);
-    return [...sizes.values()].reduce((sum, size) => sum + size, 0);
+    return {
+      bytes: [...sizes.values()].reduce((sum, size) => sum + size, 0),
+      scripts: [...texts.values()],
+    };
   } finally {
     await context.close();
   }
@@ -133,9 +157,16 @@ for (const route of routes) {
   test(`first-load JavaScript of the ${route.name} route is at most ${String(limitKb)} KB gzipped`, async ({
     page,
   }) => {
-    const bytes = await firstLoadBytes(page, route.path(), route.prepare);
+    const { bytes, scripts } = await firstLoad(page, route.path(), route.prepare);
     test.info().annotations.push({ type: 'gzip', description: `${(bytes / 1024).toFixed(1)} KB` });
     console.log(`${route.name}: ${(bytes / 1024).toFixed(1)} KB gzipped`);
+    // Checked first: a forbidden module is the more specific message than the size it adds.
+    for (const { name, text } of FORBIDDEN_IN_SCRIPTS) {
+      expect(
+        scripts.some((script) => script.includes(text)),
+        `${route.name} loads ${name} in the browser`,
+      ).toBe(false);
+    }
     expect(
       bytes,
       `${route.name} loads ${(bytes / 1024).toFixed(1)} KB of JavaScript (gzipped), limit ${String(limitKb)} KB`,

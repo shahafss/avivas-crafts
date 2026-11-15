@@ -22,7 +22,7 @@ export function HeaderCategoryLinks({
         key={category.id}
         href={`/${locale}/c/${category.slug}`}
         {...fallbackAttrs(name)}
-        className="inline-flex min-h-11 items-center whitespace-nowrap hover:underline"
+        className="inline-flex min-h-11 min-w-11 items-center justify-center whitespace-nowrap hover:underline"
       >
         {name.text}
       </Link>

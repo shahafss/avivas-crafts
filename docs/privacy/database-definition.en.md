@@ -15,7 +15,7 @@ for a database at the **basic** security level. Related documents: [security pro
 | Database                           | One PostgreSQL database for the shop, hosted by Render (Europe)                                                                                    |
 | Purpose                            | Taking and fulfilling orders, contacting customers about them, keeping the legal record of sales, proof of consent, running the shop's admin area  |
 | Registration                       | [to be completed: legal reviewer to confirm whether registration with the Privacy Protection Authority is required]                                |
-| Security level                     | **Basic**: no special-sensitivity data (card data never reaches the shop), at most 3 authorised users, see section 5                               |
+| Security level                     | **Basic**: no special-sensitivity data (the shop collects no payment details), at most 3 authorised users, see section 5                           |
 | Information of special sensitivity | None collected                                                                                                                                     |
 
 ## 2. Data kept (personal data register)
@@ -60,7 +60,6 @@ notes). Nothing is bought or received from other databases.
 | ---------- | -------------------------------------------------------------- | --------------- | --------------------------------------------------------------------------------------------- |
 | Render     | Hosting of the site and the database                           | Europe          | Everything in the database                                                                    |
 | Cloudflare | DNS, storage and delivery of product images, encrypted backups | European region | Product images (visitor IP addresses when images load); encrypted backup files it cannot read |
-| PayPlus    | Card payment processing                                        | Israel          | Card details (entered on its own page) and order amount                                       |
 | Resend     | Sending emails about orders and contact messages               | Europe          | Recipient address and email content while sending                                             |
 | Google     | Sign-in of the shop administrators only                        | -               | Administrators' accounts; no customer data                                                    |
 

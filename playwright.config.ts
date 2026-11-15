@@ -3,7 +3,8 @@ import { CONSENT_PORT, E2E_PORT, serverEnv } from './tests/e2e/env';
 
 const STOREFRONT_SPECS =
   /(^|[\\/])(cart|checkout-.*|language|privacy|catalog|order-tracking|contact)\.spec\.ts$/;
-const CONSENT_SPEC = /consent\.spec\.ts$/;
+// The `consent` project runs on the second server: the consent test category on, no card provider.
+const CONSENT_SPEC = /(consent|no-card-payment)\.spec\.ts$/;
 
 // The app is built once by `pnpm test:e2e`; the web servers only run `pnpm start`.
 export default defineConfig({
@@ -36,6 +37,7 @@ export default defineConfig({
       testMatch: STOREFRONT_SPECS,
     },
     {
+      // The "second server" project (3101): consent test category and PAYMENT_PROVIDER=none.
       name: 'consent',
       use: {
         ...devices['Desktop Chrome'],
@@ -57,7 +59,13 @@ export default defineConfig({
     {
       command: `pnpm start -p ${String(CONSENT_PORT)}`,
       url: `http://localhost:${String(CONSENT_PORT)}/api/health`,
-      env: { ...serverEnv(CONSENT_PORT), CONSENT_TEST_CATEGORY: 'analytics' },
+      env: {
+        ...serverEnv(CONSENT_PORT),
+        CONSENT_TEST_CATEGORY: 'analytics',
+        // No card provider; the stray host proves the proxy ignores it under `none` (006 FR-010).
+        PAYMENT_PROVIDER: 'none',
+        PAYPLUS_PAYMENT_HOST: 'pay.example.test',
+      },
       reuseExistingServer: !process.env.CI,
       timeout: 120_000,
       // Without this the `pnpm` wrapper is killed but `next-server` lives on and the runner never exits.

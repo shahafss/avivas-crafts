@@ -237,9 +237,10 @@ icons (the sample's `−`, `+` and `✓` become SVG).
 |---|---|---|---|
 | Product card (grid) | 400, 800 | `(min-width: 900px) 25vw, (min-width: 640px) 33vw, 50vw` | `lazy`, except the first 4 cards on home/category: `eager` |
 | Gallery main | 400, 800, 1600 | `(min-width: 900px) 55vw, 100vw` | first image `eager` + `fetchpriority="high"`, others `lazy` |
-| Gallery thumbnails | 400 | `72px` | `lazy` |
-| Zoom dialog | 1600 | `100vw` | loaded when the dialog opens |
-| Cart / checkout line | 400 | `72px` | `lazy` |
+| Gallery thumbnails | 400 (a one-entry `srcset`, so every catalog and product image has `srcset` and `sizes`) | `72px` | `lazy` |
+| Zoom dialog | 1600 (one-entry `srcset`) | `100vw` | loaded when the dialog opens |
+| Cart / checkout line | 400 (one-entry `srcset`) | `72px` | `lazy` |
+| Order summary line (checkout and order page) | 400 (one-entry `srcset`) | `48px` (rendered 48×60) | `lazy` |
 | Open Graph | 800 | — | meta tag only (WhatsApp drops preview images over about 300 KB) |
 
 - Every photo sits in a `photo`-coloured 4:5 well (`aspect-ratio: 4/5`, `object-fit: cover`), so
@@ -335,6 +336,12 @@ slow opacity pulse (static with reduced motion). Marked `aria-hidden`; the conta
   `<label for>`. Links inside the label are plain links, not lifted above the input, so a tap on a
   link opens the link and never toggles the box (003 FR-028; replaces the former "whole label row
   is the target").
+- `Checkbox` disabled state (006): box fill `ground` with a `line` border (a checked box keeps its
+  check, filled `ink-2` instead of `ink`), label in `ink-2`, `cursor: not-allowed`, no hover
+  change, a hint line under the label tied by `aria-describedby`; the row stays at least 44 px
+  high. Used only for a setting the shop cannot offer (for example the card option while no card
+  provider is configured), never to signal a missing choice (there the control stays enabled and
+  the form says what is missing).
 - `RadioCard`: a full-width option card (white, 1.5 px `field` border, `rounded-chip`, padding 14–16);
   selected = `ink` border + inset ring + `sun-soft` fill; title 16/700 with the price at
   inline-end, description 14 `ink-2` below; native radio input visually hidden but focusable
@@ -458,7 +465,7 @@ dismissible (nothing stored on the device), not sticky, not a link.
 - `header-wrap`: sticky top, `ground` background, padding 10/12 px (16/24 px from 900 px).
 - `HeaderPill`: white, `rounded-pill`, `shadow-float`, padding-inline 16 (start) / 10 (end),
   8 px block; contents in DOM order: brand (home link, 800), desktop category links (from 900 px:
-  up to 5 categories as 15/500 links, then "עוד" in the menu), actions at inline-end:
+  up to 5 categories as 15/500 links, each with a hit area of at least 44×44 px, then "עוד" in the menu), actions at inline-end:
   `LanguageSwitch` island, search `IconButton` (link to `/{locale}/search`), `CartLink` island, menu
   `IconButton` (always below 900 px; from 900 px only when there are more than 5 categories).
 - Brand: text wordmark of the shop name from settings (`shop_name_he/en`, English falling back to
@@ -472,7 +479,9 @@ dismissible (nothing stored on the device), not sticky, not a link.
   icons never shrink or hide.
 - `CartLink` island: cart `IconButton` with label "סל קניות, {count, plural, …}" /
   "Cart, {count} items"; `sun` badge (min 18 px, 11/800, inline-end top) only when count > 0.
-  Server-renders without a badge; the island reads `ac_cart_v1` after hydration.
+  Server-renders without a badge; the island reads `ac_cart_v1` after hydration. The accessible
+  name always contains the digits the badge shows ("סל קניות, 1 פריט", "Cart, 1 item"), so it
+  contains the visible text (WCAG 2.5.3, axe `label-content-name-mismatch`; 006).
 
 ### 7.19 `shop/LanguageSwitch` (island)
 
@@ -551,7 +560,7 @@ Code shapes and test ids are fixed in `specs/003-privacy-legal-pages/contracts/c
 
 ### 7.22 `shop/CartLine` (inside the cart island)
 
-Row: 72×90 thumbnail (`rounded-chip`) · name (link to product, 16/700) · options "{group}:
+Row: 72×90 thumbnail (`rounded-chip`) · name (link to product, 16/700, at least 44 px high) · options "{group}:
 {value}" (14 `ink-2`) · unit price · `QuantityStepper` (compact) · line total (700, tabular) ·
 quiet "הסרה" / "Remove" with `close` icon. Mobile: thumbnail at inline-start, text stacked,
 stepper and line total on one row. Flagged line: white panel with a 1.5 px `alert` border
@@ -970,7 +979,7 @@ and style; nothing optional loads before acceptance.
 | Check | Where |
 |---|---|
 | Axe WCAG 2.1 A/AA, zero violations, every screen in both locales | `tests/e2e/a11y.spec.ts` (T124) |
-| Direction and layout: `dir`/`lang`; gallery at inline-start (right in he, left in en) at 1280 px; header order mirrored; no horizontal overflow at 320 and 375 px on every public page; no `style=` attribute in the server-rendered HTML, and none in the DOM apart from Next's own `next-route-announcer`; every product `<img>` has `srcset`, `sizes`, `width`, `height`; header, buy-box, cart and checkout controls ≥ 44×44 px; zoom dialog arrow keys follow direction | `tests/e2e/storefront-layout.spec.ts` (T125) |
+| Direction and layout: `dir`/`lang`; gallery at inline-start (right in he, left in en) at 1280 px; header order mirrored; no horizontal overflow at 320 and 375 px on every public page; no `style=` attribute in the server-rendered HTML, and none in the DOM apart from Next's own `next-route-announcer`; every product `<img>` (cards, gallery photos, thumbnails and zoom image, cart and order lines) has `srcset`, `sizes`, `width`, `height`; header, buy-box, cart and checkout controls ≥ 44×44 px; zoom dialog arrow keys follow direction | `tests/e2e/storefront-layout.spec.ts` (T125) |
 | No `style` prop, no physical Tailwind utilities, no physical CSS properties | ESLint (T002) + `pnpm check:css` |
 | First-load JS ≤ 150 KB gz on every storefront route (checkout ≤ 155 KB) | `tests/e2e/bundle-size.spec.ts` (T087): sums the gzipped size of the JS each route loads in Chromium; part of `pnpm test:e2e` (so in CI) |
 | Visual review against this document and the sample at 375 / 768 / 1280 px, he and en | `tests/e2e/design-review.spec.ts` (T133, `DESIGN_REVIEW=1`) writing to `test-results/design-review/` (not committed), reviewed by the coordinator |
@@ -1262,6 +1271,17 @@ text, and comes after the state badges, so it cannot be mistaken for a state. On
 the description count: options and image descriptions do not.
 Accept: the badge shows on a product with no English name and not on a product with both English
 fields; axe reports no violations.
+
+### 12.10 Settings `/admin/settings`
+
+Added by 006. Under `PAYMENT_PROVIDER=none` (production at launch, no card provider) the payment
+section shows the card checkbox unchecked and disabled with the hint "תשלום בכרטיס עוד לא הוגדר"
+and the offline checkbox checked and disabled (the disabled `Checkbox`, §7.10); the offline
+instructions fields stay editable and saving them works. Behaviour of every surface in
+`specs/006-launch-readiness/contracts/payment-mode.md`. The admin home (§12.4) lists empty Hebrew
+offline payment details among the settings to complete while offline payment is on.
+Accept: with `none` both checkboxes are disabled and saving changed instructions shows the saved
+toast; axe reports no violations.
 
 ---
 

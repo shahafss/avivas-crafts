@@ -405,7 +405,8 @@
         "businessAddressHe": "Business address (Hebrew)",
         "businessAddressEn": "Business address (English)",
         "notificationEmails": "Notification emails",
-        "pickupInstructionsHe": "Pickup instructions (Hebrew)"
+        "pickupInstructionsHe": "Pickup instructions (Hebrew)",
+        "offlineInstructionsHe": "Offline payment instructions in Hebrew"
       }
     },
     "orders": {
@@ -869,7 +870,9 @@
         "offline": "Direct payment (transfer, Bit, PayBox, cash)",
         "instructionsHe": "Direct payment instructions, in Hebrew",
         "instructionsHint": "Shown to customers after ordering and in the confirmation email, e.g. account details for a transfer.",
-        "instructionsEn": "Direct payment instructions, in English (optional)"
+        "instructionsEn": "Direct payment instructions, in English (optional)",
+        "cardNotSetUp": "Card payment is not set up yet",
+        "offlineMustStayOn": "Direct payment must stay on while card payment is not set up."
       },
       "pickup": {
         "title": "Self-pickup",
@@ -921,6 +924,7 @@
         "email": "The email address isn't valid.",
         "notificationEmails": "One to three valid email addresses are needed.",
         "last_payment_method": "At least one payment method must stay on.",
+        "card_not_set_up": "Card payment is not set up yet, so offline payment must stay on.",
         "last_delivery_method": "An enabled zone must keep at least one delivery method.",
         "israel_stays_enabled": "The Israel zone must stay on.",
         "pickup_israel_only": "Self-pickup is only possible in Israel.",

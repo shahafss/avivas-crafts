@@ -138,4 +138,47 @@ describe('parseEnv', () => {
   it('rejects a SECRET_HMAC_KEY that is not valid base64', () => {
     expect(() => parseEnv(base({ SECRET_HMAC_KEY: '!'.repeat(48) }))).toThrow(/SECRET_HMAC_KEY/);
   });
+
+  describe('PAYMENT_PROVIDER=none', () => {
+    const none = { PAYMENT_PROVIDER: 'none' };
+    const noPayplus = {
+      PAYPLUS_BASE_URL: undefined,
+      PAYPLUS_API_KEY: undefined,
+      PAYPLUS_SECRET_KEY: undefined,
+      PAYPLUS_PAYMENT_PAGE_UID: undefined,
+      PAYPLUS_PAYMENT_HOST: undefined,
+    };
+
+    it.each(['development', 'test'])(
+      'parses with no PAYPLUS_* variable under APP_ENV %s',
+      (appEnv) => {
+        expect(parseEnv(base({ ...none, ...noPayplus, APP_ENV: appEnv })).PAYMENT_PROVIDER).toBe(
+          'none',
+        );
+      },
+    );
+
+    it('parses with no PAYPLUS_* variable under APP_ENV production', () => {
+      const env = parseEnv(base({ ...production, ...none, ...noPayplus }));
+      expect(env.PAYMENT_PROVIDER).toBe('none');
+    });
+
+    it('still refuses fake in production, naming the variable and the rule', () => {
+      expect(() =>
+        parseEnv(base({ ...production, ...noPayplus, PAYMENT_PROVIDER: 'fake' })),
+      ).toThrow(/- PAYMENT_PROVIDER: must not be "fake" when APP_ENV=production/);
+    });
+
+    it('rejects an unknown provider', () => {
+      expect(() => parseEnv(base({ PAYMENT_PROVIDER: 'stripe' }))).toThrow(/PAYMENT_PROVIDER/);
+    });
+
+    it('still requires the five PAYPLUS_* variables with payplus', () => {
+      for (const name of Object.keys(noPayplus)) {
+        expect(() => parseEnv(base({ ...production, [name]: undefined }))).toThrow(
+          new RegExp(name),
+        );
+      }
+    });
+  });
 });

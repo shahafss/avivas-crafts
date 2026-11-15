@@ -15,6 +15,8 @@ import {
   type Failure,
 } from '@/server/catalog/result';
 import { db } from '@/server/db/client';
+import { getEnv } from '@/server/env';
+import { effectivePaymentMethods } from '@/server/payments/availability';
 import { SEED_PLACEHOLDERS } from '@/server/db/seed';
 import {
   optionGroup,
@@ -59,7 +61,8 @@ export async function getZoneForCountry(countryCode: string): Promise<Zone | nul
 }
 
 /** Fields the admin home may list (002 research R13). */
-export type AttentionField = keyof typeof SEED_PLACEHOLDERS | 'pickupInstructionsHe';
+export type AttentionField =
+  keyof typeof SEED_PLACEHOLDERS | 'pickupInstructionsHe' | 'offlineInstructionsHe';
 
 /** Names of the settings fields that still hold a seed placeholder. */
 export function placeholderFields(settings: Settings): (keyof typeof SEED_PLACEHOLDERS)[] {
@@ -80,7 +83,8 @@ export function placeholderFields(settings: Settings): (keyof typeof SEED_PLACEH
 /**
  * Settings fields the admin home asks Aviva to complete (research R13): the seed placeholders,
  * plus `pickupInstructionsHe` when an enabled zone offers pickup and the Hebrew instructions are
- * empty.
+ * empty, and `offlineInstructionsHe` while offline payment is effectively on and the Hebrew
+ * instructions are empty (006 FR-010b).
  */
 export async function settingsNeedingAttention(): Promise<AttentionField[]> {
   const settings = await getSettings();
@@ -92,6 +96,12 @@ export async function settingsNeedingAttention(): Promise<AttentionField[]> {
       .where(and(eq(shippingZone.enabled, true), eq(shippingZone.pickupEnabled, true)))
       .limit(1);
     if (zone) fields.push('pickupInstructionsHe');
+  }
+  if (
+    (settings.offlineInstructionsHe ?? '').trim() === '' &&
+    effectivePaymentMethods(settings, getEnv().PAYMENT_PROVIDER).offline
+  ) {
+    fields.push('offlineInstructionsHe');
   }
   return fields;
 }
@@ -182,6 +192,14 @@ export async function updateSettings(
       .where(eq(shopSettings.id, 1))
       .for('update');
     if (!current) throw new Error('shop_settings row is missing: run `pnpm db:seed`');
+    // Judged on the submitted fields only: every settings section sends just its own, so saving
+    // pickup instructions or business details works whatever is stored.
+    if (
+      getEnv().PAYMENT_PROVIDER === 'none' &&
+      (changes.onlinePaymentEnabled === true || changes.offlinePaymentEnabled === false)
+    ) {
+      return formFailure(`${SETTINGS_ERRORS}.card_not_set_up`);
+    }
     const merged = { ...current, ...changes };
     if (!merged.onlinePaymentEnabled && !merged.offlinePaymentEnabled) {
       return formFailure(`${SETTINGS_ERRORS}.last_payment_method`);

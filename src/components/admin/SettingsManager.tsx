@@ -233,16 +233,20 @@ function ShopNameSection({
 
 function PaymentSection({
   settings,
+  cardPaymentAvailable,
   actions,
   notify,
 }: {
   settings: SettingsData;
+  cardPaymentAvailable: boolean;
   actions: SettingsActions;
   notify: (message: string, tone: 'success' | 'error') => void;
 }) {
   const t = useTranslations('admin.settings');
-  const [online, setOnline] = useState(settings.onlinePaymentEnabled);
-  const [offline, setOffline] = useState(settings.offlinePaymentEnabled);
+  // With no card provider the shop takes offline payment only (contracts/payment-mode.md): the
+  // stored flags are not shown, and the values below are what a save submits.
+  const [online, setOnline] = useState(cardPaymentAvailable && settings.onlinePaymentEnabled);
+  const [offline, setOffline] = useState(!cardPaymentAvailable || settings.offlinePaymentEnabled);
   // Plain text on purpose (003 research R1): these texts are shown as plain text in the checkout,
   // on the order page and in emails, so the Markdown editor of the content screens is not used.
   const [instructionsHe, setInstructionsHe] = useState(settings.offlineInstructionsHe ?? '');
@@ -274,6 +278,8 @@ function PaymentSection({
         <Checkbox
           label={t('payment.online')}
           checked={online}
+          disabled={!cardPaymentAvailable}
+          hint={cardPaymentAvailable ? undefined : t('payment.cardNotSetUp')}
           onChange={(event) => {
             setOnline(event.target.checked);
           }}
@@ -282,6 +288,8 @@ function PaymentSection({
         <Checkbox
           label={t('payment.offline')}
           checked={offline}
+          disabled={!cardPaymentAvailable}
+          hint={cardPaymentAvailable ? undefined : t('payment.offlineMustStayOn')}
           onChange={(event) => {
             setOffline(event.target.checked);
           }}
@@ -633,11 +641,13 @@ export function SettingsManager({
   settings,
   zones,
   usdBlockers,
+  cardPaymentAvailable,
   actions,
 }: {
   settings: SettingsData;
   zones: ZoneData[];
   usdBlockers: UsdBlocker[];
+  cardPaymentAvailable: boolean;
   actions: SettingsActions;
 }) {
   const t = useTranslations('admin.settings');
@@ -655,7 +665,12 @@ export function SettingsManager({
   return (
     <div className="grid gap-5" data-testid="settings-ready">
       <ShopNameSection settings={settings} actions={actions} notify={notify} />
-      <PaymentSection settings={settings} actions={actions} notify={notify} />
+      <PaymentSection
+        settings={settings}
+        cardPaymentAvailable={cardPaymentAvailable}
+        actions={actions}
+        notify={notify}
+      />
       <PickupSection settings={settings} actions={actions} notify={notify} />
       <section className="grid gap-4">
         <div>
