@@ -36,7 +36,7 @@
       "cookieSettings": "הגדרות עוגיות"
     },
     "cart": {
-      "label": "סל קניות, {count, plural, =0 {ריק} one {פריט אחד} other {# פריטים}}"
+      "label": "סל קניות, {count, plural, =0 {ריק} one {# פריט} other {# פריטים}}"
     },
     "language": {
       "toEnglishShort": "EN",
@@ -405,7 +405,8 @@
         "businessAddressHe": "כתובת העסק בעברית",
         "businessAddressEn": "כתובת העסק באנגלית",
         "notificationEmails": "אימיילים להתראות",
-        "pickupInstructionsHe": "הוראות איסוף בעברית"
+        "pickupInstructionsHe": "הוראות איסוף בעברית",
+        "offlineInstructionsHe": "הוראות לתשלום ישיר בעברית"
       }
     },
     "orders": {
@@ -869,7 +870,9 @@
         "offline": "תשלום ישיר (העברה, Bit, PayBox, מזומן)",
         "instructionsHe": "הוראות לתשלום ישיר, בעברית",
         "instructionsHint": "מוצגות ללקוחות אחרי ההזמנה ובמייל האישור, למשל פרטי חשבון להעברה.",
-        "instructionsEn": "הוראות לתשלום ישיר, באנגלית (לא חובה)"
+        "instructionsEn": "הוראות לתשלום ישיר, באנגלית (לא חובה)",
+        "cardNotSetUp": "תשלום בכרטיס עוד לא הוגדר",
+        "offlineMustStayOn": "תשלום ישיר חייב להישאר פעיל כל עוד תשלום בכרטיס לא הוגדר."
       },
       "pickup": {
         "title": "איסוף עצמי",
@@ -921,6 +924,7 @@
         "email": "כתובת האימייל לא תקינה.",
         "notificationEmails": "צריך בין כתובת אחת לשלוש כתובות אימייל תקינות.",
         "last_payment_method": "לפחות אופן תשלום אחד חייב להישאר פעיל.",
+        "card_not_set_up": "תשלום בכרטיס עוד לא הוגדר, ולכן תשלום ישיר חייב להישאר פעיל.",
         "last_delivery_method": "באזור פעיל חייבת להישאר לפחות שיטת משלוח אחת.",
         "israel_stays_enabled": "אזור ישראל חייב להישאר פעיל.",
         "pickup_israel_only": "איסוף עצמי אפשרי רק בישראל.",

@@ -1,6 +1,8 @@
 import { getTranslations } from 'next-intl/server';
 import { SettingsManager } from '@/components/admin/SettingsManager';
 import { requireAdmin } from '@/server/auth/require-admin';
+import { getEnv } from '@/server/env';
+import { effectivePaymentMethods } from '@/server/payments/availability';
 import {
   getSettings,
   getZoneCountries,
@@ -8,6 +10,11 @@ import {
   productsMissingUsdPrice,
 } from '@/server/settings/settings';
 import { updateSettings, updateZone } from './actions';
+
+export async function generateMetadata() {
+  const t = await getTranslations('admin.settings');
+  return { title: t('title') };
+}
 
 export default async function SettingsPage() {
   await requireAdmin();
@@ -66,6 +73,9 @@ export default async function SettingsPage() {
               .map((row) => row.countryCode),
           }))}
         usdBlockers={usdBlockers}
+        cardPaymentAvailable={
+          effectivePaymentMethods(settings, getEnv().PAYMENT_PROVIDER).cardAvailable
+        }
         actions={{ updateSettings, updateZone }}
       />
     </div>

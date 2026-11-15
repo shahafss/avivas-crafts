@@ -24,6 +24,7 @@ import {
   type LineSnapshot,
 } from '@/server/orders/snapshots';
 import { getProvider } from '@/server/payments';
+import { effectivePaymentMethods } from '@/server/payments/availability';
 import type { PaymentProvider } from '@/server/payments/provider';
 import { log } from '@/server/security/logger';
 import { checkRateLimit } from '@/server/security/rate-limit';
@@ -174,11 +175,8 @@ export async function placeOrder(input: unknown, ctx: PlaceOrderContext): Promis
   if (!parsed.success) return { ok: false, fieldErrors: checkoutFieldErrors(parsed.error) };
   const details = parsed.data;
 
-  if (
-    details.paymentMethod === 'online'
-      ? !settings.onlinePaymentEnabled
-      : !settings.offlinePaymentEnabled
-  ) {
+  const methods = effectivePaymentMethods(settings, getEnv().PAYMENT_PROVIDER);
+  if (details.paymentMethod === 'online' ? !methods.online : !methods.offline) {
     return fail('checkout.payment_unavailable_method');
   }
   const lines = await priceItems(items, zone);
@@ -457,7 +455,9 @@ export async function retryOnlinePayment(
     if ('ok' in locked) return locked;
     const { pending } = locked;
     const [settings] = await tx.select().from(shopSettings);
-    if (!settings?.onlinePaymentEnabled) return fail('checkout.payment_unavailable_method');
+    if (!settings || !effectivePaymentMethods(settings, getEnv().PAYMENT_PROVIDER).online) {
+      return fail('checkout.payment_unavailable_method');
+    }
     const repriced = await repriceStored(tx, locked, 'online', acceptNewTotal);
     if ('ok' in repriced) return repriced;
 
@@ -528,11 +528,17 @@ export async function switchToOfflinePayment(
     if ('ok' in locked) return locked;
     const { pending, zone } = locked;
     const [settings] = await tx.select().from(shopSettings);
-    if (!settings?.offlinePaymentEnabled) return fail('checkout.offline_unavailable');
+    if (!settings || !effectivePaymentMethods(settings, getEnv().PAYMENT_PROVIDER).offline) {
+      return fail('checkout.offline_unavailable');
+    }
     const repriced = await repriceStored(tx, locked, 'offline', acceptNewTotal);
     if ('ok' in repriced) return repriced;
 
-    await disablePageBestEffort(getProvider(pending.provider), pending);
+    // A row that names another provider than the configured one (e.g. `payplus` under `none`)
+    // has no provider to call; its page is left to expire on its own.
+    if (pending.provider === getEnv().PAYMENT_PROVIDER) {
+      await disablePageBestEffort(getProvider(pending.provider), pending);
+    }
     const token = randomToken();
     const created = await insertOrder(tx, {
       locale: pending.locale,

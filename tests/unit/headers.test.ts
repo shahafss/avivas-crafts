@@ -5,7 +5,7 @@ import {
   shouldBounceAdminRequest,
   type BounceRequest,
 } from '@/server/security/admin-bounce';
-import { buildCsp, securityHeaders } from '@/server/security/headers';
+import { buildCsp, paymentHostFor, securityHeaders } from '@/server/security/headers';
 
 const base = {
   paymentHost: 'payments.example.com',
@@ -131,5 +131,23 @@ describe('admin bounce', () => {
   it('refuses a target outside this site', () => {
     expect(() => sameSiteNavigationPage('//evil.example', 'n')).toThrow();
     expect(() => sameSiteNavigationPage('https://evil.example', 'n')).toThrow();
+  });
+});
+
+describe('paymentHostFor', () => {
+  const host = 'pay.example.test';
+
+  it.each(['payplus', 'fake'])('passes the configured host under %s (unchanged)', (provider) => {
+    expect(paymentHostFor({ PAYMENT_PROVIDER: provider, PAYPLUS_PAYMENT_HOST: host })).toBe(host);
+  });
+
+  it('passes nothing under fake or payplus when no host is configured', () => {
+    expect(paymentHostFor({ PAYMENT_PROVIDER: 'fake' })).toBe(undefined);
+  });
+
+  it('ignores a stray host under none', () => {
+    expect(paymentHostFor({ PAYMENT_PROVIDER: 'none', PAYPLUS_PAYMENT_HOST: host })).toBe(
+      undefined,
+    );
   });
 });

@@ -21,6 +21,18 @@ function asOrigin(hostOrOrigin: string): string {
   return /^https?:\/\//.test(hostOrOrigin) ? hostOrOrigin : `https://${hostOrOrigin}`;
 }
 
+/**
+ * The card provider's hosted-page host for the CSP. Under `none` (no card payment) a stray
+ * PAYPLUS_PAYMENT_HOST must not widen `form-action` (006 FR-010); under `payplus` and `fake`
+ * nothing changes from before (contracts/payment-mode.md).
+ */
+export function paymentHostFor(env: {
+  PAYMENT_PROVIDER: string;
+  PAYPLUS_PAYMENT_HOST?: string | undefined;
+}): string | undefined {
+  return env.PAYMENT_PROVIDER === 'none' ? undefined : env.PAYPLUS_PAYMENT_HOST;
+}
+
 /** A fresh random nonce for one request. */
 export function generateNonce(): string {
   return Buffer.from(crypto.getRandomValues(new Uint8Array(16))).toString('base64');

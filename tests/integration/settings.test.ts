@@ -37,6 +37,9 @@ vi.mock('@/server/db/client', () => ({
   withTx: <T>(fn: (tx: unknown) => Promise<T>) => testDb.db.transaction(fn),
 }));
 vi.mock('@/server/storage', () => ({ getStorage: () => files.storage }));
+vi.mock('@/server/env', () => ({
+  getEnv: () => ({ APP_ENV: 'test', PAYMENT_PROVIDER: 'fake' }),
+}));
 
 beforeAll(async () => {
   testDb = await createTestDb();
@@ -316,10 +319,15 @@ describe('settingsNeedingAttention (002 US7, research R13)', () => {
     const expected = placeholderFields(await getSettings());
     expect(expected.length).toBeGreaterThan(0);
     // The seed always enables pickup in a zone and leaves the pickup instructions empty.
-    expect(await settingsNeedingAttention()).toEqual([...expected, 'pickupInstructionsHe']);
-    // With pickup off, only the placeholders remain.
+    // ...and, with offline payment on, the empty Hebrew offline instructions (006 FR-010b).
+    expect(await settingsNeedingAttention()).toEqual([
+      ...expected,
+      'pickupInstructionsHe',
+      'offlineInstructionsHe',
+    ]);
+    // With pickup off, only the placeholders and the offline instructions remain.
     await testDb.db.update(shippingZone).set({ pickupEnabled: false });
-    expect(await settingsNeedingAttention()).toEqual(expected);
+    expect(await settingsNeedingAttention()).toEqual([...expected, 'offlineInstructionsHe']);
   });
 
   it('adds pickupInstructionsHe when an enabled zone offers pickup and the text is empty or blank', async () => {

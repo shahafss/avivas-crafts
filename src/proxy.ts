@@ -8,7 +8,7 @@ import {
   sameSiteNavigationPage,
   shouldBounceAdminRequest,
 } from '@/server/security/admin-bounce';
-import { buildCsp, generateNonce, securityHeaders } from '@/server/security/headers';
+import { buildCsp, generateNonce, paymentHostFor, securityHeaders } from '@/server/security/headers';
 
 // Headers, locale routing and the same-site bounce only. No authorisation here: every admin
 // page, Server Action and route handler calls requireAdmin() itself (research.md R14).
@@ -30,7 +30,7 @@ export default function proxy(request: NextRequest): Response {
   const nonce = generateNonce();
 
   const csp = buildCsp(nonce, {
-    paymentHost: env.PAYPLUS_PAYMENT_HOST,
+    paymentHost: paymentHostFor(env),
     imageOrigin: env.IMAGE_PUBLIC_ORIGIN,
     optionalScriptHosts: [],
     oidcOrigin: isSignInPath(pathname) ? new URL(env.OIDC_ISSUER).origin : undefined,

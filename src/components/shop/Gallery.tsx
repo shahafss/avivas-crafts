@@ -206,6 +206,7 @@ export function Gallery({ name, images }: { name: string; images: GalleryImage[]
               >
                 <img
                   src={image.src400}
+                  srcSet={`${image.src400} 400w`}
                   sizes="72px"
                   width={72}
                   height={90}
@@ -247,6 +248,7 @@ export function Gallery({ name, images }: { name: string; images: GalleryImage[]
               <div className="grid min-h-full min-w-full place-items-center">
                 <img
                   src={shown.src1600}
+                  srcSet={`${shown.src1600} 1600w`}
                   sizes="100vw"
                   width={shown.width}
                   height={shown.height}

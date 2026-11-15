@@ -1,6 +1,7 @@
 import { and, eq, isNull, lte, or } from 'drizzle-orm';
 import { db } from '@/server/db/client';
 import { pendingCheckout } from '@/server/db/schema';
+import { getEnv } from '@/server/env';
 import { confirmOnlinePayment } from '@/server/orders/confirm-online-payment';
 import { onlineOrderToken, sha256, TOKEN_PATTERN } from '@/server/orders/create-order';
 import { getProvider } from '@/server/payments';
@@ -44,7 +45,13 @@ export async function GET(request: Request): Promise<Response> {
   let pending = await find();
   if (!pending) return respond('expired');
 
-  if (pending.state === 'awaiting_provider' && pending.providerPageId !== null) {
+  // A row that names another provider than the configured one (e.g. `payplus` under `none`) is
+  // never asked about: it stays pending, and the expiry task deals with it.
+  if (
+    pending.state === 'awaiting_provider' &&
+    pending.providerPageId !== null &&
+    pending.provider === getEnv().PAYMENT_PROVIDER
+  ) {
     const now = new Date();
     // One caller per interval asks the provider; the others get the stored state.
     const claimed = await db

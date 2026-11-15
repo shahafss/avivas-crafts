@@ -25,20 +25,22 @@ export function Checkbox({ id, label, hint, error, className, ...rest }: Checkbo
     <div className={className}>
       <label
         htmlFor={fieldId}
-        className="relative flex min-h-11 cursor-pointer items-start gap-3 py-2"
+        className="relative flex min-h-11 cursor-pointer items-start gap-3 py-2 has-disabled:cursor-not-allowed has-disabled:text-ink-2"
       >
         <input
           {...rest}
           type="checkbox"
           id={fieldId}
           {...describe(fieldId, { hint, error })}
-          className="peer absolute -start-2.5 -top-px z-10 size-11 cursor-pointer appearance-none opacity-0"
+          className="peer absolute -start-2.5 -top-px z-10 size-11 cursor-pointer appearance-none opacity-0 disabled:cursor-not-allowed"
         />
         <span
           className={cn(
             'mt-px grid size-6 shrink-0 place-items-center rounded-md border-[1.5px] border-field bg-panel text-panel',
             'peer-checked:border-ink peer-checked:bg-ink peer-focus-visible:outline-3 peer-focus-visible:outline-offset-3 peer-focus-visible:outline-ink',
             'peer-aria-invalid:border-alert [&>svg]:opacity-0 peer-checked:[&>svg]:opacity-100',
+            // Disabled (storefront.md 7.10): a setting the shop cannot offer.
+            'peer-disabled:border-line peer-disabled:bg-ground peer-checked:peer-disabled:border-ink-2 peer-checked:peer-disabled:bg-ink-2',
           )}
         >
           <Icon name="check" size={16} />

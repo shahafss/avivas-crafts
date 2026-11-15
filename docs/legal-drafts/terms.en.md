@@ -16,7 +16,6 @@ All prices on the site are in shekels and include VAT. The delivery fee (if any)
 
 ## Payment methods
 
-- **Secure payment on the site**: by credit card, on the payment provider's secure page.
 - **Direct payment to the seller**: bank transfer, Bit, PayBox or cash on pickup. The details are sent after the order, and in the confirmation email. An order paid directly waits for payment, and we start preparing it as agreed between us.
 
 ## Delivery and pickup

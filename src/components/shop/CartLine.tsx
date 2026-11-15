@@ -64,6 +64,8 @@ export function CartLine({
         {line.imageUrl === null ? null : (
           <img
             src={line.imageUrl}
+            srcSet={`${line.imageUrl} 400w`}
+            sizes="72px"
             width={72}
             height={90}
             alt=""
@@ -90,7 +92,7 @@ export function CartLine({
               data-testid="cart-line-name"
               lang={line.nameLang}
               dir={line.nameLang === undefined ? undefined : 'auto'}
-              className="block text-base leading-snug font-bold hover:underline"
+              className="flex min-h-11 items-center text-base leading-snug font-bold hover:underline"
             >
               {displayName}
             </Link>

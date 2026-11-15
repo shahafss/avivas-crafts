@@ -23,6 +23,7 @@ import {
   type PublicProduct,
 } from '@/server/catalog/public-queries';
 import { getEnv } from '@/server/env';
+import { effectivePaymentMethods } from '@/server/payments/availability';
 import { alternates } from '@/server/seo';
 import { getSettings, getZoneForCountry } from '@/server/settings/settings';
 
@@ -161,8 +162,8 @@ export default async function ProductPage({ params }: { params: Params }) {
 
   const shipping = zone?.enabled === true && zone.shippingEnabled ? zone : null;
   const pickup = zone?.enabled === true && zone.pickupEnabled;
-  const hasFacts =
-    shipping !== null || pickup || settings.onlinePaymentEnabled || settings.offlinePaymentEnabled;
+  const methods = effectivePaymentMethods(settings, getEnv().PAYMENT_PROVIDER);
+  const hasFacts = shipping !== null || pickup || methods.online || methods.offline;
   const base = `/${locale}`;
   const shippingPage = `${base}/pages/shipping-returns`;
 
@@ -270,14 +271,11 @@ export default async function ProductPage({ params }: { params: Params }) {
                       {t('pickup')}
                     </Fact>
                   ) : null}
-                  {settings.onlinePaymentEnabled ? (
-                    <Fact
-                      icon="card"
-                      note={settings.offlinePaymentEnabled ? t('payOnlineAlt') : undefined}
-                    >
+                  {methods.online ? (
+                    <Fact icon="card" note={methods.offline ? t('payOnlineAlt') : undefined}>
                       {t('payOnline')}
                     </Fact>
-                  ) : settings.offlinePaymentEnabled ? (
+                  ) : methods.offline ? (
                     <Fact icon="card">{t('payOffline')}</Fact>
                   ) : null}
                 </ul>

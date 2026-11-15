@@ -70,6 +70,8 @@ export function OrderSummary({
               <span className="block h-[60px] w-12 overflow-hidden rounded-chip bg-photo">
                 <img
                   src={line.imageUrl}
+                  srcSet={`${line.imageUrl} 400w`}
+                  sizes="48px"
                   width={48}
                   height={60}
                   alt=""

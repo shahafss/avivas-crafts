@@ -34,7 +34,7 @@ Do once a year, and after any severe incident or large change. Date: [date]. Don
 
 - [ ] Dependencies updated; `pnpm run audit` reports nothing high or critical.
 - [ ] Operating systems and browsers on admin and maintainer devices are updated, with screen locks.
-- [ ] Provider list unchanged (Render, Cloudflare, PayPlus, Resend, Google); each provider's location and sub-processors checked; the Privacy Policy still lists them.
+- [ ] Provider list unchanged (Render, Cloudflare, Resend, Google); each provider's location and sub-processors checked; the Privacy Policy still lists them.
 - [ ] Secrets rotated where due; none in the repository.
 
 ## Requests

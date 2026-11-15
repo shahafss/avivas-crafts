@@ -13,6 +13,10 @@ specific to this project. The binding rules are in `.specify/memory/constitution
   sections; a feature that changes the design updates it.
 - `specs/001-online-crafts-shop/` is frozen (the MVP record). Read it for decisions already made
   (spec FRs, `plan.md`, `research.md`); never edit it.
+- Launch and operations (feature 006): `docs/launch-checklist.md` (account-side steps, in order),
+  `docs/owner-guide-he.md` (Hebrew guide for the owner), `docs/security/threat-model.md`,
+  `ops/backup/README.md` (backups and restore), `render.yaml` (the Render Blueprint). Production
+  runs with `PAYMENT_PROVIDER=none` (offline payment only); card payment comes later.
 
 ## Branches and git
 

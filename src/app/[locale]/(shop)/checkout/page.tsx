@@ -9,6 +9,8 @@ import { pick } from '@/lib/i18n-fallback';
 import { db } from '@/server/db/client';
 import { shippingZoneCountry } from '@/server/db/schema';
 import { issueFormToken } from '@/server/checkout/form-token';
+import { getEnv } from '@/server/env';
+import { effectivePaymentMethods } from '@/server/payments/availability';
 import { getEnabledZones, getSettings } from '@/server/settings/settings';
 import { alternates } from '@/server/seo';
 
@@ -52,6 +54,7 @@ export default async function CheckoutPage({ params }: { params: Promise<{ local
     countryOptions(locale),
   ]);
   const messages = rawMessages as unknown as typeof MessageFile;
+  const methods = effectivePaymentMethods(settings, getEnv().PAYMENT_PROVIDER);
   const israel = zones.find((zone) => zone.code === 'IL');
   const pickup = pick(locale, settings.pickupInstructionsHe, settings.pickupInstructionsEn);
   const businessName = pick(locale, settings.businessNameHe, settings.businessNameEn);
@@ -59,8 +62,8 @@ export default async function CheckoutPage({ params }: { params: Promise<{ local
   const config: CheckoutConfig = {
     locale,
     formToken: issueFormToken(),
-    onlineEnabled: settings.onlinePaymentEnabled,
-    offlineEnabled: settings.offlinePaymentEnabled,
+    onlineEnabled: methods.online,
+    offlineEnabled: methods.offline,
     shippingAvailable: zones.some((zone) => zone.shippingEnabled),
     pickupAvailable: israel?.pickupEnabled === true,
     pickupInstructions: pickup.text.trim() === '' ? null : pickup.text.trim(),
