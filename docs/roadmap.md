@@ -31,7 +31,7 @@ The vision (who the shop is for, what success means, principles, what is out of 
 | 003 | Privacy, consent, legal and content pages | yes | Done (dev) | [specs/003-privacy-legal-pages](../specs/003-privacy-legal-pages/) |
 | 004 | Simpler admin access | yes | Done (dev) | [specs/004-simpler-admin-access](../specs/004-simpler-admin-access/) |
 | 005 | English version and language switch | yes | Done (dev) | [specs/005-english-language-switch](../specs/005-english-language-switch/) |
-| 006 | Hosting and launch readiness | yes | In progress | [specs/006-launch-readiness](../specs/006-launch-readiness/) |
+| 006 | Hosting and launch readiness | yes | Done (dev) | [specs/006-launch-readiness](../specs/006-launch-readiness/) |
 
 Numbers are a suggested order. Spec Kit gives each feature the next free number when it is
 created, so if the order changes, the numbers follow the order of creation, not this table.

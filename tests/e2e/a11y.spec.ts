@@ -1,6 +1,14 @@
 import AxeBuilder from '@axe-core/playwright';
 import type { Page } from '@playwright/test';
-import { expect, resetDb, signInAsAdmin, sql, test, waitForFormAge } from './fixtures';
+import {
+  expect,
+  MIN_FORM_AGE_MS,
+  resetDb,
+  signInAsAdmin,
+  sql,
+  test,
+  waitForFormAge,
+} from './fixtures';
 import { hydrated, placeOfflineOrder, putCartItem } from './shop-helpers';
 
 // 006 T019 (research D6, 001 T124 narrowed): axe (WCAG 2.1 A/AA, zero violations) on the storefront
@@ -44,7 +52,9 @@ test.beforeAll(async ({ browser }, testInfo) => {
   if (testInfo.project.name !== 'chromium-desktop') return;
   await resetDb();
   orderPath = await placeOfflineOrder(browser, testInfo);
-  const [product] = await sql<{ id: string }[]>`SELECT id FROM product WHERE slug = 'sample-clay-mug'`;
+  const [product] = await sql<
+    { id: string }[]
+  >`SELECT id FROM product WHERE slug = 'sample-clay-mug'`;
   const [order] = await sql<{ id: string }[]>`SELECT id FROM orders ORDER BY created_at LIMIT 1`;
   productId = product?.id ?? '';
   orderId = order?.id ?? '';
@@ -158,6 +168,10 @@ test('keyboard only: add to cart and complete an offline checkout (375 px, he)',
   await page.keyboard.press('Enter');
   await page.waitForURL(/\/he\/checkout$/);
   await expect(page.getByTestId('checkout-form')).toBeVisible({ timeout: 20_000 });
+  // The server stamps the form token when it renders /checkout. This was a client-side
+  // navigation, so the document's own age (what `waitForFormAge` measures) is that of the
+  // product page and says nothing about the form. Time the form from here instead.
+  const formShownAt = Date.now();
   await hydrated(page, 'place-order');
 
   await tabTo('field-fullName');
@@ -181,10 +195,17 @@ test('keyboard only: add to cart and complete an offline checkout (375 px, he)',
   await page.keyboard.press('Space');
   await expect(page.getByTestId('accept-terms')).toBeChecked();
 
-  await waitForFormAge(page);
+  await waitForFormAge(page, MIN_FORM_AGE_MS, formShownAt);
   await tabTo('place-order');
   await page.keyboard.press('Enter');
-  await page.waitForURL(/\/he\/order\//, { timeout: 30_000 });
+  // Either the order page or a refusal notice: a refusal fails with its own message.
+  const refusal = page.getByTestId('checkout-form').getByRole('alert');
+  await expect(page.getByTestId('order-number').or(refusal.first())).toBeVisible({
+    timeout: 30_000,
+  });
+  if (!/\/he\/order\//.test(page.url())) {
+    throw new Error(`Checkout was refused: ${(await refusal.allInnerTexts()).join(' | ')}`);
+  }
   await expect(page.getByTestId('order-number')).toBeVisible();
 });
 
