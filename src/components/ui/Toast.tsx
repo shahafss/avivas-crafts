@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { useEffect } from 'react';
 import { cn } from '@/lib/cn';
-import { Icon } from './Icon';
+import { Icon } from './ClientIcon';
 import { IconButton } from './IconButton';
 
 export interface ToastProps {
@@ -39,8 +39,8 @@ export function Toast({ message, tone = 'success', onDismiss, duration = 6000 }:
             ? // Present but invisible, so the live regions are in the page before the text arrives.
               'sr-only'
             : cn(
-                'pointer-events-auto flex w-full items-center gap-2 rounded-2xl py-1.5 ps-4 pe-1.5 text-[15px] font-bold shadow-float',
-                error ? 'border-[1.5px] border-alert bg-panel text-alert' : 'bg-ink text-panel',
+                'pointer-events-auto flex w-full items-center gap-2 rounded-card py-1.5 ps-4 pe-1.5 text-[15px] font-bold shadow-float',
+                error ? 'border-[1.5px] border-alert bg-paper text-alert' : 'bg-ink text-paper',
               )
         }
       >

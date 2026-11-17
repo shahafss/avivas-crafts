@@ -118,7 +118,7 @@ function Swatches({
               }
               className={cn(
                 swatch === null
-                  ? 'inline-flex items-center justify-center bg-panel'
+                  ? 'inline-flex items-center justify-center bg-paper'
                   : `swatch-${swatch}`,
                 'size-11 rounded-full border-[1.5px]',
                 swatch === null ? 'border-field' : 'border-ink/25',
@@ -310,7 +310,7 @@ export function OptionGroupsEditor({
       {groups.map((group) => (
         <section
           key={group.key}
-          className="grid gap-4 rounded-card border border-line bg-panel p-4"
+          className="grid gap-4 rounded-card border border-line bg-paper p-4"
           data-testid="option-group"
         >
           <div className="grid gap-3 sm:grid-cols-2">

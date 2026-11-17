@@ -10,7 +10,7 @@ export interface ChipRowProps {
 export function ChipRow({ label, children }: ChipRowProps) {
   return (
     <nav aria-label={label}>
-      <ul className="-mx-3 flex snap-x gap-2 overflow-x-auto px-3 pb-1 pointer-coarse:[scrollbar-width:none] lg:mx-0 lg:flex-wrap lg:overflow-visible lg:px-0">
+      <ul className="-mx-4 flex snap-x gap-2 overflow-x-auto px-4 pb-1 pointer-coarse:[scrollbar-width:none] lg:mx-0 lg:flex-wrap lg:overflow-visible lg:px-0">
         {Children.toArray(children).map((child, index) => (
           <li key={index} className="shrink-0">
             {child}

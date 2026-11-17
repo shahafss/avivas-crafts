@@ -1,5 +1,6 @@
 import 'server-only';
 import { and, asc, eq, isNull, ne } from 'drizzle-orm';
+import { cache } from 'react';
 import {
   settingsInputSchema,
   zoneInputSchema,
@@ -8,6 +9,7 @@ import {
 } from '@/lib/validation/settings';
 import { logActivity } from '@/server/activity/log';
 import {
+  fieldFailure,
   formFailure,
   ok,
   type ActionResult,
@@ -19,6 +21,7 @@ import { getEnv } from '@/server/env';
 import { effectivePaymentMethods } from '@/server/payments/availability';
 import { SEED_PLACEHOLDERS } from '@/server/db/seed';
 import {
+  category,
   optionGroup,
   optionValue,
   product,
@@ -50,15 +53,18 @@ export function getEnabledZones(): Promise<Zone[]> {
     .orderBy(asc(shippingZone.code));
 }
 
-/** The zone a country belongs to (enabled or not), or null. */
-export async function getZoneForCountry(countryCode: string): Promise<Zone | null> {
+/**
+ * The zone a country belongs to (enabled or not), or null. One lookup per request: the strip, the
+ * cart drawer's free-shipping note and the checkout share it.
+ */
+export const getZoneForCountry = cache(async (countryCode: string): Promise<Zone | null> => {
   const [row] = await db
     .select({ zone: shippingZone })
     .from(shippingZoneCountry)
     .innerJoin(shippingZone, eq(shippingZone.id, shippingZoneCountry.zoneId))
     .where(eq(shippingZoneCountry.countryCode, countryCode.toUpperCase()));
   return row?.zone ?? null;
-}
+});
 
 /** Fields the admin home may list (002 research R13). */
 export type AttentionField =
@@ -199,6 +205,24 @@ export async function updateSettings(
       (changes.onlinePaymentEnabled === true || changes.offlinePaymentEnabled === false)
     ) {
       return formFailure(`${SETTINGS_ERRORS}.card_not_set_up`);
+    }
+    if (changes.homeCategoryId != null) {
+      const [existing] = await tx
+        .select({ id: category.id })
+        .from(category)
+        .where(eq(category.id, changes.homeCategoryId));
+      if (!existing) {
+        return fieldFailure('homeCategoryId', `${SETTINGS_ERRORS}.home_category_not_found`);
+      }
+    }
+    for (const field of ['headerCategory1Id', 'headerCategory2Id'] as const) {
+      const id = changes[field];
+      if (id == null) continue;
+      const [existing] = await tx
+        .select({ id: category.id })
+        .from(category)
+        .where(eq(category.id, id));
+      if (!existing) return fieldFailure(field, `${SETTINGS_ERRORS}.header_category_not_found`);
     }
     const merged = { ...current, ...changes };
     if (!merged.onlinePaymentEnabled && !merged.offlinePaymentEnabled) {

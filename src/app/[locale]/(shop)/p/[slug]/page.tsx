@@ -19,7 +19,7 @@ import { fallbackAttrs, pick } from '@/lib/i18n-fallback';
 import { formatMoney } from '@/lib/money';
 import {
   getPublishedProductBySlug,
-  listRelatedProducts,
+  listAlsoLikeFor,
   type PublicProduct,
 } from '@/server/catalog/public-queries';
 import { getEnv } from '@/server/env';
@@ -92,7 +92,7 @@ function Fact({
 }) {
   return (
     <li className="flex items-start gap-3">
-      <Icon name={icon} className="mt-0.5 text-sun-ink" />
+      <Icon name={icon} className="mt-0.5 text-forest" />
       <span>
         <span className="block">{children}</span>
         {note === undefined ? null : <span className="block text-[13px] text-ink-2">{note}</span>}
@@ -107,25 +107,24 @@ export default async function ProductPage({ params }: { params: Params }) {
   const product = await getPublishedProductBySlug(slug);
   if (product === null) notFound();
 
-  const [t, common, rawMessages, settings, zone, related] = await Promise.all([
+  const [t, common, rawMessages, settings, zone] = await Promise.all([
     getTranslations({ locale, namespace: 'shop.product' }),
     getTranslations({ locale, namespace: 'common' }),
     getMessages(),
     getSettings(),
     getZoneForCountry('IL'),
-    product.category === null
-      ? Promise.resolve([])
-      : listRelatedProducts(product.category.id, product.id, 4),
   ]);
+  // The home-row category holds every piece, so sharing it says nothing (007 D8).
+  const alsoLike = await listAlsoLikeFor(product, settings.homeCategoryId, 4);
   const messages = rawMessages as unknown as typeof MessageFile;
 
   const name = pick(locale, product.nameHe, product.nameEn);
   const description = pick(locale, product.descriptionHe, product.descriptionEn);
   const prepTime = pick(locale, product.prepTimeHe, product.prepTimeEn);
   const category =
-    product.category === null
+    product.mainCategory === null
       ? null
-      : pick(locale, product.category.nameHe, product.category.nameEn);
+      : pick(locale, product.mainCategory.nameHe, product.mainCategory.nameEn);
 
   const images: GalleryImage[] = product.images.map((image) => {
     const alt = pick(locale, image.altHe, image.altEn);
@@ -174,7 +173,7 @@ export default async function ProductPage({ params }: { params: Params }) {
       : [
           {
             label: category.text,
-            href: `${base}/c/${product.category?.slug ?? ''}`,
+            href: `${base}/c/${product.mainCategory?.slug ?? ''}`,
             ...(category.fallback ? { lang: 'he' as const } : {}),
           },
         ]),
@@ -209,12 +208,12 @@ export default async function ProductPage({ params }: { params: Params }) {
       <div className="grid gap-4">
         <Breadcrumbs label={t('breadcrumbs')} items={crumbs} />
         <NextIntlClientProvider locale={locale} messages={clientMessages}>
-          <div className="grid gap-5 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] lg:items-start lg:gap-7">
+          <div className="grid gap-5 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] lg:items-start lg:gap-10">
             <Gallery name={name.text} images={images} />
-            <div className="grid content-start gap-4 rounded-card bg-panel px-[18px] py-[22px] lg:sticky lg:top-[88px] lg:p-[32px_30px]">
+            <div className="grid content-start gap-4 lg:sticky lg:top-[calc(var(--header-h)+16px)]">
               <h1
                 {...fallbackAttrs(name)}
-                className="text-[28px] leading-[1.15] font-extrabold tracking-tight text-balance lg:text-[30px]"
+                className="text-[30px] leading-[1.15] font-bold tracking-[-0.01em] text-balance lg:text-[36px]"
               >
                 {name.text}
               </h1>
@@ -300,18 +299,20 @@ export default async function ProductPage({ params }: { params: Params }) {
         </NextIntlClientProvider>
       </div>
 
-      {related.length === 0 || category === null ? null : (
-        <section aria-labelledby="related-title" className="grid gap-4">
+      {alsoLike.length === 0 ? null : (
+        <section data-testid="also-like" aria-labelledby="also-like-title" className="grid gap-4">
           <h2
-            id="related-title"
-            className="text-xl leading-tight font-extrabold tracking-tight lg:text-[22px]"
+            id="also-like-title"
+            className="text-[28px] leading-tight font-bold tracking-tight lg:text-[40px]"
           >
-            {t.rich('related', {
-              category: category.text,
-              cat: (chunks) => <span {...fallbackAttrs(category)}>{chunks}</span>,
-            })}
+            {t('alsoLike')}
           </h2>
-          <ProductGrid products={related} locale={locale} label={t('relatedLabel')} />
+          <ProductGrid
+            products={alsoLike}
+            locale={locale}
+            label={t('relatedLabel')}
+            eagerCount={0}
+          />
         </section>
       )}
     </div>

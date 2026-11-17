@@ -68,7 +68,7 @@ export default async function CategoryPage({
       <div className="grid gap-1">
         <h1
           {...fallbackAttrs(name)}
-          className="text-[28px] leading-[1.15] font-extrabold tracking-tight text-balance lg:text-[34px]"
+          className="text-[32px] leading-[1.15] font-bold tracking-[-0.01em] text-balance lg:text-[44px]"
         >
           {name.text}
         </h1>
@@ -83,7 +83,7 @@ export default async function CategoryPage({
           title={t('emptyTitle')}
           text={t('emptyText')}
           action={
-            <LinkButton href={`/${locale}`} variant="secondary">
+            <LinkButton href={`/${locale}/shop`} variant="secondary">
               {t('emptyAction')}
             </LinkButton>
           }

@@ -62,7 +62,7 @@ export async function StatsChart({ stats }: { stats: Stats }) {
               width={barWidth}
               height={height}
               rx={Math.min(2, barWidth / 2)}
-              className={index === last ? 'fill-sun' : 'fill-ink'}
+              className={index === last ? 'fill-sage stroke-forest stroke-[1.5]' : 'fill-forest'}
             />
           );
         })}

@@ -58,7 +58,7 @@ export default async function ContactPage({ params }: { params: Params }) {
       />
       <h1
         {...fallbackAttrs(page.title)}
-        className="text-[28px] leading-[1.15] font-extrabold tracking-tight text-balance lg:text-[34px]"
+        className="text-[32px] leading-[1.15] font-bold tracking-[-0.01em] text-balance lg:text-[44px]"
       >
         {page.title.text}
       </h1>
@@ -68,7 +68,7 @@ export default async function ContactPage({ params }: { params: Params }) {
         </Prose>
       </div>
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start lg:gap-8">
-        <section className="rounded-card bg-panel p-[18px]">
+        <section className="rounded-card border border-line bg-paper p-[18px]">
           <h2 className="mb-3 text-lg font-extrabold">{t('formHeading')}</h2>
           <NextIntlClientProvider locale={locale} messages={{ contact: messages.contact }}>
             <ContactForm formToken={issueFormToken()} locale={locale} />
@@ -77,7 +77,7 @@ export default async function ContactPage({ params }: { params: Params }) {
         <section
           data-testid="contact-details"
           aria-labelledby="contact-details-heading"
-          className="grid content-start gap-1 rounded-card bg-panel p-[18px]"
+          className="grid content-start gap-1 rounded-card border border-line bg-paper p-[18px]"
         >
           <h2 id="contact-details-heading" className="mb-1 text-lg font-extrabold">
             {t('detailsHeading')}

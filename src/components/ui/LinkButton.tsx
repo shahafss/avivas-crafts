@@ -3,7 +3,7 @@ import type { ComponentPropsWithoutRef } from 'react';
 import { buttonClasses, type ButtonVariant } from './button-styles';
 
 export interface LinkButtonProps extends Omit<ComponentPropsWithoutRef<typeof Link>, 'href'> {
-  /** Full path including the locale, e.g. `/he/cart`. */
+  /** Full path including the locale, e.g. `/he/shop`. */
   href: string;
   variant?: ButtonVariant;
 }

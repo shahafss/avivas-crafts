@@ -77,10 +77,10 @@ describe('recordView: counting', () => {
   it('counts a view per Israel calendar day and path', async () => {
     await recordView({ p: '/he' }, ctx());
     await recordView({ p: '/he/' }, ctx());
-    await recordView({ p: '/he/cart' }, ctx());
+    await recordView({ p: '/he/shop' }, ctx());
     expect((await pages()).toSorted((a, b) => a.path.localeCompare(b.path))).toEqual([
       { day: '2026-03-10', path: '/he', views: 2 },
-      { day: '2026-03-10', path: '/he/cart', views: 1 },
+      { day: '2026-03-10', path: '/he/shop', views: 1 },
     ]);
     expect(await referrers()).toEqual([]);
   });
@@ -99,7 +99,7 @@ describe('recordView: counting', () => {
   it('counts a visit for an external or empty referrer, lower-cased', async () => {
     await recordView({ p: '/he', r: 'Instagram.com' }, ctx());
     await recordView({ p: '/he', r: 'instagram.com' }, ctx());
-    await recordView({ p: '/he/cart', r: '' }, ctx());
+    await recordView({ p: '/he/shop', r: '' }, ctx());
     expect(
       (await referrers()).toSorted((a, b) => a.referrerHost.localeCompare(b.referrerHost)),
     ).toEqual([
@@ -252,7 +252,7 @@ describe('POST /api/v', () => {
 
   it('also reads application/json', async () => {
     const response = await POST(
-      request(JSON.stringify({ p: '/he/cart' }), { 'content-type': 'application/json' }),
+      request(JSON.stringify({ p: '/he/shop' }), { 'content-type': 'application/json' }),
     );
     expectEmpty204(response);
     expect(await pages()).toHaveLength(1);

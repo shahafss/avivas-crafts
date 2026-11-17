@@ -219,7 +219,7 @@ test('the contact links across the shop lead to the page in the same language', 
     for (const locale of ['he', 'en'] as const) {
       await page.goto(`/${locale}`);
       // The menu (a popover next to the header) holds the link.
-      await contactLinkWorks(page, 'nav[popover]', locale);
+      await contactLinkWorks(page, '#site-menu', locale);
       await contactLinkWorks(page, 'footer', locale);
 
       await page.goto(`/${locale}/p/sample-clay-mug`);
@@ -231,17 +231,18 @@ test('the contact links across the shop lead to the page in the same language', 
   }
 });
 
-test('the home page empty state, the checkout and the order page link to the contact page', async ({
+test('the All pieces empty state, the checkout and the order page link to the contact page', async ({
   page,
 }, testInfo) => {
   test.skip(testInfo.project.name === 'chromium-desktop', 'cart and checkout: phone projects');
 
-  // Home page with an empty catalog.
+  // The empty catalog: the home page has no empty state any more (storefront.md §8.1); the
+  // "no pieces yet" message with the contact link lives on All pieces (§8.14).
   const hidden = await sql<{ id: string }[]>`
     UPDATE product SET state = 'hidden' WHERE state = 'published' RETURNING id`;
   try {
     for (const locale of ['he', 'en'] as const) {
-      await page.goto(`/${locale}`);
+      await page.goto(`/${locale}/shop`);
       await contactLinkWorks(page, 'main', locale);
     }
   } finally {
@@ -251,7 +252,7 @@ test('the home page empty state, the checkout and the order page link to the con
 
   // Checkout.
   const [mug] = await sql<{ id: string }[]>`SELECT id FROM product WHERE slug = 'sample-clay-mug'`;
-  await page.goto('/he/cart');
+  await page.goto('/he/contact');
   await page.evaluate(
     ({ productId }) => {
       localStorage.setItem(
@@ -269,7 +270,7 @@ test('the home page empty state, the checkout and the order page link to the con
   );
   await page.goto('/he/checkout');
   await expect(page.getByTestId('checkout-form')).toBeVisible({ timeout: 20_000 });
-  await contactLinkWorks(page, 'nav[popover]', 'he');
+  await contactLinkWorks(page, '#site-menu', 'he');
   // "Other country" answers with a link to the contact page.
   await page.getByTestId('delivery-shipping').check();
   await page.getByTestId('field-country').selectOption('other');

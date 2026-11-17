@@ -2,7 +2,7 @@ import { cn } from '@/lib/cn';
 
 export type SkeletonVariant = 'card' | 'line' | 'row';
 
-const PHOTO = 'rounded-card bg-photo motion-safe:animate-pulse';
+const PHOTO = 'bg-photo motion-safe:animate-pulse';
 
 function Bar({ className }: { className: string }) {
   return <div className={cn('rounded-chip bg-photo motion-safe:animate-pulse', className)} />;

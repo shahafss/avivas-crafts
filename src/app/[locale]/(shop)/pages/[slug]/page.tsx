@@ -57,7 +57,7 @@ export default async function ContentPage({ params }: { params: Params }) {
       />
       <h1
         {...fallbackAttrs(page.title)}
-        className="text-[28px] leading-[1.15] font-extrabold tracking-tight text-balance lg:text-[34px]"
+        className="text-[32px] leading-[1.15] font-bold tracking-[-0.01em] text-balance lg:text-[44px]"
       >
         {page.title.text}
       </h1>

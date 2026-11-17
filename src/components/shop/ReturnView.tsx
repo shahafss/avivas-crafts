@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import {
@@ -8,10 +7,12 @@ import {
   switchToOfflinePayment,
 } from '@/app/[locale]/(shop)/checkout/return/actions';
 import { Button } from '@/components/ui/Button';
-import { Icon, type IconName } from '@/components/ui/Icon';
+import { Icon } from '@/components/ui/ClientIcon';
+import type { CoreIconName } from '@/components/ui/icon-core';
 import { LinkButton } from '@/components/ui/LinkButton';
 import { Notice } from '@/components/ui/Notice';
 import { Spinner } from '@/components/ui/Spinner';
+import { CART_DRAWER_ID } from '@/lib/cart/drawer';
 import { clearCart } from '@/lib/cart/store';
 import { formatMoney, type MoneyLocale } from '@/lib/money';
 
@@ -65,7 +66,7 @@ function Panel({
   children,
   'data-testid': testId,
 }: {
-  icon: IconName;
+  icon: CoreIconName;
   title: string;
   children?: ReactNode;
   'data-testid'?: string;
@@ -73,9 +74,9 @@ function Panel({
   return (
     <div
       data-testid={testId}
-      className="grid justify-items-center gap-3 rounded-card bg-panel px-5 py-8 text-center"
+      className="grid justify-items-center gap-3 rounded-card border border-line bg-paper px-5 py-8 text-center"
     >
-      <span className="grid size-14 place-items-center rounded-full bg-sun-soft text-ink">
+      <span className="grid size-14 place-items-center rounded-full bg-sage text-ink">
         <Icon name={icon} size={26} />
       </span>
       <h1 className="text-xl leading-tight font-extrabold tracking-tight text-balance">{title}</h1>
@@ -214,12 +215,11 @@ export function ReturnView({
 
   const text = (key: string): string => (t.has(key) ? t(key) : t('errors.generic'));
   const shown: View = token === '' ? { kind: 'expired' } : view;
-  const cartHref = `/${locale}/cart`;
 
   if (shown.kind === 'checking' || shown.kind === 'confirmed') {
     return (
-      <div className="grid justify-items-center gap-3 rounded-card bg-panel px-5 py-8 text-center">
-        <span className="grid size-14 place-items-center rounded-full bg-sun-soft text-ink">
+      <div className="grid justify-items-center gap-3 rounded-card border border-line bg-paper px-5 py-8 text-center">
+        <span className="grid size-14 place-items-center rounded-full bg-sage text-ink">
           {shown.kind === 'confirmed' ? <Icon name="check" size={26} /> : <Spinner size={26} />}
         </span>
         <p role="status" data-testid="return-status" className="text-lg font-bold">
@@ -262,12 +262,14 @@ export function ReturnView({
             <Notice tone="alert" role="alert">
               <p className="font-bold">{text(problem)}</p>
               {problem === 'lines_unavailable' ? (
-                <Link
-                  href={cartHref}
-                  className="mt-1 inline-block underline underline-offset-[3px]"
+                <button
+                  type="button"
+                  popoverTarget={CART_DRAWER_ID}
+                  data-testid="return-cart"
+                  className="mt-1 inline-flex min-h-11 items-center underline underline-offset-[3px]"
                 >
                   {t('backToCart')}
-                </Link>
+                </button>
               ) : null}
             </Notice>
           </div>
@@ -316,7 +318,7 @@ export function ReturnView({
   if (shown.kind === 'switched') {
     return (
       <Panel icon="info" title={t('return.switched')} data-testid="return-switched">
-        <LinkButton href={`/${locale}`} variant="quiet">
+        <LinkButton href={`/${locale}/shop`} variant="quiet">
           {t('backToShop')}
         </LinkButton>
       </Panel>
@@ -326,7 +328,7 @@ export function ReturnView({
   if (shown.kind === 'timeout') {
     return (
       <Panel icon="info" title={t('return.timeout')} data-testid="return-timeout">
-        <LinkButton href={`/${locale}`} variant="quiet">
+        <LinkButton href={`/${locale}/shop`} variant="quiet">
           {t('backToShop')}
         </LinkButton>
       </Panel>
@@ -335,9 +337,9 @@ export function ReturnView({
 
   return (
     <Panel icon="alert" title={t('return.expired')} data-testid="return-expired">
-      <LinkButton href={cartHref} variant="secondary">
+      <Button variant="secondary" popoverTarget={CART_DRAWER_ID} data-testid="return-cart">
         {t('return.toCart')}
-      </LinkButton>
+      </Button>
     </Panel>
   );
 }

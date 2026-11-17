@@ -25,7 +25,7 @@ export function SelectField({
         <select
           {...rest}
           id={fieldId}
-          {...describe(fieldId, { hint, error })}
+          {...describe(fieldId, { hint, error }, rest['aria-describedby'])}
           className={cn(CONTROL, 'h-[52px] appearance-none pe-11')}
         >
           {children}

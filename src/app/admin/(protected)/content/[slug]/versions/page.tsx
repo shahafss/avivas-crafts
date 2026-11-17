@@ -46,7 +46,7 @@ export default async function ContentVersionsPage({
               prefetch={false}
               data-testid="content-version-link"
               data-version={row.version}
-              className="flex min-h-11 items-center rounded-card border border-line bg-panel p-4 font-bold"
+              className="flex min-h-11 items-center rounded-card border border-line bg-paper p-4 font-bold"
             >
               {t.rich('item', {
                 n: row.version,

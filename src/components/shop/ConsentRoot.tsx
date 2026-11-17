@@ -62,7 +62,7 @@ export async function ConsentSkipLink({ locale }: { locale: Locale }) {
   return (
     <a
       href="#consent-banner"
-      className="sr-only rounded-pill bg-sun px-5 py-3 font-bold text-ink focus:not-sr-only focus:fixed focus:start-3 focus:top-3 focus:z-banner"
+      className="sr-only rounded-pill bg-forest px-5 py-3 font-bold text-paper focus:not-sr-only focus:fixed focus:start-3 focus:top-3 focus:z-banner"
     >
       {t('skip')}
     </a>

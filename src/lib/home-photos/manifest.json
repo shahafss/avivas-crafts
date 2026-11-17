@@ -1,0 +1,128 @@
+{
+  "bannerChild": {
+    "phone": [
+      {
+        "file": "banner-child-play-p400.858a2cbc.webp",
+        "width": 400,
+        "height": 600,
+        "bytes": 42036
+      },
+      {
+        "file": "banner-child-play-p565.33bc3892.webp",
+        "width": 565,
+        "height": 848,
+        "bytes": 72950
+      }
+    ],
+    "wide": [
+      {
+        "file": "banner-child-play-w800.e6d9ce53.webp",
+        "width": 800,
+        "height": 339,
+        "bytes": 43464
+      },
+      {
+        "file": "banner-child-play-w1200.90e9281d.webp",
+        "width": 1200,
+        "height": 509,
+        "bytes": 75830
+      },
+      {
+        "file": "banner-child-play-w1600.4fcb7302.webp",
+        "width": 1600,
+        "height": 678,
+        "bytes": 116870
+      },
+      {
+        "file": "banner-child-play-w2000.9f68b26c.webp",
+        "width": 2000,
+        "height": 848,
+        "bytes": 164108
+      }
+    ]
+  },
+  "bannerShelf": {
+    "phone": [
+      {
+        "file": "banner-shelf-p400.920a3be5.webp",
+        "width": 400,
+        "height": 600,
+        "bytes": 66534
+      },
+      {
+        "file": "banner-shelf-p565.ff31b4ac.webp",
+        "width": 565,
+        "height": 848,
+        "bytes": 127792
+      }
+    ],
+    "wide": [
+      {
+        "file": "banner-shelf-w800.45dba786.webp",
+        "width": 800,
+        "height": 339,
+        "bytes": 78892
+      },
+      {
+        "file": "banner-shelf-w1200.8054028f.webp",
+        "width": 1200,
+        "height": 509,
+        "bytes": 162606
+      },
+      {
+        "file": "banner-shelf-w1600.505f2962.webp",
+        "width": 1600,
+        "height": 678,
+        "bytes": 271228
+      },
+      {
+        "file": "banner-shelf-w2000.7a209c40.webp",
+        "width": 2000,
+        "height": 848,
+        "bytes": 400252
+      }
+    ]
+  },
+  "hero": {
+    "phone": [
+      {
+        "file": "hero-workshop-p400.534f12e3.webp",
+        "width": 400,
+        "height": 600,
+        "bytes": 63008
+      },
+      {
+        "file": "hero-workshop-p565.6330283f.webp",
+        "width": 565,
+        "height": 848,
+        "bytes": 110742
+      }
+    ],
+    "wide": [
+      {
+        "file": "hero-workshop-w800.fe9dda43.webp",
+        "width": 800,
+        "height": 339,
+        "bytes": 68898
+      },
+      {
+        "file": "hero-workshop-w1200.62a6c8ce.webp",
+        "width": 1200,
+        "height": 509,
+        "bytes": 126182
+      },
+      {
+        "file": "hero-workshop-w1600.2551579a.webp",
+        "width": 1600,
+        "height": 678,
+        "bytes": 194856
+      },
+      {
+        "file": "hero-workshop-w2000.5b7531dd.webp",
+        "width": 2000,
+        "height": 848,
+        "bytes": 280912
+      }
+    ]
+  }
+}

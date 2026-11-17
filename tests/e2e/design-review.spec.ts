@@ -2,12 +2,24 @@ import { createHash, randomBytes } from 'node:crypto';
 import { mkdirSync } from 'node:fs';
 import type { Browser, Page, TestInfo } from '@playwright/test';
 import { expect, resetDb, signInAsAdmin, sql, test, waitForFormAge } from './fixtures';
-import { hydrated, placeOfflineOrder, putCartItem } from './shop-helpers';
+import {
+  hydrated,
+  openCartDrawer,
+  placeOfflineOrder,
+  putCartItem,
+  transitionsDone,
+} from './shop-helpers';
 
-// 006 T026 (research D10): full-page screenshots of every screen and state of
-// docs/design/storefront.md §8-§9 (he and en) and the admin screens of §12 (he only), at 375, 768
-// and 1280 px, into test-results/design-review/<locale>-<width>-<screen>.png. The coordinator
-// reviews them against the design doc. Skipped unless DESIGN_REVIEW=1:
+// 006 T026 (research D10), extended by 007 T064: full-page screenshots of every screen and state of
+// docs/design/storefront.md §8-§9 (he and en) and the admin screens of §12 (he only), at 375, 768,
+// 1024 and 1280 px (admin: 375, 768 and 1280 px; the "All pieces" page `/shop` at every width but 768 px), into test-results/design-review/<locale>-<width>-<screen>.png. The coordinator
+// reviews them against the design doc and the owner's home example
+// (docs/design/home-example.src.html, the reference for the home page) and
+// docs/design/storefront.md (the reference for everything else). 007 adds: the home page with its
+// row of pieces, `/shop`, the header after scrolling past the hero (`home-scrolled`), a product
+// page with "You may also like" (`product-also-like`), the footer with three social links (set by
+// SQL, restored after: `footer-social`), and the settings and piece-editor screens with the
+// social, home-row and category-checkbox parts. Skipped unless DESIGN_REVIEW=1:
 //
 //   DESIGN_REVIEW=1 pnpm exec playwright test tests/e2e/design-review.spec.ts --project=chromium-desktop
 //
@@ -24,7 +36,7 @@ import { hydrated, placeOfflineOrder, putCartItem } from './shop-helpers';
 // last a moment and need a failing request); the payment-return "checking" spinner (§8.7, gone
 // when the status answer arrives); `error.tsx` (§8.12, no safe way to trigger it); an empty catalog
 // (§8.1, the review keeps the sample products); the contact rate-limit and expired-form notices
-// (§8.10); the header menu at 1280 px (the menu button is hidden from 900 px by design).
+// (§8.10); the header menu at 1280 px (the menu button is hidden from 1024 px by design, so `menu-open` has no 1024 or 1280 px shot).
 
 test.skip(!process.env.DESIGN_REVIEW, 'Set DESIGN_REVIEW=1 to capture the design-review screens');
 test.describe.configure({ mode: 'serial' });
@@ -34,6 +46,9 @@ test.beforeEach(({}, testInfo) => {
 
 const OUT = 'test-results/design-review';
 const WIDTHS = [375, 768, 1280] as const;
+// 007 (FR-008): the full header row starts at 1024 px, so the storefront screens are also shot at
+// 1024 px, the narrowest width of the new header. The admin screens keep WIDTHS.
+const STORE_WIDTHS = [375, 768, 1024, 1280] as const;
 const HEIGHT = 900;
 type Locale = 'he' | 'en';
 const LOCALES: Locale[] = ['he', 'en'];
@@ -83,12 +98,14 @@ async function settle(page: Page): Promise<void> {
   await page.evaluate(async () => {
     const step = Math.max(200, window.innerHeight / 2);
     for (let y = 0; y < document.body.scrollHeight; y += step) {
-      window.scrollTo(0, y);
+      window.scrollTo({ top: y, left: 0, behavior: 'instant' });
       await new Promise((resolve) => setTimeout(resolve, 60));
     }
-    window.scrollTo(0, 0);
+    // The page uses smooth scrolling: scroll back instantly, or the screenshot is taken mid-way.
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
     await document.fonts.ready;
   });
+  await page.waitForFunction(() => window.scrollY === 0, undefined, { timeout: 5000 });
   await page
     .waitForFunction(() => [...document.images].every((image) => image.complete), undefined, {
       timeout: 10_000,
@@ -176,7 +193,7 @@ for (const locale of LOCALES) {
   test(`storefront screens in ${locale}`, async ({ page, browser }, testInfo) => {
     test.setTimeout(600_000);
 
-    for (const width of WIDTHS) {
+    for (const width of STORE_WIDTHS) {
       await page.setViewportSize({ width, height: HEIGHT });
       const at = (what: string): string => `${locale} ${String(width)} ${what}`;
       const visit = async (screen: string, path: string, ready?: () => Promise<void>) =>
@@ -187,7 +204,27 @@ for (const locale of LOCALES) {
         });
 
       await emptyCart(page);
-      await visit('home', '');
+      await visit('home', '', () => expect(page.getByTestId('home-row')).toBeVisible());
+      if (width !== 768) {
+        await visit('shop', '/shop');
+      }
+      await attempt(at('home-scrolled'), async () => {
+        // The header after scrolling past the hero (it is see-through only at the very top).
+        await open(page, `/${locale}`);
+        await page.evaluate(async () => {
+          await document.fonts.ready;
+        });
+        await page.evaluate(() => {
+          window.scrollTo({ top: window.innerHeight * 1.5, left: 0, behavior: 'instant' });
+        });
+        await page.waitForFunction(() => window.scrollY > 0, undefined, { timeout: 5000 });
+        await page.waitForTimeout(500);
+        await page.screenshot({
+          path: `${OUT}/${locale}-${String(width)}-home-scrolled.png`,
+          fullPage: false,
+        });
+        captured += 1;
+      });
       await visit('category', '/c/sample-ceramics');
       await visit('search', '/search?q=bowl');
       await visit('search-empty-query', '/search');
@@ -195,12 +232,20 @@ for (const locale of LOCALES) {
       await visit('search-too-long', `/search?q=${'a'.repeat(81)}`);
       await visit('category-empty', '/c/empty-category');
       await visit('product-options', '/p/sample-soy-candle');
+      await visit('product-also-like', '/p/sample-soy-candle', () =>
+        expect(page.getByTestId('also-like')).toBeVisible(),
+      );
       await visit('product-not-orderable', '/p/sample-ceramic-bowl');
       await visit('product-no-english', '/p/sample-clay-mug');
       await visit('product-not-available', '/p/no-such-product');
-      await visit('cart-empty', '/cart', () =>
-        expect(page.getByTestId('cart-empty')).toBeVisible({ timeout: 20_000 }),
-      );
+      await attempt(at('cart-empty'), async () => {
+        // The cart is a drawer (007 D21): open it on the home page with an empty cart.
+        await open(page, `/${locale}`);
+        await openCartDrawer(page);
+        await expect(page.getByTestId('cart-empty')).toBeVisible({ timeout: 20_000 });
+        await transitionsDone(page);
+        await shoot(page, locale, width, 'cart-empty');
+      });
       await visit('about', '/pages/about');
       await visit('page-legal-draft', '/pages/terms');
       await visit('page-no-english', '/pages/shipping-returns');
@@ -239,13 +284,16 @@ for (const locale of LOCALES) {
 
       await attempt(at('cart'), async () => {
         await putCartItem(page, 'sample-soy-candle');
-        await open(page, `/${locale}/cart`);
-        await expect(page.getByTestId('cart-line')).toHaveCount(1);
+        await open(page, `/${locale}`);
+        await openCartDrawer(page);
+        await expect(page.getByTestId('cart-line')).toHaveCount(1, { timeout: 20_000 });
+        await transitionsDone(page);
         await shoot(page, locale, width, 'cart');
       });
       await attempt(at('cart-flagged'), async () => {
         await putCartItem(page, 'sample-ceramic-bowl');
-        await open(page, `/${locale}/cart`);
+        await open(page, `/${locale}`);
+        await openCartDrawer(page);
         await expect(page.getByTestId('cart-flag')).toBeVisible({ timeout: 20_000 });
         await hydrated(page, 'cart-continue');
         await page.getByTestId('cart-continue').click();
@@ -294,13 +342,13 @@ for (const locale of LOCALES) {
       });
       await attempt(at('menu-open'), async () => {
         await open(page, `/${locale}`);
-        const menuButton = page.locator('button[popovertarget="site-menu"]');
-        // From 900 px the menu button is hidden by design (a known gap in the header comment).
+        const menuButton = page.locator('#site-header button[popovertarget="site-menu"]');
+        // From 1024 px the menu button is hidden by design (a known gap in the header comment).
         if (!(await menuButton.isVisible())) return;
         await hydrated(page, 'cart-link');
         await menuButton.click();
         await expect(page.locator('#site-menu')).toBeVisible();
-        await page.waitForTimeout(300);
+        await transitionsDone(page);
         await page.screenshot({
           path: `${OUT}/${locale}-${String(width)}-menu-open.png`,
           fullPage: false,
@@ -308,6 +356,28 @@ for (const locale of LOCALES) {
         captured += 1;
         await page.keyboard.press('Escape');
       });
+    }
+  });
+}
+
+for (const locale of LOCALES) {
+  test(`footer with three social links in ${locale}`, async ({ page }) => {
+    test.setTimeout(300_000);
+    await sql`UPDATE shop_settings SET
+      social_instagram_url = 'https://www.instagram.com/aviva',
+      social_facebook_url = 'https://www.facebook.com/aviva',
+      social_tiktok_url = 'https://www.tiktok.com/@aviva'`;
+    try {
+      for (const width of STORE_WIDTHS) {
+        await page.setViewportSize({ width, height: HEIGHT });
+        await attempt(`${locale} ${String(width)} footer-social`, async () => {
+          await open(page, `/${locale}`);
+          await expect(page.getByTestId('footer-social').getByRole('link')).toHaveCount(3);
+          await shoot(page, locale, width, 'footer-social');
+        });
+      }
+    } finally {
+      await sql`UPDATE shop_settings SET social_instagram_url = NULL, social_facebook_url = NULL, social_tiktok_url = NULL`;
     }
   });
 }
@@ -344,7 +414,7 @@ for (const locale of LOCALES) {
     try {
       for (const state of ORDER_STATES) {
         await state.set();
-        for (const width of WIDTHS) {
+        for (const width of STORE_WIDTHS) {
           await page.setViewportSize({ width, height: HEIGHT });
           await attempt(`${locale} ${String(width)} ${state.name}`, async () => {
             await open(page, `/${locale}${orderPath}`);

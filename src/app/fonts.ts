@@ -1,8 +1,7 @@
-import { Heebo } from 'next/font/google';
+import { Assistant } from 'next/font/google';
 
-export const heebo = Heebo({
+export const assistant = Assistant({
   subsets: ['hebrew', 'latin'],
-  weight: ['400', '500', '700', '800'],
-  variable: '--font-heebo',
+  variable: '--font-assistant',
   display: 'swap',
 });

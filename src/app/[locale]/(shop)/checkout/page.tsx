@@ -78,7 +78,7 @@ export default async function CheckoutPage({ params }: { params: Promise<{ local
 
   return (
     <div className="grid gap-5 pt-4 lg:gap-6 lg:pt-6">
-      <h1 className="text-[28px] leading-[1.15] font-extrabold tracking-tight text-balance lg:text-[34px]">
+      <h1 className="text-[32px] leading-[1.15] font-bold tracking-[-0.01em] text-balance lg:text-[44px]">
         {t('title')}
       </h1>
       <NextIntlClientProvider locale={locale} messages={{ checkout: messages.checkout }}>

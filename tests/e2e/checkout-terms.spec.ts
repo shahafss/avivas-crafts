@@ -20,7 +20,7 @@ async function centre(page: Page, selector: string): Promise<void> {
 
 async function openCheckout(page: Page, locale: 'he' | 'en'): Promise<void> {
   const [row] = await sql<{ id: string }[]>`SELECT id FROM product WHERE slug = 'sample-clay-mug'`;
-  await page.goto(`/${locale}/cart`);
+  await page.goto(`/${locale}/contact`);
   await page.evaluate(
     ({ productId }) => {
       localStorage.setItem(

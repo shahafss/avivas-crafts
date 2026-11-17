@@ -67,7 +67,7 @@ export function ConfirmDialog({
       onClick={(event) => {
         if (event.target === event.currentTarget && !busy) onCancel();
       }}
-      className="m-auto w-[min(92vw,26rem)] rounded-card border border-line bg-panel p-6 text-ink shadow-float backdrop:bg-ink/40"
+      className="m-auto w-[min(92vw,26rem)] rounded-card border border-line bg-paper p-6 text-ink shadow-float backdrop:bg-ink/40"
     >
       {/* Only an open dialog has content, so several dialogs on one page never share test ids or focus. */}
       {open ? (

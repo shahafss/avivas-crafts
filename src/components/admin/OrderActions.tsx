@@ -84,7 +84,7 @@ type BusyKey =
 /** The payment dialogs: "received" and "returned" (storefront.md §12.3). */
 type PaymentDialog = 'paid' | 'refunded';
 
-const SECTION = 'grid gap-3 rounded-card border border-line bg-panel p-4';
+const SECTION = 'grid gap-3 rounded-card border border-line bg-paper p-4';
 
 function fieldOf(to: 'shipped' | 'ready_for_pickup'): FulfilmentField {
   return to === 'shipped' ? 'trackingNumber' : 'pickupNote';

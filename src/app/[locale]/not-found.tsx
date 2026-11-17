@@ -9,7 +9,7 @@ export default async function NotFound() {
   const common = await getTranslations('common');
   return (
     <div className="mx-auto grid max-w-xl gap-5 py-10 text-center">
-      <h1 className="text-[28px] leading-[1.15] font-extrabold tracking-tight text-balance lg:text-[34px]">
+      <h1 className="text-[32px] leading-[1.15] font-bold tracking-[-0.01em] text-balance lg:text-[44px]">
         {t('title')}
       </h1>
       <p className="text-ink-2">{t('text')}</p>
@@ -31,7 +31,7 @@ export default async function NotFound() {
         </Button>
       </form>
       <div>
-        <LinkButton href={`/${locale}`}>{common('allPieces')}</LinkButton>
+        <LinkButton href={`/${locale}/shop`}>{common('allPieces')}</LinkButton>
       </div>
     </div>
   );

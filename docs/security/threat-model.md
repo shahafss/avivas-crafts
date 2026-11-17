@@ -104,6 +104,7 @@ feature added or changed.
 | I | Admin pages cached or indexed | `Cache-Control: no-store` on admin pages; `/admin` excluded in robots | A02 |
 | D | An admin saves an unusable setting (for example card payment on with no provider) | Server-side validation; with no card provider the settings action rejects card on or offline off (006) | A06, A10 |
 | E | Open redirect after sign-in sends the admin elsewhere | Only a validated same-origin `next` path is accepted | A01 |
+| 007 | Owner-controlled outbound links (the three social links in the footer) lead visitors to a harmful site, or carry a `javascript:` or `data:` address | Only `https` addresses on the platform's own domains (Instagram, Facebook, TikTok) are accepted; checked on the server on save and constrained in the database (`https://` prefix, at most 300 characters). Rendered as plain same-tab links (no `target`): no embeds, no third-party scripts, and the CSP is unchanged | A05 |
 
 ### 3.5 Customer data tools (find, export, anonymise)
 
@@ -177,6 +178,12 @@ These are accepted and stated, not mitigated:
 - **R5. Proxying the shop domain through Cloudflare later needs research R19 and the Privacy
   Policy updated first.** At launch Cloudflare provides DNS and the image host only; the shop
   domain is DNS-only and `TRUSTED_PROXY_HOPS=1` counts Render's hop.
+- **R6. `GHSA-fc5q-39xc-vjpf` (picomatch ReDoS, high) is ignored in the dependency audit**
+  (`auditConfig.ignoreGhsas` in `pnpm-workspace.yaml`, since 2026-11-17). No patched version
+  exists. picomatch arrives through next-intl's build-time file watcher (`@parcel/watcher`, part of a
+  production dependency that never runs at request time) and through development tooling
+  (eslint-config-next, vitest). No code that handles a visitor's request reaches it.
+  Remove the ignore as soon as a fixed version ships.
 
 Also worth knowing:
 

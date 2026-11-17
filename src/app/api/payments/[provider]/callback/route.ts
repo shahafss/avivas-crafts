@@ -12,7 +12,11 @@ import { checkRateLimit } from '@/server/security/rate-limit';
 const MAX_BODY_BYTES = 64 * 1024;
 const HEADERS = { 'Cache-Control': 'no-store' };
 
-function json(status: number, body: Record<string, unknown>, extra: Record<string, string> = {}): Response {
+function json(
+  status: number,
+  body: Record<string, unknown>,
+  extra: Record<string, string> = {},
+): Response {
   return Response.json(body, { status, headers: { ...HEADERS, ...extra } });
 }
 

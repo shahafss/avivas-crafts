@@ -4,7 +4,9 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useCallback, useState, type ReactNode } from 'react';
+import { Checkbox } from '@/components/ui/Checkbox';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { FieldError, hintId } from '@/components/ui/Field';
 import { FormField } from '@/components/ui/FormField';
 import { Toast } from '@/components/ui/Toast';
 import { cn } from '@/lib/cn';
@@ -35,7 +37,7 @@ export interface EditorProductData {
   priceUsdMinor: number | null;
   prepTimeHe: string | null;
   prepTimeEn: string | null;
-  categoryId: string | null;
+  categoryIds: string[];
   state: ProductState;
   orderable: boolean;
 }
@@ -55,10 +57,12 @@ const FIELD_OF: Record<string, string> = {
   priceUsdMinor: 'priceUsd',
   prepTimeHe: 'prepTimeHe',
   prepTimeEn: 'prepTimeEn',
-  categoryId: 'category',
+  // The "missing category" key is `categoryId` (its text is unchanged); the unknown-id error is `categoryIds`.
+  categoryId: 'categories',
+  categoryIds: 'categories',
 };
 
-const SECTION = 'grid gap-4 rounded-card border border-line bg-panel p-4 sm:p-5';
+const SECTION = 'grid gap-4 rounded-card border border-line bg-paper p-4 sm:p-5';
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -72,12 +76,16 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 export function ProductEditor({
   product,
   categories,
+  homeCategoryName,
   images,
   groups,
   actions,
 }: {
   product: EditorProductData;
+  /** In the shop's category order. */
   categories: { id: string; nameHe: string }[];
+  /** Name of the home-row category, or null when none is chosen (for the hint). */
+  homeCategoryName: string | null;
   images: PhotoItem[];
   groups: OptionGroupItem[];
   actions: ProductEditorActions;
@@ -95,7 +103,7 @@ export function ProductEditor({
   const [priceUsd, setPriceUsd] = useState(minorToMajorText(product.priceUsdMinor));
   const [prepTimeHe, setPrepTimeHe] = useState(product.prepTimeHe ?? '');
   const [prepTimeEn, setPrepTimeEn] = useState(product.prepTimeEn ?? '');
-  const [categoryId, setCategoryId] = useState(product.categoryId ?? '');
+  const [categoryIds, setCategoryIds] = useState<string[]>(product.categoryIds);
   const [notOrderable, setNotOrderable] = useState(!product.orderable);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -148,7 +156,7 @@ export function ProductEditor({
       priceUsdMinor: usd,
       prepTimeHe,
       prepTimeEn,
-      categoryId: categoryId === '' ? null : categoryId,
+      categoryIds,
     });
     if (!updated.ok) return showFailure(updated);
     // Changed when the switch and the saved state agree (orderable = not notOrderable).
@@ -208,9 +216,9 @@ export function ProductEditor({
 
   const stateBadge = cn(
     'rounded-pill px-2.5 py-0.5 text-[13px] font-bold',
-    product.state === 'published' && 'bg-sun-soft',
+    product.state === 'published' && 'bg-sage',
     product.state === 'draft' && 'bg-photo',
-    product.state === 'hidden' && 'border-[1.5px] border-field bg-panel',
+    product.state === 'hidden' && 'border-[1.5px] border-field bg-paper',
   );
 
   return (
@@ -315,23 +323,40 @@ export function ProductEditor({
                 }}
                 data-testid="field-priceUsd"
               />
-              <FormField
-                as="select"
-                label={t('fields.category')}
-                value={categoryId}
-                error={errors.category}
-                onChange={(event) => {
-                  setCategoryId(event.target.value);
-                }}
-                data-testid="field-category"
+              <fieldset
+                data-testid="field-categories"
+                aria-describedby={
+                  errors.categories === undefined
+                    ? hintId('field-categories')
+                    : `${hintId('field-categories')} field-categories-error`
+                }
+                className="min-w-0"
               >
-                <option value="">{t('fields.categoryNone')}</option>
-                {categories.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.nameHe}
-                  </option>
-                ))}
-              </FormField>
+                <legend className="text-sm leading-snug font-bold">{t('categoriesLabel')}</legend>
+                <p id={hintId('field-categories')} className="text-[13px] leading-snug text-ink-2">
+                  {homeCategoryName === null
+                    ? t('categoriesHintNoHome')
+                    : t('categoriesHint', { home: homeCategoryName })}
+                </p>
+                <div className="mt-1.5 grid">
+                  {categories.map((item) => (
+                    <Checkbox
+                      key={item.id}
+                      label={item.nameHe}
+                      checked={categoryIds.includes(item.id)}
+                      onChange={(event) => {
+                        const on = event.target.checked;
+                        setCategoryIds((current) =>
+                          on ? [...current, item.id] : current.filter((value) => value !== item.id),
+                        );
+                      }}
+                    />
+                  ))}
+                </div>
+                {errors.categories === undefined ? null : (
+                  <FieldError id="field-categories">{errors.categories}</FieldError>
+                )}
+              </fieldset>
               <FormField
                 label={t('fields.prepTimeHe')}
                 hint={t('fields.prepTimeHeHint')}

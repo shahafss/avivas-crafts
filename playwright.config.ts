@@ -2,7 +2,7 @@ import { defineConfig, devices } from '@playwright/test';
 import { CONSENT_PORT, E2E_PORT, serverEnv } from './tests/e2e/env';
 
 const STOREFRONT_SPECS =
-  /(^|[\\/])(cart|checkout-.*|language|privacy|catalog|order-tracking|contact)\.spec\.ts$/;
+  /(^|[\\/])(cart|checkout-.*|language|privacy|catalog|order-tracking|contact|home)\.spec\.ts$/;
 // The `consent` project runs on the second server: the consent test category on, no card provider.
 const CONSENT_SPEC = /(consent|no-card-payment)\.spec\.ts$/;
 

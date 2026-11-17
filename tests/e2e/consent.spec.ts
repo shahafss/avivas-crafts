@@ -238,3 +238,46 @@ test('after a Cookie Policy change the banner returns and nothing optional loads
     policy_version: cookies?.version,
   });
 });
+
+// 007 T092/T093 (FR-044, FR-046, research D21): a modal drawer makes the consent banner and its
+// skip link inert too (every top-level child of <body> except the drawer), so keyboard focus
+// cannot reach them while it is open, and the banner works again once it is closed.
+test('an open drawer makes the consent banner inert; closing it brings the banner back', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 375, height: 812 });
+  await showBanner(page);
+  await hydrated(page, 'cart-link');
+  const banner = page.getByTestId('consent-banner');
+  await page.locator('#site-header [popovertarget="site-menu"]').click();
+  await expect(page.locator('#site-menu')).toBeVisible();
+  expect(
+    await banner.evaluate((element) => element.closest('[inert]') !== null),
+    'the banner is inert while the menu drawer is open',
+  ).toBe(true);
+  const reachable = await page.evaluate(() => {
+    const drawer = document.getElementById('site-menu');
+    return [...document.body.querySelectorAll<HTMLElement>('a[href], button, input')].filter(
+      (element) =>
+        !drawer?.contains(element) &&
+        element.closest('[inert]') === null &&
+        element.closest('[popover]:not(:popover-open)') === null,
+    ).length;
+  });
+  expect(
+    reachable,
+    'nothing outside the drawer is reachable (banner and skip links included)',
+  ).toBe(0);
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#site-menu')).toBeHidden();
+  expect(await banner.evaluate((element) => element.closest('[inert]') !== null)).toBe(false);
+  await expect(page.getByTestId('consent-accept-all')).toBeEnabled();
+
+  // The same for the cart drawer.
+  await page.getByTestId('cart-link').click();
+  await expect(page.getByTestId('cart-drawer')).toBeVisible();
+  expect(await banner.evaluate((element) => element.closest('[inert]') !== null)).toBe(true);
+  await page.keyboard.press('Escape');
+  await expect(page.getByTestId('cart-drawer')).toBeHidden();
+  expect(await banner.evaluate((element) => element.closest('[inert]') !== null)).toBe(false);
+});

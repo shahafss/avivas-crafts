@@ -1,13 +1,13 @@
 'use client';
 
-import Link from 'next/link';
 import { useEffect, useRef } from 'react';
 import { ErrorSummary, type ErrorSummaryItem } from '@/components/ui/ErrorSummary';
 import { Notice } from '@/components/ui/Notice';
+import { CART_DRAWER_ID } from '@/lib/cart/drawer';
 import { CHECKOUT_SUMMARY_ID } from './checkout-ids';
 
 /**
- * What went wrong with a checkout submit: the alert with its recovery (a link back to the cart
+ * What went wrong with a checkout submit: the alert with its recovery (a button that opens the cart drawer
  * when lines can no longer be ordered) and the error summary that links to each invalid field.
  * Loaded only when there is something to show, so the checkout's first load stays small.
  * `focusToken` changes on every failed submit: the summary takes focus, or the alert scrolls
@@ -22,8 +22,8 @@ export default function CheckoutProblems({
 }: {
   /** The alert text, if any. */
   message: string | null;
-  /** Translated link back to the cart, with its address; null when not offered. */
-  cartLink: { label: string; href: string } | null;
+  /** Translated button that opens the cart drawer; null when not offered. */
+  cartLink: { label: string } | null;
   summaryHeading: string;
   summaryItems: ErrorSummaryItem[];
   focusToken: number;
@@ -45,12 +45,14 @@ export default function CheckoutProblems({
           <Notice tone="alert" role="alert">
             <p className="font-bold">{message}</p>
             {cartLink === null ? null : (
-              <Link
-                href={cartLink.href}
-                className="mt-1 inline-block underline underline-offset-[3px]"
+              <button
+                type="button"
+                popoverTarget={CART_DRAWER_ID}
+                data-testid="checkout-back-to-cart"
+                className="mt-1 inline-flex min-h-11 items-center underline underline-offset-[3px]"
               >
                 {cartLink.label}
-              </Link>
+              </button>
             )}
           </Notice>
         </div>

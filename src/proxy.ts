@@ -8,7 +8,12 @@ import {
   sameSiteNavigationPage,
   shouldBounceAdminRequest,
 } from '@/server/security/admin-bounce';
-import { buildCsp, generateNonce, paymentHostFor, securityHeaders } from '@/server/security/headers';
+import {
+  buildCsp,
+  generateNonce,
+  paymentHostFor,
+  securityHeaders,
+} from '@/server/security/headers';
 
 // Headers, locale routing and the same-site bounce only. No authorisation here: every admin
 // page, Server Action and route handler calls requireAdmin() itself (research.md R14).

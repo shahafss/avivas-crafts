@@ -142,7 +142,7 @@ export default function ConsentBanner({
           tabIndex={-1}
           aria-labelledby={titleId}
           data-testid="consent-banner"
-          className="fixed inset-x-0 bottom-0 z-banner mx-auto w-full max-w-[40rem] rounded-t-[20px] bg-panel p-5 text-ink shadow-float"
+          className="fixed inset-x-0 bottom-0 z-banner mx-auto w-full max-w-[40rem] rounded-t-[12px] bg-paper p-5 text-ink shadow-float"
         >
           <h2 id={titleId} className="text-lg font-extrabold">
             {t('banner.title')}
@@ -199,7 +199,7 @@ export default function ConsentBanner({
           returnTo.current = null;
           if (element?.isConnected === true) element.focus();
         }}
-        className="m-auto w-[min(92vw,30rem)] rounded-card border border-line bg-panel p-6 text-ink shadow-float backdrop:bg-ink/40"
+        className="m-auto w-[min(92vw,30rem)] rounded-card border border-line bg-paper p-6 text-ink shadow-float backdrop:bg-ink/40"
       >
         <h2 id={dialogTitleId} className="text-xl font-extrabold">
           {t('dialog.title')}
@@ -243,13 +243,13 @@ export default function ConsentBanner({
                     aria-hidden="true"
                     className={cn(
                       'relative block h-7 w-12 rounded-pill border-[1.5px] border-ink transition-colors',
-                      on ? 'bg-ink' : 'bg-panel',
+                      on ? 'bg-ink' : 'bg-paper',
                     )}
                   >
                     <span
                       className={cn(
                         'absolute top-1/2 block size-5 -translate-y-1/2 rounded-full',
-                        on ? 'end-[3px] bg-panel' : 'start-[3px] bg-ink',
+                        on ? 'end-[3px] bg-paper' : 'start-[3px] bg-ink',
                       )}
                     />
                   </span>

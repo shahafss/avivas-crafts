@@ -30,8 +30,8 @@ export function RadioCard({
     <label
       htmlFor={fieldId}
       className={cn(
-        'relative flex min-h-11 w-full cursor-pointer items-start justify-between gap-3 rounded-chip border-[1.5px] border-field bg-panel p-3.5 sm:p-4',
-        'has-checked:border-ink has-checked:bg-sun-soft has-checked:ring-1 has-checked:ring-ink has-checked:ring-inset',
+        'relative flex min-h-11 w-full cursor-pointer items-start justify-between gap-3 rounded-chip border-[1.5px] border-field bg-paper p-3.5 sm:p-4',
+        'has-checked:border-ink has-checked:bg-sage has-checked:ring-1 has-checked:ring-ink has-checked:ring-inset',
         'has-focus-visible:outline-3 has-focus-visible:outline-offset-3 has-focus-visible:outline-ink',
         className,
       )}

@@ -140,7 +140,7 @@ export async function seedCatalog(actor: Actor): Promise<CheckoutFixture> {
     await updateProduct(actor, created.data.id, {
       descriptionHe: 'תיאור',
       priceIlsMinor: price,
-      categoryId,
+      categoryIds: [categoryId],
       prepTimeHe: prepHe,
       prepTimeEn: prepEn,
     });

@@ -53,13 +53,13 @@ Success means:
 
 - **Name:** "Aviva's Crafts" is a working name, not final. No logo or wordmark exists yet.
 - **Voice (decided 2026-11-07):** the shop speaks as Aviva in the first person (Hebrew feminine singular: "סרגתי", "אני שולחת"); customers are addressed in the plural ("בחרו", "הוסיפו"). English mirrors it ("I crocheted…").
-- **Storefront look (approved 2026-11-08):** the category standard, executed well, in the spirit of soliducosmetics.com and allbirds.com, warm and positive: warm light ground, espresso text, marigold actions, a rose made-to-order note, a peach footer, Heebo only. It must not feel like a childish toy store or a cold luxury boutique. The binding reference is `docs/design/storefront.md`.
+- **Storefront look (approved 2026-11-16):** the Shopify-like direction of the owner's own Shopify shop: a white page, near-black green text, soft sage and dark green buttons, a peach band, a mint footer, Assistant for all text, full-width photos on the home page and square product photos. It must not feel like a childish toy store or a cold luxury boutique. The binding reference is `docs/design/storefront.md`. (This replaces the warm cream and marigold look approved 2026-11-08.)
 - **Admin wording:** plain Hebrew with no jargon, and clear feedback on success and on errors. This is binding (constitution principle II).
 
 ## Evidence on Hand
 
-- **Exists:** Aviva's own photos of finished pieces, taken on her phone. They are uploaded through the admin area, where they are re-encoded and stripped of metadata.
-- **Does not exist, so never fabricate:** a logo or wordmark, photos of Aviva or her workspace, customer testimonials or reviews, press mentions, sales figures, or an "about" story beyond what Aviva writes herself on the editable About page.
+- **Exists:** Aviva's own photos of finished pieces, taken on her phone. They are uploaded through the admin area, where they are re-encoded and stripped of metadata. Also three lifestyle images supplied by the owner for the home page (AI-generated from Aviva's real pieces and her real look; approved 2026-11-16).
+- **Does not exist, so never fabricate:** a logo or wordmark, any other photos of Aviva or her workspace, customer testimonials or reviews, press mentions, sales figures, or an "about" story beyond what Aviva writes herself on the editable About page.
 - **Copy:** product names and descriptions are written by Aviva in Hebrew, with optional English. Legal page texts are drafts and must be reviewed by a qualified legal professional before launch.
 
 ## Product Principles
@@ -68,7 +68,7 @@ Success means:
 2. **Aviva runs it alone.** Every admin flow must work on her phone, in plain Hebrew, without help. If she has to ask the family for help, the design failed.
 3. **Guest checkout with as few steps as possible.** No accounts, only the fields an order needs, and the made-to-order wait is stated up front.
 4. **Hebrew first, English done properly.** RTL is the default. English is a correct LTR layout, not an afterthought.
-5. **Trust through honesty.** Show real prices, preparation times, business details, and privacy behavior. Never use invented social proof or dark patterns.
+5. **Trust through honesty.** Show real prices, preparation times, business details, and privacy behavior. Never use invented social proof or dark patterns. The owner-supplied lifestyle images on the home page are the one allowed exception to "never invent"; no other invented photos.
 
 ## Accessibility & Inclusion
 

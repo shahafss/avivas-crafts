@@ -61,7 +61,7 @@ export default async function SearchPage({
         label={t('breadcrumbs')}
         items={[{ label: common('home'), href: `/${locale}` }, { label: t('title') }]}
       />
-      <h1 className="text-[28px] leading-[1.15] font-extrabold tracking-tight text-balance lg:text-[34px]">
+      <h1 className="text-[32px] leading-[1.15] font-bold tracking-[-0.01em] text-balance lg:text-[44px]">
         {t('title')}
       </h1>
 
@@ -69,6 +69,7 @@ export default async function SearchPage({
         action={`/${locale}/search`}
         method="get"
         role="search"
+        aria-label={t('formLabel')}
         className="flex max-w-xl flex-wrap items-start gap-3"
       >
         <TextField

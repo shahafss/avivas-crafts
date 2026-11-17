@@ -1,7 +1,7 @@
 import 'server-only';
-import { and, asc, desc, eq, isNull } from 'drizzle-orm';
+import { and, asc, desc, eq, exists, inArray, isNull } from 'drizzle-orm';
 import { db } from '@/server/db/client';
-import { category, product, productImage } from '@/server/db/schema';
+import { category, product, productCategory, productImage } from '@/server/db/schema';
 import { adminImageUrl, listImages, type ImageRow } from './images';
 import { listOptionGroups, type OptionGroupRow } from './options';
 
@@ -14,7 +14,8 @@ export interface AdminProductListRow {
   priceIlsMinor: number | null;
   state: ProductState;
   orderable: boolean;
-  categoryNameHe: string | null;
+  /** Hebrew names of every category of the piece, in the shop's category order. */
+  categoryNames: string[];
   /** Same-origin URL of the main photo (400 px), or null. */
   imageUrl: string | null;
   /**
@@ -32,7 +33,19 @@ export async function listAdminProducts(
 ): Promise<AdminProductListRow[]> {
   const conditions = [
     filters.state === undefined ? undefined : eq(product.state, filters.state),
-    filters.categoryId === undefined ? undefined : eq(product.categoryId, filters.categoryId),
+    filters.categoryId === undefined
+      ? undefined
+      : exists(
+          db
+            .select({ one: productCategory.productId })
+            .from(productCategory)
+            .where(
+              and(
+                eq(productCategory.productId, product.id),
+                eq(productCategory.categoryId, filters.categoryId),
+              ),
+            ),
+        ),
   ].filter((condition) => condition !== undefined);
   const rows = await db
     .select({
@@ -42,14 +55,12 @@ export async function listAdminProducts(
       priceIlsMinor: product.priceIlsMinor,
       state: product.state,
       orderable: product.orderable,
-      categoryNameHe: category.nameHe,
       imageKey: productImage.storageKey,
       nameEn: product.nameEn,
       descriptionHe: product.descriptionHe,
       descriptionEn: product.descriptionEn,
     })
     .from(product)
-    .leftJoin(category, eq(category.id, product.categoryId))
     .leftJoin(
       productImage,
       and(
@@ -60,8 +71,26 @@ export async function listAdminProducts(
     )
     .where(and(...conditions))
     .orderBy(desc(product.createdAt), asc(product.id));
+  const names = new Map<string, string[]>();
+  if (rows.length > 0) {
+    const links = await db
+      .select({ productId: productCategory.productId, nameHe: category.nameHe })
+      .from(productCategory)
+      .innerJoin(category, eq(category.id, productCategory.categoryId))
+      .where(
+        inArray(
+          productCategory.productId,
+          rows.map((row) => row.id),
+        ),
+      )
+      .orderBy(asc(category.sortOrder));
+    for (const link of links) {
+      names.set(link.productId, [...(names.get(link.productId) ?? []), link.nameHe]);
+    }
+  }
   return rows.map(({ imageKey, nameEn, descriptionHe, descriptionEn, ...row }) => ({
     ...row,
+    categoryNames: names.get(row.id) ?? [],
     imageUrl: imageKey === null ? null : adminImageUrl(imageKey, 400),
     missingEnglish: blank(nameEn) || (!blank(descriptionHe) && blank(descriptionEn)),
   }));
@@ -78,7 +107,8 @@ export interface EditorProduct {
   priceUsdMinor: number | null;
   prepTimeHe: string | null;
   prepTimeEn: string | null;
-  categoryId: string | null;
+  /** Ids of the piece's categories (any order). */
+  categoryIds: string[];
   state: ProductState;
   orderable: boolean;
 }
@@ -99,6 +129,10 @@ export async function getEditorData(id: string): Promise<EditorData | null> {
   const [row] = await db.select().from(product).where(eq(product.id, id));
   if (!row) return null;
   const images = await listImages(id);
+  const links = await db
+    .select({ categoryId: productCategory.categoryId })
+    .from(productCategory)
+    .where(eq(productCategory.productId, id));
   return {
     product: {
       id: row.id,
@@ -111,7 +145,7 @@ export async function getEditorData(id: string): Promise<EditorData | null> {
       priceUsdMinor: row.priceUsdMinor,
       prepTimeHe: row.prepTimeHe,
       prepTimeEn: row.prepTimeEn,
-      categoryId: row.categoryId,
+      categoryIds: links.map((link) => link.categoryId),
       state: row.state,
       orderable: row.orderable,
     },

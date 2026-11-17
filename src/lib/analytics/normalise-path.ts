@@ -15,7 +15,7 @@ export const DIRECT = '(direct)';
 export interface CountablePath {
   /** The normalised path that is counted. */
   path: string;
-  kind: 'home' | 'search' | 'cart' | 'contact' | 'category' | 'product' | 'page';
+  kind: 'home' | 'shop' | 'search' | 'contact' | 'category' | 'product' | 'page';
   /** The product, category or page slug the server checks against the database. */
   slug?: string;
 }
@@ -39,8 +39,8 @@ export function parseCountablePath(raw: unknown): CountablePath | null {
 
   if (rest.length === 0) return { path, kind: 'home' };
   if (rest.length === 1) {
+    if (rest[0] === 'shop') return { path, kind: 'shop' };
     if (rest[0] === 'search') return { path, kind: 'search' };
-    if (rest[0] === 'cart') return { path, kind: 'cart' };
     if (rest[0] === 'contact') return { path, kind: 'contact' };
     return null;
   }

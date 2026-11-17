@@ -32,6 +32,13 @@ export const SEED_PLACEHOLDERS = {
 // Moved to a dependency-free module (003); re-exported for existing imports.
 export { CONTENT_SLUGS };
 
+/** The category the home row shows at release (007 FR-034); the migration creates the same row. */
+export const FEATURED_CATEGORY = {
+  slug: 'featured',
+  nameHe: 'מומלצות',
+  nameEn: 'Featured',
+} as const;
+
 const SAMPLE_CATEGORIES = [
   { slug: 'sample-candles', nameHe: 'נרות', nameEn: 'Candles' },
   { slug: 'sample-ceramics', nameHe: 'קרמיקה', nameEn: 'Ceramics' },
@@ -50,8 +57,10 @@ export async function runSeed(database: SeedDb, options: SeedOptions): Promise<v
   if (options.samples) {
     // After the transaction: photos go through the image pipeline and storage, which take their own connections.
     // Imported only here, so a deploy-time seed without samples never loads the image libraries.
-    const { seedSampleProducts } = await import('@/server/catalog/sample-products');
+    const { linkSampleProducts, seedSampleProducts } =
+      await import('@/server/catalog/sample-products');
     await seedSampleProducts(database);
+    await linkSampleProducts(database, FEATURED_CATEGORY.slug);
   }
 }
 
@@ -81,7 +90,7 @@ async function seedInTx(db: SeedDb, options: SeedOptions): Promise<void> {
     .values({ zoneId: zone.id, countryCode: 'IL' })
     .onConflictDoNothing();
 
-  await db
+  const insertedSettings = await db
     .insert(shopSettings)
     .values({
       id: 1,
@@ -96,7 +105,8 @@ async function seedInTx(db: SeedDb, options: SeedOptions): Promise<void> {
       businessAddressEn: SEED_PLACEHOLDERS.businessAddressEn,
       notificationEmails: [...SEED_PLACEHOLDERS.notificationEmails],
     })
-    .onConflictDoNothing({ target: shopSettings.id });
+    .onConflictDoNothing({ target: shopSettings.id })
+    .returning({ id: shopSettings.id });
 
   if (options.contentDir === undefined) {
     const inserted = await db
@@ -122,6 +132,28 @@ async function seedInTx(db: SeedDb, options: SeedOptions): Promise<void> {
           sortOrder: sql`(SELECT coalesce(max(${category.sortOrder}), -1) + 1 FROM ${category})`,
         })
         .onConflictDoNothing({ target: category.slug });
+    }
+  }
+
+  // "Featured" only for a new settings row or with samples (data-model.md section 5, Seed): an
+  // existing row is never changed (null there means Aviva chose "no row"), and a deploy without
+  // samples never re-creates a "Featured" that was deleted. It comes after the sample categories.
+  const newSettingsRow = insertedSettings.length > 0;
+  if (newSettingsRow || options.samples) {
+    await db
+      .insert(category)
+      .values({
+        ...FEATURED_CATEGORY,
+        sortOrder: sql`(SELECT coalesce(max(${category.sortOrder}), -1) + 1 FROM ${category})`,
+      })
+      .onConflictDoNothing({ target: category.slug });
+    if (newSettingsRow) {
+      await db
+        .update(shopSettings)
+        .set({
+          homeCategoryId: sql`(SELECT ${category.id} FROM ${category} WHERE ${category.slug} = ${FEATURED_CATEGORY.slug})`,
+        })
+        .where(eq(shopSettings.id, 1));
     }
   }
 }

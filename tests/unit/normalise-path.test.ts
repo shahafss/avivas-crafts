@@ -1,7 +1,7 @@
 // 003 US5 (tasks.md T033; research R12): the pure rules of the cookieless page-view beacon.
 //
 // API of the implementation (T036), src/lib/analytics/normalise-path.ts:
-//   parseCountablePath(raw: unknown): { path: string; kind: 'home' | 'search' | 'cart' | 'contact'
+//   parseCountablePath(raw: unknown): { path: string; kind: 'home' | 'shop' | 'search' | 'contact'
 //     | 'category' | 'product' | 'page'; slug?: string } | null
 //   normalisePath(raw: unknown): string | null          (= parseCountablePath(raw)?.path ?? null)
 //   normaliseReferrer(raw: unknown, { ownHost, paymentHost? }): string | null
@@ -23,7 +23,8 @@ describe('normalisePath: accepted paths', () => {
     ['/he/p/doll-1?x=1#y', '/he/p/doll-1'],
     ['/he/p/doll-1#y', '/he/p/doll-1'],
     ['/en/search?q=a', '/en/search'],
-    ['/he/cart', '/he/cart'],
+    ['/he/shop', '/he/shop'],
+    ['/en/shop?sort=price-asc', '/en/shop'],
     ['/he/pages/terms', '/he/pages/terms'],
     ['/he/pages/about', '/he/pages/about'],
     ['/he/pages/shipping-returns', '/he/pages/shipping-returns'],
@@ -52,6 +53,7 @@ describe('normalisePath: rejected paths', () => {
     '/fr',
     '/',
     '',
+    '/he/cart',
     'he/cart',
     '//he/cart',
     '/he/pages/unknown',
@@ -64,6 +66,8 @@ describe('normalisePath: rejected paths', () => {
     '/he/p/doll_1',
     '/he/p/doll/extra',
     '/he/c/dolls/extra',
+    '/he/shop/x',
+    '/he/shop/doll-1',
     '/HE/cart',
     '/he/p/%zz',
     '/he/p/%2e%2e',
@@ -101,8 +105,9 @@ describe('parseCountablePath', () => {
       slug: 'terms',
     });
     expect(parseCountablePath('/he')).toEqual({ path: '/he', kind: 'home' });
+    expect(parseCountablePath('/he/shop')).toEqual({ path: '/he/shop', kind: 'shop' });
+    expect(parseCountablePath('/en/shop')?.kind).toBe('shop');
     expect(parseCountablePath('/he/search')?.kind).toBe('search');
-    expect(parseCountablePath('/he/cart')?.kind).toBe('cart');
     expect(parseCountablePath('/en/contact')?.kind).toBe('contact');
   });
 });

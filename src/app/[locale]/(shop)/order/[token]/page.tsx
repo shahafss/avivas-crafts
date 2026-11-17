@@ -163,11 +163,11 @@ export default async function OrderPage({
       <OrderCleanup justPlaced={justPlaced} />
       <div className="grid justify-items-center gap-3 text-center">
         {cancelled ? null : (
-          <span className="grid size-14 place-items-center rounded-full bg-sun-soft text-ink">
+          <span className="grid size-14 place-items-center rounded-full bg-sage text-ink">
             <Icon name="check" size={26} />
           </span>
         )}
-        <h1 className="text-[28px] leading-[1.15] font-extrabold tracking-tight text-balance">
+        <h1 className="text-[32px] leading-[1.15] font-bold tracking-[-0.01em] text-balance lg:text-[44px]">
           {justPlaced ? t('heading') : t('headingLater')}
         </h1>
         <p>
@@ -182,9 +182,9 @@ export default async function OrderPage({
             data-testid="order-payment-state"
             className={cn(
               'inline-flex min-h-8 items-center rounded-pill px-3.5 text-sm font-bold',
-              order.paymentState === 'paid' && 'bg-sun-soft',
+              order.paymentState === 'paid' && 'bg-sage',
               order.paymentState === 'refunded' && 'bg-photo',
-              order.paymentState === 'awaiting_payment' && 'border-[1.5px] border-field bg-panel',
+              order.paymentState === 'awaiting_payment' && 'border-[1.5px] border-field bg-paper',
             )}
           >
             {t(`paymentState.${order.paymentState}`)}
@@ -296,7 +296,10 @@ export default async function OrderPage({
 
       {madeText === null ? null : <Notice tone="made">{t(madeText)}</Notice>}
 
-      <section aria-label={t('summary.label')} className="rounded-card bg-panel p-[18px]">
+      <section
+        aria-label={t('summary.label')}
+        className="rounded-card border border-line bg-paper p-[18px]"
+      >
         <h2 className="mb-3 text-lg font-extrabold">{t('summary.label')}</h2>
         <OrderSummary
           lines={summaryLines}
@@ -311,7 +314,7 @@ export default async function OrderPage({
       </section>
 
       <div className="text-center">
-        <LinkButton href={`/${locale}`} variant="quiet">
+        <LinkButton href={`/${locale}/shop`} variant="quiet">
           {t('backToShop')}
         </LinkButton>
       </div>

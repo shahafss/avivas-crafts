@@ -182,6 +182,8 @@ test('Hebrew shipping order: every status shows the right step, payment and noti
   await expect(page.getByTestId('order-line')).toHaveCount(1);
   await expect(page.getByTestId('order-prep-time')).toBeVisible();
   await expect(page.getByTestId('order-summary')).toBeVisible();
+  // FR-038: the way back to the shop leads to the All pieces page.
+  await expect(page.getByRole('link', { name: 'חזרה לחנות' })).toHaveAttribute('href', '/he/shop');
 
   // New, awaiting payment.
   await expectCurrent(page, labels, 0);

@@ -17,9 +17,7 @@ type Rendered = { props: { children: string; className: string } };
 
 /** Colour utilities only: `text-[13px]` is a size, not a colour. */
 const textColours = (classes: string): string[] =>
-  classes
-    .split(/\s+/)
-    .filter((c) => /^text-(ink|ink-2|alert|sun|rose|rose-ink|field|panel)$/.test(c));
+  classes.split(/\s+/).filter((c) => /^text-(ink|ink-2|alert|field|paper)$/.test(c));
 
 describe('badge looks', () => {
   it('give every status and payment look exactly one text colour, and none from the base', () => {
@@ -33,6 +31,11 @@ describe('badge looks', () => {
     expect(textColours(STATUS_LOOK.completed)).toEqual(['text-ink-2']);
     expect(textColours(STATUS_LOOK.cancelled)).toEqual(['text-alert']);
     expect(textColours(STATUS_LOOK.new)).toEqual(['text-ink']);
+  });
+
+  it('gives "new" and "paid" the sage fill (research D10)', () => {
+    expect(STATUS_LOOK.new).toContain('bg-sage');
+    expect(PAYMENT_LOOK.paid).toContain('bg-sage');
   });
 });
 

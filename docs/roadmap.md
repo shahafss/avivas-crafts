@@ -32,6 +32,7 @@ The vision (who the shop is for, what success means, principles, what is out of 
 | 004 | Simpler admin access | yes | Done (dev) | [specs/004-simpler-admin-access](../specs/004-simpler-admin-access/) |
 | 005 | English version and language switch | yes | Done (dev) | [specs/005-english-language-switch](../specs/005-english-language-switch/) |
 | 006 | Hosting and launch readiness | yes | Done (dev) | [specs/006-launch-readiness](../specs/006-launch-readiness/) |
+| 007 | Storefront redesign (Shopify-like look) | yes | Done (awaiting owner test) | [specs/007-storefront-redesign](../specs/007-storefront-redesign/) |
 
 Numbers are a suggested order. Spec Kit gives each feature the next free number when it is
 created, so if the order changes, the numbers follow the order of creation, not this table.
@@ -122,6 +123,20 @@ and database would roughly double the cost and break the under-₪100/month budg
 preview site is needed earlier.
 
 **Source**: spec 001 › Phase 9 (T123–T134).
+
+### 007 — Storefront redesign
+
+**Goal**: the storefront looks very similar to the owner's own Shopify shop (Horizon theme,
+"Balance" style): white page, dark green text, sage and dark green buttons, peach band, mint
+footer, Assistant font, a plain full-width header, a home page with a large photo and photo
+banners, a swipeable row of featured pieces, an "All pieces" page, square product photos and a
+"You may also like" row. Every current function and Aviva's wording stay; the admin area takes only
+the new colours and font. New: social links in the footer, set by Aviva in Settings; a piece can be
+in several categories, and Settings chooses the home row's category.
+
+**Why before launch**: the owner paused the launch on 2026-11-16 to redesign the shop first.
+
+**Source**: owner design discussion 2026-11-16 (decisions recorded in the spec).
 
 ## Later (after launch)
 

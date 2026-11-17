@@ -66,9 +66,9 @@ export function OptionSelector({
                 key={value.id}
                 data-testid="option-chip"
                 className={cn(
-                  'inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-chip border-[1.5px] bg-panel px-4 text-[15px] font-medium transition-colors duration-150 ease-out',
-                  invalidGroupId === group.id ? 'border-alert' : 'border-field',
-                  'hover:bg-sun-soft has-checked:border-ink has-checked:bg-sun-soft has-checked:ring-1 has-checked:ring-ink has-checked:ring-inset',
+                  'inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-pill border bg-paper px-[18px] text-[15px] transition-colors duration-150 ease-out',
+                  invalidGroupId === group.id ? 'border-alert' : 'border-ink-2',
+                  'hover:not-has-checked:bg-photo has-checked:border-[1.5px] has-checked:border-ink has-checked:bg-sage has-checked:font-bold',
                   'has-focus-visible:outline-3 has-focus-visible:outline-offset-3 has-focus-visible:outline-ink',
                 )}
               >

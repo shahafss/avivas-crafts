@@ -9,10 +9,10 @@ import {
   test,
   waitForFormAge,
 } from './fixtures';
-import { hydrated, placeOfflineOrder, putCartItem } from './shop-helpers';
+import { hydrated, openCartDrawer, placeOfflineOrder, putCartItem } from './shop-helpers';
 
 // 006 T019 (research D6, 001 T124 narrowed): axe (WCAG 2.1 A/AA, zero violations) on the storefront
-// in both locales at 375 and 1280 px, on the admin at 375 (phone first, storefront.md §12) and
+// in both locales at 375, 1024 and 1280 px, on the admin at 375 (phone first, storefront.md §12) and
 // 1280 px, and the keyboard-only paths.
 //
 // Existing specs also run axe, but on other viewports (the phone projects) or on single pages, so
@@ -31,6 +31,7 @@ test.beforeEach(({}, testInfo) => {
 
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];
 const PHONE = { width: 375, height: 812 };
+const LAPTOP = { width: 1024, height: 800 }; // the narrowest width of the full header row (007)
 const DESKTOP = { width: 1280, height: 800 };
 
 async function expectNoViolations(page: Page, label: string): Promise<void> {
@@ -70,7 +71,7 @@ const CONTENT_PAGES = [
 ] as const;
 
 for (const locale of ['he', 'en'] as const) {
-  for (const viewport of [PHONE, DESKTOP]) {
+  for (const viewport of [PHONE, LAPTOP, DESKTOP]) {
     test(`storefront ${locale} at ${String(viewport.width)} px has no axe violations`, async ({
       page,
     }) => {
@@ -82,6 +83,7 @@ for (const locale of ['he', 'en'] as const) {
         await expectNoViolations(page, `${locale} ${path} ${String(viewport.width)}`);
       };
 
+      await check('/shop');
       await check('/c/sample-ceramics');
       await check('/search?q=bowl');
       for (const slug of CONTENT_PAGES) await check(`/pages/${slug}`);
@@ -90,15 +92,36 @@ for (const locale of ['he', 'en'] as const) {
       await check(orderPath);
 
       await putCartItem(page, 'sample-clay-mug');
-      await check('/cart');
-      await expect(page.getByTestId('cart-line')).toHaveCount(1);
-      await expectNoViolations(page, `${locale} cart with a line`);
+      // The cart is a drawer now (FR-046): open it on the product page and check the open dialog.
+      await check('/p/sample-clay-mug');
+      await openCartDrawer(page);
+      await expect(page.getByTestId('cart-line')).toHaveCount(1, { timeout: 20_000 });
+      await expectNoViolations(page, `${locale} cart drawer with a line`);
+      await page.keyboard.press('Escape');
+      await expect(page.getByTestId('cart-drawer')).toBeHidden();
       await check('/checkout');
       await expect(page.getByTestId('checkout-form')).toBeVisible({ timeout: 20_000 });
       await expectNoViolations(page, `${locale} checkout with a line`);
     });
   }
 }
+
+test('the storefront with all three social links has no axe violations', async ({ page }) => {
+  await sql`UPDATE shop_settings SET
+    social_instagram_url = 'https://www.instagram.com/aviva',
+    social_facebook_url = 'https://www.facebook.com/aviva',
+    social_tiktok_url = 'https://www.tiktok.com/@aviva'`;
+  try {
+    for (const viewport of [PHONE, LAPTOP, DESKTOP]) {
+      await page.setViewportSize(viewport);
+      await page.goto('/he');
+      await expect(page.getByTestId('footer-social').getByRole('link')).toHaveCount(3);
+      await expectNoViolations(page, `/he with social links ${String(viewport.width)}`);
+    }
+  } finally {
+    await sql`UPDATE shop_settings SET social_instagram_url = NULL, social_facebook_url = NULL, social_tiktok_url = NULL`;
+  }
+});
 
 test('the admin has no axe violations at 375 and 1280 px', async ({ page }) => {
   // Signed out first: the sign-in page.
@@ -110,12 +133,21 @@ test('the admin has no axe violations at 375 and 1280 px', async ({ page }) => {
   }
 
   await signInAsAdmin(page);
+  // Every admin screen (007 SC-003): the piece editor holds the category checkboxes, the content
+  // pages include a version list and one stored version.
   const paths = [
+    '/admin',
+    '/admin/products',
     `/admin/products/${productId}`,
+    '/admin/categories',
     '/admin/orders',
     `/admin/orders/${orderId}`,
+    '/admin/stats',
     '/admin/settings',
+    '/admin/content',
     '/admin/content/terms',
+    '/admin/content/terms/versions',
+    '/admin/content/terms/versions/1',
     '/admin/customers',
   ];
   for (const viewport of [PHONE, DESKTOP]) {
@@ -126,6 +158,31 @@ test('the admin has no axe violations at 375 and 1280 px', async ({ page }) => {
       await expect(page.getByRole('heading', { level: 1 }).first()).toBeVisible();
       await expectNoViolations(page, `${path} ${String(viewport.width)}`);
     }
+  }
+});
+
+test('the admin settings screen with the two-error social summary has no axe violations', async ({
+  page,
+}) => {
+  await signInAsAdmin(page);
+  try {
+    for (const viewport of [PHONE, DESKTOP]) {
+      await page.setViewportSize(viewport);
+      await page.goto('/admin/settings');
+      await expect(page.getByTestId('settings-ready')).toBeVisible({ timeout: 20_000 });
+      await page.getByTestId('settings-socialFacebookUrl').fill('https://example.com/a');
+      await page.getByTestId('settings-socialTiktokUrl').fill('https://example.com/b');
+      await page.getByTestId('settings-social').getByRole('button', { name: 'שמירה' }).click();
+      const summary = page.getByTestId('settings-social-error-summary');
+      await expect(summary).toBeVisible();
+      await expect(summary.getByRole('listitem')).toHaveCount(2);
+      await expectNoViolations(
+        page,
+        `/admin/settings with two social errors ${String(viewport.width)}`,
+      );
+    }
+  } finally {
+    await sql`UPDATE shop_settings SET social_instagram_url = NULL, social_facebook_url = NULL, social_tiktok_url = NULL`;
   }
 });
 
@@ -149,10 +206,18 @@ test('keyboard only: add to cart and complete an offline checkout (375 px, he)',
   await tabTo('add-to-cart');
   await page.keyboard.press('Enter');
   await expect(page.getByTestId('added-to-cart-row')).toBeVisible();
+  // The add opened the cart drawer and moved focus to its close button (FR-047).
+  await expect(page.getByTestId('cart-drawer')).toBeVisible();
+  await expect(page.getByTestId('cart-close')).toBeFocused();
+  await expect(page.getByTestId('cart-line')).toHaveCount(1, { timeout: 20_000 });
+  // Close it with the keyboard and come back through "in your cart": focus returns to that button.
+  await page.keyboard.press('Escape');
+  await expect(page.getByTestId('cart-drawer')).toBeHidden();
   await tabTo('go-to-cart');
   await page.keyboard.press('Enter');
-  await page.waitForURL(/\/he\/cart$/);
+  await expect(page.getByTestId('cart-drawer')).toBeVisible();
   await expect(page.getByTestId('cart-line')).toHaveCount(1);
+  await hydrated(page, 'cart-continue');
 
   // Shift+Tab: from the continue link back to a control of the cart line and forward again.
   await tabTo('cart-continue');
@@ -168,6 +233,9 @@ test('keyboard only: add to cart and complete an offline checkout (375 px, he)',
   await page.keyboard.press('Enter');
   await page.waitForURL(/\/he\/checkout$/);
   await expect(page.getByTestId('checkout-form')).toBeVisible({ timeout: 20_000 });
+  // Following "to checkout" closed the drawer and left no lock behind.
+  await expect(page.getByTestId('cart-drawer')).toBeHidden();
+  await expect(page.locator('[inert]')).toHaveCount(0);
   // The server stamps the form token when it renders /checkout. This was a client-side
   // navigation, so the document's own age (what `waitForFormAge` measures) is that of the
   // product page and says nothing about the form. Time the form from here instead.

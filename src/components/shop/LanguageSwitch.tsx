@@ -8,8 +8,8 @@ import { otherLocale, switchPath } from '@/lib/locale-path';
 // The hit area is 4 px beyond the border box on every side: the inset is measured from the padding
 // box, so it is 4 px plus the 1.5 px border.
 const COMPACT =
-  "relative me-1 inline-flex h-9 items-center rounded-pill border-[1.5px] border-ink px-2.5 text-[13px] font-bold text-ink transition-colors duration-150 ease-out before:absolute before:-inset-[5.5px] before:content-[''] hover:bg-sun-soft";
-const FULL = 'flex min-h-11 items-center hover:underline';
+  "relative me-1 inline-flex h-9 items-center rounded-pill border-[1.5px] border-current px-2.5 text-[13px] font-bold text-current transition-colors duration-150 ease-out before:absolute before:-inset-[5.5px] before:content-[''] hover:bg-sage hover:text-ink focus-visible:outline-paper focus-visible:outline-offset-1";
+const FULL = 'flex min-h-11 items-center hover:bg-sage hover:underline';
 
 /**
  * The language switch (storefront.md §7.19, contracts/locale-switch.md). A client island because

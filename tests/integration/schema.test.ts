@@ -10,8 +10,10 @@ import {
   orderLine,
   orders,
   product,
+  productCategory,
   productImage,
   shippingZone,
+  shopSettings,
 } from '@/server/db/schema';
 
 let testDb: TestDbHandle;
@@ -76,9 +78,12 @@ async function makeCategory(name = 'c', sortOrder = 0): Promise<string> {
 async function makeProduct(categoryId: string | null = null, slug = 'p-1'): Promise<string> {
   const [row] = await testDb.db
     .insert(product)
-    .values({ slug, nameHe: 'מוצר', categoryId })
+    .values({ slug, nameHe: 'מוצר' })
     .returning({ id: product.id });
-  return must(row).id;
+  const productId = must(row).id;
+  if (categoryId !== null)
+    await testDb.db.insert(productCategory).values({ productId, categoryId });
+  return productId;
 }
 
 function image(productId: string, position: number | null, key: string) {
@@ -242,6 +247,35 @@ describe('check constraints', () => {
   });
 });
 
+describe('shop_settings social link checks (007 US3)', () => {
+  beforeEach(async () => {
+    await testDb.db.insert(shopSettings).values({
+      shopNameHe: 'חנות',
+      businessNameHe: 'עסק',
+      businessRegNumber: '1',
+      businessEmail: 'a@example.test',
+      businessPhone: '1',
+      businessAddressHe: 'כתובת',
+      notificationEmails: ['a@example.test'],
+    });
+  });
+
+  const columns = ['social_facebook_url', 'social_instagram_url', 'social_tiktok_url'] as const;
+
+  it.each(columns)('%s rejects a non-https value and one over 300 characters', async (column) => {
+    for (const value of ['http://x', `https://${'a'.repeat(293)}`]) {
+      await expect(
+        testDb.db.execute(
+          sql`UPDATE shop_settings SET ${sql.identifier(column)} = ${value} WHERE id = 1`,
+        ),
+      ).rejects.toThrow();
+    }
+    await testDb.db.execute(
+      sql`UPDATE shop_settings SET ${sql.identifier(column)} = ${'https://x.test/a'} WHERE id = 1`,
+    );
+  });
+});
+
 describe('content_page_version', () => {
   const row = (overrides: Partial<typeof contentPageVersion.$inferInsert> = {}) => ({
     slug: 'terms',
@@ -318,5 +352,31 @@ describe('content_page_version', () => {
       { slug: 'privacy', version: 2 },
       { slug: 'terms', version: 3 },
     ]);
+  });
+});
+
+describe('shop_settings header categories (007 FR-039)', () => {
+  it('sets the setting to null when its category is deleted', async () => {
+    await testDb.db.insert(shopSettings).values({
+      shopNameHe: 'חנות',
+      businessNameHe: 'עסק',
+      businessRegNumber: '1',
+      businessEmail: 'a@example.test',
+      businessPhone: '1',
+      businessAddressHe: 'כתובת',
+      notificationEmails: ['a@example.test'],
+    });
+    const one = await makeCategory();
+    const [two] = await testDb.db
+      .insert(category)
+      .values({ slug: 'second-cat', nameHe: 'ב', sortOrder: 60 })
+      .returning({ id: category.id });
+    const twoId = must(two).id;
+    await testDb.db.execute(
+      sql`UPDATE shop_settings SET header_category_1_id = ${one}, header_category_2_id = ${twoId} WHERE id = 1`,
+    );
+    await testDb.db.delete(category).where(eq(category.id, one));
+    const [row] = await testDb.db.select().from(shopSettings);
+    expect(row).toMatchObject({ headerCategory1Id: null, headerCategory2Id: twoId });
   });
 });

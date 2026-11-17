@@ -4,9 +4,10 @@ import type { ReactNode } from 'react';
 import type { Locale } from '@/i18n/routing';
 import { fallbackAttrs, pick } from '@/lib/i18n-fallback';
 import type { Settings } from '@/server/settings/settings';
+import { SocialLinks } from './SocialLinks';
 
 const NAME_MARK = '\u0001';
-const LINK = 'flex min-h-11 items-center hover:underline';
+const LINK = 'flex min-h-11 items-center hover:underline hover:underline-offset-[3px]';
 
 /**
  * The footer on every public page (storefront.md §7.20, 003 FR-005): the business details from
@@ -43,7 +44,7 @@ export async function Footer({
     { href: `${base}/pages/cookies`, label: t('cookies') },
     { href: `${base}/pages/accessibility`, label: t('accessibility') },
   ];
-  const heading = 'text-sm font-extrabold';
+  const heading = 'text-lg leading-[1.3] font-bold';
   // The copyright message keeps its `{shopName}` placeholder; the name is put in its own element
   // so it can carry `lang="he"` when an English page falls back to the Hebrew name.
   const [before = '', after = ''] = t('copyright', {
@@ -51,10 +52,10 @@ export async function Footer({
     shopName: NAME_MARK,
   }).split(NAME_MARK);
   return (
-    <footer className="rounded-t-[28px] bg-peach px-5 py-8 text-sm lg:px-6 lg:py-12">
+    <footer className="bg-mint px-4 py-12 text-[15px] text-ink lg:px-6 lg:py-16">
       <div className="mx-auto grid max-w-[1240px] gap-8 lg:grid-cols-[2fr_1fr_1fr]">
         <div className="grid content-start gap-1">
-          <h2 lang={brand.lang} className="text-base font-extrabold">
+          <h2 lang={brand.lang} className={heading}>
             {brand.text}
           </h2>
           <p data-testid="footer-business-name" {...fallbackAttrs(businessName)}>
@@ -87,6 +88,19 @@ export async function Footer({
               <bdi dir="ltr">{settings.businessPhone}</bdi>
             </a>
           </p>
+          <SocialLinks
+            urls={{
+              instagram: settings.socialInstagramUrl,
+              facebook: settings.socialFacebookUrl,
+              tiktok: settings.socialTiktokUrl,
+            }}
+            labels={{
+              list: t('social.label'),
+              instagram: t('social.instagram'),
+              facebook: t('social.facebook'),
+              tiktok: t('social.tiktok'),
+            }}
+          />
         </div>
         <nav aria-label={t('infoNav')}>
           <h2 className={heading}>{t('info')}</h2>
@@ -114,9 +128,9 @@ export async function Footer({
           </ul>
         </nav>
       </div>
-      <div className="mx-auto mt-6 flex max-w-[1240px] flex-wrap items-center justify-between gap-x-6 gap-y-1">
+      <div className="mx-auto mt-8 flex max-w-[1240px] flex-wrap items-center justify-between gap-x-6 gap-y-1 border-t border-ink/25 pt-4">
         {languageSwitch}
-        <p className="text-ink-2">
+        <p className="text-sm text-ink-2">
           {before}
           {brand.lang === undefined ? (
             brand.text

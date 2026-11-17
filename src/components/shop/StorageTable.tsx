@@ -48,7 +48,7 @@ export async function StorageTable({ locale }: { locale: Locale }) {
           <tr
             key={item.name}
             data-testid="storage-row"
-            className="border-b border-line max-sm:mb-3 max-sm:block max-sm:rounded-card max-sm:border max-sm:bg-panel max-sm:p-4"
+            className="border-b border-line max-sm:mb-3 max-sm:block max-sm:rounded-card max-sm:border max-sm:bg-paper max-sm:p-4"
           >
             <td data-label={t('name')} className={CELL}>
               <bdi dir="ltr" className="font-mono font-bold">

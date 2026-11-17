@@ -36,11 +36,11 @@ export function Checkbox({ id, label, hint, error, className, ...rest }: Checkbo
         />
         <span
           className={cn(
-            'mt-px grid size-6 shrink-0 place-items-center rounded-md border-[1.5px] border-field bg-panel text-panel',
+            'mt-px grid size-6 shrink-0 place-items-center rounded-md border-[1.5px] border-field bg-paper text-paper',
             'peer-checked:border-ink peer-checked:bg-ink peer-focus-visible:outline-3 peer-focus-visible:outline-offset-3 peer-focus-visible:outline-ink',
             'peer-aria-invalid:border-alert [&>svg]:opacity-0 peer-checked:[&>svg]:opacity-100',
             // Disabled (storefront.md 7.10): a setting the shop cannot offer.
-            'peer-disabled:border-line peer-disabled:bg-ground peer-checked:peer-disabled:border-ink-2 peer-checked:peer-disabled:bg-ink-2',
+            'peer-disabled:border-line peer-disabled:bg-photo peer-checked:peer-disabled:border-ink-2 peer-checked:peer-disabled:bg-ink-2',
           )}
         >
           <Icon name="check" size={16} />

@@ -33,7 +33,7 @@ import {
 
 type T = Awaited<ReturnType<typeof getTranslations<'admin.orders'>>>;
 
-const SECTION = 'grid gap-3 rounded-card border border-line bg-panel p-4';
+const SECTION = 'grid gap-3 rounded-card border border-line bg-paper p-4';
 const H2 = 'text-lg leading-tight font-extrabold';
 const LABEL = 'text-[13px] font-bold text-ink-2';
 
