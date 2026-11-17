@@ -1,5 +1,5 @@
 import 'server-only';
-import { and, count, eq, isNull, ne } from 'drizzle-orm';
+import { and, count, eq, inArray, isNull, ne } from 'drizzle-orm';
 import {
   createProductSchema,
   missingForPublish,
@@ -15,6 +15,7 @@ import {
   optionGroup,
   optionValue,
   product,
+  productCategory,
   productImage,
   shippingZone,
 } from '@/server/db/schema';
@@ -100,7 +101,23 @@ async function optionDeltas(
   return result;
 }
 
-async function publishFacts(tx: DbLike, row: ProductRow): Promise<PublishFacts> {
+async function categoryIdsOf(tx: DbLike, productId: string): Promise<string[]> {
+  const rows = await tx
+    .select({ categoryId: productCategory.categoryId })
+    .from(productCategory)
+    .where(eq(productCategory.productId, productId));
+  return rows.map((row) => row.categoryId);
+}
+
+/**
+ * `categoryIds` is the set being saved, when there is one; otherwise the stored links count
+ * (so publishing and every save of a published piece see the categories it will have).
+ */
+async function publishFacts(
+  tx: DbLike,
+  row: ProductRow,
+  categoryIds?: string[],
+): Promise<PublishFacts> {
   const [images] = await tx
     .select({ n: count() })
     .from(productImage)
@@ -110,7 +127,7 @@ async function publishFacts(tx: DbLike, row: ProductRow): Promise<PublishFacts> 
     descriptionHe: row.descriptionHe,
     priceIlsMinor: row.priceIlsMinor,
     priceUsdMinor: row.priceUsdMinor,
-    categoryId: row.categoryId,
+    categoryIds: categoryIds ?? (await categoryIdsOf(tx, row.id)),
     prepTimeHe: row.prepTimeHe,
     imageCount: images?.n ?? 0,
     groups: await optionDeltas(tx, row.id),
@@ -156,10 +173,10 @@ export async function updateProduct(
 ): Promise<ActionResult> {
   const parsed = updateProductSchema.safeParse(input);
   if (!parsed.success) return zodFailure(parsed.error, 'admin.products.errors.invalid');
+  // `categoryIds` is not a column: it replaces the piece's category links (below).
+  const { categoryIds: requestedCategoryIds, ...columns } = parsed.data;
   const changes = Object.fromEntries(
-    Object.entries(parsed.data as Record<string, unknown>).filter(
-      ([, value]) => value !== undefined,
-    ),
+    Object.entries(columns as Record<string, unknown>).filter(([, value]) => value !== undefined),
   ) as Partial<Omit<ProductRow, 'id'>>;
 
   return db.transaction(async (tx): Promise<ActionResult> => {
@@ -183,12 +200,23 @@ export async function updateProduct(
       }
     }
 
-    if (changes.categoryId !== undefined && changes.categoryId !== null) {
-      const [found] = await tx
-        .select({ id: category.id })
-        .from(category)
-        .where(eq(category.id, changes.categoryId));
-      if (!found) return fieldFailure('categoryId', 'admin.products.errors.category_not_found');
+    // Every requested category must exist; a set that differs from the stored one is a change.
+    let storedCategoryIds: string[] = [];
+    let categoriesChanged = false;
+    if (requestedCategoryIds !== undefined) {
+      if (requestedCategoryIds.length > 0) {
+        const found = await tx
+          .select({ id: category.id })
+          .from(category)
+          .where(inArray(category.id, requestedCategoryIds));
+        if (found.length !== requestedCategoryIds.length) {
+          return fieldFailure('categoryIds', 'admin.products.errors.category_not_found');
+        }
+      }
+      storedCategoryIds = await categoryIdsOf(tx, id);
+      categoriesChanged =
+        storedCategoryIds.length !== requestedCategoryIds.length ||
+        requestedCategoryIds.some((categoryId) => !storedCategoryIds.includes(categoryId));
     }
 
     const next: ProductRow = { ...current, ...changes };
@@ -206,16 +234,39 @@ export async function updateProduct(
     }
 
     if (current.state === 'published') {
-      const missing = missingForPublish(await publishFacts(tx, next));
+      const missing = missingForPublish(await publishFacts(tx, next, requestedCategoryIds));
       if (missing.length > 0) return publishFailure(missing);
     }
 
-    const changed = (Object.keys(changes) as (keyof typeof changes)[]).filter(
+    const changed: string[] = (Object.keys(changes) as (keyof typeof changes)[]).filter(
       (key) => changes[key] !== current[key],
     );
+    // A save that only changes the categories still counts, so it is not dropped here.
+    if (categoriesChanged) changed.push('categoryIds');
     if (changed.length === 0) return ok(undefined);
 
-    await tx.update(product).set(changes).where(eq(product.id, id));
+    // `updatedAt` must stay in the set: a save that only changes the categories would otherwise
+    // call `.set({})`, which Drizzle rejects.
+    await tx
+      .update(product)
+      .set({ ...changes, updatedAt: new Date() })
+      .where(eq(product.id, id));
+    if (requestedCategoryIds !== undefined && categoriesChanged) {
+      const removed = storedCategoryIds.filter((entry) => !requestedCategoryIds.includes(entry));
+      const added = requestedCategoryIds.filter((entry) => !storedCategoryIds.includes(entry));
+      if (removed.length > 0) {
+        await tx
+          .delete(productCategory)
+          .where(
+            and(eq(productCategory.productId, id), inArray(productCategory.categoryId, removed)),
+          );
+      }
+      if (added.length > 0) {
+        await tx
+          .insert(productCategory)
+          .values(added.map((categoryId) => ({ productId: id, categoryId })));
+      }
+    }
     for (const [column, currency] of [
       ['priceIlsMinor', 'ILS'],
       ['priceUsdMinor', 'USD'],

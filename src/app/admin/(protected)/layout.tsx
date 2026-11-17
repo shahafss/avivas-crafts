@@ -25,11 +25,11 @@ export default async function ProtectedLayout({ children }: { children: ReactNod
     <div className="min-h-dvh">
       <a
         href="#main"
-        className="sr-only focus:not-sr-only focus:fixed focus:start-2 focus:top-2 focus:z-banner focus:rounded-pill focus:bg-ink focus:px-4 focus:py-2 focus:text-panel"
+        className="sr-only focus:not-sr-only focus:fixed focus:start-2 focus:top-2 focus:z-banner focus:rounded-pill focus:bg-ink focus:px-4 focus:py-2 focus:text-paper"
       >
         {t('skipToContent')}
       </a>
-      <header className="border-b border-line bg-panel">
+      <header className="border-b border-line bg-paper">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3">
           <Link href="/admin" prefetch={false} className="text-lg font-extrabold">
             {t('brand')}
@@ -57,7 +57,7 @@ export default async function ProtectedLayout({ children }: { children: ReactNod
                 <Link
                   href={item.href}
                   prefetch={false}
-                  className="inline-flex min-h-11 items-center rounded-pill px-4 text-[15px] font-bold hover:bg-sun-soft"
+                  className="inline-flex min-h-11 items-center rounded-pill px-4 text-[15px] font-bold hover:bg-sage"
                 >
                   {t(`nav.${item.key}`)}
                 </Link>

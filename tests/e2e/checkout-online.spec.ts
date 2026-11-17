@@ -223,6 +223,41 @@ test('online failure: no order, no email; retry and switch keep the details', as
   await expect(page.getByTestId('retry-payment')).toHaveCount(0);
 });
 
+test('the return page "back to cart" control (lines no longer orderable) opens the cart drawer', async ({
+  page,
+}) => {
+  await resetDb();
+  await setCart(page, [{ slug: 'sample-clay-mug', quantity: 1 }]);
+  await openCheckout(page);
+  await fillDetails(page);
+  await page.getByTestId('payment-online').check();
+  await submit(page);
+  await page.waitForURL(/\/he\/checkout\/fake-pay/, { timeout: 30_000 });
+  await page.getByTestId('fake-pay-fail').click();
+  await page.waitForURL(/\/he\/checkout\/return/);
+  await expect(page.getByTestId('retry-payment')).toBeVisible({ timeout: 30_000 });
+
+  // The piece is hidden meanwhile: retrying answers "lines_unavailable" with a way back to the cart.
+  await sql`UPDATE product SET state = 'hidden' WHERE slug = 'sample-clay-mug'`;
+  try {
+    await page.getByTestId('retry-payment').click();
+    const back = page.getByTestId('return-cart');
+    await expect(back).toBeVisible({ timeout: 30_000 });
+    expect(await back.evaluate((element) => element.tagName)).toBe('BUTTON');
+    const here = page.url();
+    await back.click();
+    const drawer = page.getByTestId('cart-drawer');
+    await expect(drawer).toBeVisible();
+    await expect(drawer.getByTestId('cart-line')).toHaveCount(1, { timeout: 20_000 });
+    expect(page.url()).toBe(here);
+    await page.keyboard.press('Escape');
+    await expect(drawer).toBeHidden();
+    await expect(back).toBeFocused();
+  } finally {
+    await sql`UPDATE product SET state = 'published' WHERE slug = 'sample-clay-mug'`;
+  }
+});
+
 test('switching to offline lands on the new order with the payment instructions and an empty cart', async ({
   page,
 }) => {
@@ -250,6 +285,11 @@ test('switching to offline lands on the new order with the payment instructions 
   // The browser's back button returns to the return page: the checkout continues as direct payment.
   await page.goBack();
   await expect(page.getByTestId('return-switched')).toBeVisible({ timeout: 30_000 });
+  // FR-038: the return panel's shop link leads to All pieces.
+  await expect(page.getByTestId('return-switched').getByRole('link')).toHaveAttribute(
+    'href',
+    '/he/shop',
+  );
   await expect(page.getByTestId('retry-payment')).toHaveCount(0);
   await expect(page.getByTestId('switch-offline')).toHaveCount(0);
 });

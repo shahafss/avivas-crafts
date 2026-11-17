@@ -13,6 +13,7 @@ import {
   optionGroup,
   optionValue,
   product,
+  productCategory,
   productImage,
   shippingZone,
   shippingZoneCountry,
@@ -50,7 +51,7 @@ afterAll(async () => {
 });
 
 describe('runSeed', () => {
-  it('creates the Israel zone, settings, seven content pages and two sample categories', async () => {
+  it('creates the Israel zone, settings, seven content pages, two sample categories and Featured', async () => {
     await runSeed(testDb.db, { samples: true });
     const zones = await testDb.db.select().from(shippingZone);
     expect(zones).toHaveLength(1);
@@ -79,13 +80,74 @@ describe('runSeed', () => {
       'terms',
     ]);
     expect(pages.every((p) => p.titleHe === 'טיוטה' && p.bodyHe === 'טיוטה')).toBe(true);
-    expect(await testDb.db.select().from(category)).toHaveLength(2);
+    expect(
+      (await testDb.db.select().from(category).orderBy(category.sortOrder)).map((c) => c.slug),
+    ).toEqual(['sample-candles', 'sample-ceramics', 'featured']);
   });
 
-  it('inserts no sample categories with samples: false', async () => {
+  it('inserts no sample categories with samples: false, only Featured, without pieces', async () => {
+    await runSeed(testDb.db, { samples: false });
+    const categories = await testDb.db.select().from(category);
+    expect(categories.map((c) => c.slug)).toEqual(['featured']);
+    expect(await testDb.db.select().from(productCategory)).toHaveLength(0);
+    expect(await testDb.db.select().from(shippingZone)).toHaveLength(1);
+  });
+
+  it('creates Featured last in order and points a new settings row at it', async () => {
+    await runSeed(testDb.db, { samples: true });
+    const [featured] = await testDb.db.select().from(category).where(eq(category.slug, 'featured'));
+    expect(featured).toMatchObject({ nameHe: 'מומלצות', nameEn: 'Featured', sortOrder: 2 });
+    const [settings] = await testDb.db.select().from(shopSettings);
+    expect(settings?.homeCategoryId).toBe(featured?.id);
+  });
+
+  it('puts Featured at order 0 when there are no other categories', async () => {
+    await runSeed(testDb.db, { samples: false });
+    const [featured] = await testDb.db.select().from(category);
+    expect(featured?.sortOrder).toBe(0);
+  });
+
+  it('links every sample to its category and to Featured, and a second run changes nothing', async () => {
+    await runSeed(testDb.db, { samples: true });
+    const linkRows = async () =>
+      testDb.db
+        .select({ product: product.slug, category: category.slug })
+        .from(productCategory)
+        .innerJoin(product, eq(product.id, productCategory.productId))
+        .innerJoin(category, eq(category.id, productCategory.categoryId))
+        .orderBy(product.slug, category.slug);
+    const before = await linkRows();
+    expect(before).toEqual([
+      { product: 'sample-ceramic-bowl', category: 'featured' },
+      { product: 'sample-ceramic-bowl', category: 'sample-ceramics' },
+      { product: 'sample-clay-mug', category: 'featured' },
+      { product: 'sample-clay-mug', category: 'sample-ceramics' },
+      { product: 'sample-soy-candle', category: 'featured' },
+      { product: 'sample-soy-candle', category: 'sample-candles' },
+    ]);
+    await runSeed(testDb.db, { samples: true });
+    expect(await linkRows()).toEqual(before);
+    expect(await testDb.db.select().from(category)).toHaveLength(3);
+  });
+
+  it('leaves a null home category on an existing settings row null', async () => {
+    await runSeed(testDb.db, { samples: true });
+    await testDb.db
+      .update(shopSettings)
+      .set({ homeCategoryId: null })
+      .where(eq(shopSettings.id, 1));
+    await runSeed(testDb.db, { samples: true });
+    const [settings] = await testDb.db.select().from(shopSettings);
+    expect(settings?.homeCategoryId).toBeNull();
+  });
+
+  it('does not re-create a deleted Featured when seeding without samples on an existing settings row', async () => {
+    await runSeed(testDb.db, { samples: false });
+    await testDb.db.delete(category).where(eq(category.slug, 'featured'));
     await runSeed(testDb.db, { samples: false });
     expect(await testDb.db.select().from(category)).toHaveLength(0);
-    expect(await testDb.db.select().from(shippingZone)).toHaveLength(1);
+    const [settings] = await testDb.db.select().from(shopSettings);
+    expect(settings?.homeCategoryId).toBeNull();
   });
 
   it('is idempotent: a second run changes nothing', async () => {
@@ -98,6 +160,7 @@ describe('runSeed', () => {
       categories: await testDb.db.select().from(category).orderBy(category.sortOrder),
       products: await testDb.db.select().from(product).orderBy(product.slug),
       images: await testDb.db.select().from(productImage).orderBy(productImage.storageKey),
+      links: await testDb.db.select().from(productCategory).orderBy(productCategory.createdAt),
       groups: await testDb.db.select().from(optionGroup),
       values: await testDb.db.select().from(optionValue).orderBy(optionValue.position),
     });

@@ -4,6 +4,11 @@ import { requireAdmin } from '@/server/auth/require-admin';
 import { listCategories } from '@/server/catalog/categories';
 import { createCategory, deleteCategory, reorderCategories, updateCategory } from './actions';
 
+export async function generateMetadata() {
+  const t = await getTranslations('admin.categories');
+  return { title: t('title') };
+}
+
 export default async function CategoriesPage() {
   await requireAdmin();
   const [t, categories] = await Promise.all([

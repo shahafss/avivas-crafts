@@ -17,6 +17,9 @@ specific to this project. The binding rules are in `.specify/memory/constitution
   `docs/owner-guide-he.md` (Hebrew guide for the owner), `docs/security/threat-model.md`,
   `ops/backup/README.md` (backups and restore), `render.yaml` (the Render Blueprint). Production
   runs with `PAYMENT_PROVIDER=none` (offline payment only); card payment comes later.
+- Home page photos (feature 007): the originals are in `assets/home-photos/` (not served);
+  `pnpm photos:home` makes the served variants in `public/site-photos/` and the manifest (see
+  `docs/design/storefront.md` §6).
 
 ## Branches and git
 

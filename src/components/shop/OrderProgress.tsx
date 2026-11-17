@@ -24,7 +24,7 @@ export function OrderProgress({ label, steps, current }: OrderProgressProps) {
       role="list"
       data-testid="order-progress"
       aria-label={label}
-      className="m-0 flex list-none flex-col rounded-card bg-panel p-[18px] sm:flex-row"
+      className="m-0 flex list-none flex-col rounded-card border border-line bg-paper p-[18px] sm:flex-row"
     >
       {steps.map((text, index) => {
         const state = STATES[index < current ? 0 : index === current ? 1 : 2];
@@ -45,9 +45,9 @@ export function OrderProgress({ label, steps, current }: OrderProgressProps) {
             <span
               className={cn(
                 'grid size-7 shrink-0 place-items-center rounded-full',
-                'group-data-[state=done]:bg-ink group-data-[state=done]:text-panel',
-                'group-data-[state=current]:border-[1.5px] group-data-[state=current]:border-ink group-data-[state=current]:bg-panel group-data-[state=current]:ring-[3px] group-data-[state=current]:ring-sun',
-                'group-data-[state=todo]:border-[1.5px] group-data-[state=todo]:border-field group-data-[state=todo]:bg-panel',
+                'group-data-[state=done]:bg-ink group-data-[state=done]:text-paper',
+                'group-data-[state=current]:border-[1.5px] group-data-[state=current]:border-ink group-data-[state=current]:bg-paper group-data-[state=current]:ring-[3px] group-data-[state=current]:ring-forest',
+                'group-data-[state=todo]:border-[1.5px] group-data-[state=todo]:border-field group-data-[state=todo]:bg-paper',
               )}
             >
               {state === 'done' ? <Icon name="check" size={16} /> : null}

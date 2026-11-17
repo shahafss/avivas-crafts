@@ -15,11 +15,19 @@ export function errorId(id: string): string {
   return `${id}-error`;
 }
 
-/** `aria-describedby` and `aria-invalid` for a control, from its hint and error. */
-export function describe(id: string, { hint, error }: Pick<FieldChrome, 'hint' | 'error'>) {
+/**
+ * `aria-describedby` and `aria-invalid` for a control, from its hint and error. `extra` is the
+ * caller's own `aria-describedby` (another field's hint, say); it is added, never lost.
+ */
+export function describe(
+  id: string,
+  { hint, error }: Pick<FieldChrome, 'hint' | 'error'>,
+  extra?: string,
+) {
   const ids = [
     hint === undefined ? null : hintId(id),
     error === undefined ? null : errorId(id),
+    extra === undefined || extra === '' ? null : extra,
   ].filter((value): value is string => value !== null);
   return {
     'aria-describedby': ids.length > 0 ? ids.join(' ') : undefined,
@@ -66,4 +74,4 @@ export function Field({
 
 /** Shared look of text-like controls: 52 px, white, 1.5 px `field` border, 16 px text. */
 export const CONTROL =
-  'w-full rounded-chip border-[1.5px] border-field bg-panel px-4 text-base text-ink placeholder:text-ink-2 focus:border-ink focus:ring-1 focus:ring-ink aria-invalid:border-alert aria-invalid:focus:ring-alert';
+  'w-full rounded-chip border-[1.5px] border-field bg-paper px-4 text-base text-ink placeholder:text-ink-2 focus:border-ink focus:ring-1 focus:ring-ink aria-invalid:border-alert aria-invalid:focus:ring-alert';

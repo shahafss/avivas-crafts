@@ -12,7 +12,7 @@ import { expect, resetDb, signInAsAdmin, sql, test } from './fixtures';
 //
 //   /admin/products            product-new                       "מוצר חדש" button (creates a draft, opens the editor)
 //   /admin/products/[id]       field-nameHe, field-nameEn, field-descriptionHe, field-priceIls,
-//                              field-priceUsd, field-category (select, option text = category name),
+//                              field-priceUsd, field-categories (fieldset of checkboxes, label = category name),
 //                              field-prepTimeHe                 form fields
 //                              photo-input                      the file input (multiple). PhotoManager detects HEIC by
 //                                                               file.type AND the .heic/.heif extension (Android browsers
@@ -30,9 +30,11 @@ import { expect, resetDb, signInAsAdmin, sql, test } from './fixtures';
 //                              publish-errors                   the list of missing fields (Hebrew labels)
 //                              option-group-add, option-group-name, option-value-add, option-value-label,
 //                              option-value-delta, option-swatch-<name>, option-group-save
-//   /he, /he/p/[slug]         product-card (link; contains an <img>, the name, the price, the
+//   /he/shop, /he/p/[slug]    product-card (link; contains an <img>, the name, the price, the
 //                              "לא זמין להזמנה כרגע" label), option-chip (radio chips; .swatch-<name> dot),
 //                              buy-price (live price), unavailable-notice
+//                              (007: a new piece is on "All pieces" at /he/shop; the home page's row only
+//                              shows the pieces of the home-row category)
 
 const here = dirname(fileURLToPath(import.meta.url));
 const heicSample = readFileSync(resolve(here, '../fixtures/images/sample.heic'));
@@ -114,7 +116,7 @@ test('1. create a product with three photos, category and prep time, publish it,
   await page.getByTestId('field-nameHe').fill(NAME);
   await page.getByTestId('field-descriptionHe').fill('בובה סרוגה בעבודת יד, עם שיער מצמר.');
   await page.getByTestId('field-priceIls').fill('180');
-  await page.getByTestId('field-category').selectOption({ label: 'נרות' });
+  await page.getByTestId('field-categories').getByLabel('נרות', { exact: true }).check();
   await page.getByTestId('field-prepTimeHe').fill('כשבועיים');
   await page.getByTestId('save-product').click();
 
@@ -135,7 +137,7 @@ test('1. create a product with three photos, category and prep time, publish it,
     (await sql<{ slug: string }[]>`SELECT slug FROM product WHERE id = ${productId}`)[0]?.slug ??
     '';
 
-  await page.goto('/he');
+  await page.goto('/he/shop');
   const card = page.getByTestId('product-card').filter({ hasText: NAME });
   await expect(card).toBeVisible();
   await expect(card).toContainText('180');
@@ -220,7 +222,7 @@ test('3. hiding removes it from /he and its URL answers "not available" with sta
     .poll(async () => await scalar<string>(sql`SELECT state FROM product WHERE id = ${productId}`))
     .toBe('hidden');
 
-  await page.goto('/he');
+  await page.goto('/he/shop');
   await expect(page.getByTestId('product-card').filter({ hasText: NAME })).toHaveCount(0);
   expect(await storefrontStatus(page, `/he/p/${slug}`)).toBe(404);
   await expect(page.getByText(NOT_AVAILABLE)).toBeVisible();
@@ -298,7 +300,7 @@ test('reordering photos and choosing another main photo changes the catalog card
   await expect(items.nth(1)).toHaveAttribute('data-image-id', third ?? '');
   await expect(items.nth(2)).toHaveAttribute('data-image-id', second ?? '');
 
-  await page.goto('/he');
+  await page.goto('/he/shop');
   await expect(
     page.getByTestId('product-card').filter({ hasText: NAME }).locator('img'),
   ).toHaveAttribute('src', new RegExp(`/dev-images/${after}`));
@@ -317,7 +319,7 @@ test('4. not orderable: still visible with the label, options read-only, no add-
     )
     .toBe(false);
 
-  await page.goto('/he');
+  await page.goto('/he/shop');
   const card = page.getByTestId('product-card').filter({ hasText: NAME });
   await expect(card).toContainText('לא זמין להזמנה כרגע');
 
@@ -340,7 +342,7 @@ test('4. not orderable: still visible with the label, options read-only, no add-
 });
 
 test('8. the English view with empty English fields shows the Hebrew texts', async ({ page }) => {
-  await page.goto('/en');
+  await page.goto('/en/shop');
   const card = page.getByTestId('product-card').filter({ hasText: NAME });
   await expect(card).toBeVisible();
   await page.goto(`/en/p/${slug}`);
@@ -387,7 +389,7 @@ test('5. delete asks for confirmation, then the product is gone from the catalog
     .poll(async () => (await sql`SELECT id FROM product WHERE id = ${productId}`).length)
     .toBe(0);
 
-  await page.goto('/he');
+  await page.goto('/he/shop');
   await expect(page.getByTestId('product-card').filter({ hasText: NAME })).toHaveCount(0);
   expect(await storefrontStatus(page, `/he/p/${slug}`)).toBe(404);
   expect((await sql`SELECT id FROM product_image WHERE product_id = ${productId}`).length).toBe(0);
@@ -399,4 +401,76 @@ test('7. an admin page without a session redirects to sign-in and shows no data'
   await page.goto('/admin/products');
   await expect(page).toHaveURL(/\/admin\/sign-in/);
   await expect(page.getByText(NAME)).toHaveCount(0);
+});
+
+test('categories: a piece can be in several, the home row follows "מומלצות", publishing needs one', async ({
+  page,
+}) => {
+  const PIECE = 'ספל חרס';
+  const [mug] = await sql<
+    { id: string }[]
+  >`SELECT id FROM product WHERE slug = 'sample-clay-mug' AND state = 'published'`;
+  expect(mug, 'the published sample piece').toBeDefined();
+  const mugId = mug?.id ?? '';
+  const categoryCount = async (): Promise<number> =>
+    Number(
+      await scalar<string>(sql`SELECT count(*) FROM product_category WHERE product_id = ${mugId}`),
+    );
+  const boxes = () => page.getByTestId('field-categories');
+  const open = async (): Promise<void> => {
+    await page.goto(`/admin/products/${mugId}`);
+    await expect(page.getByTestId('field-nameHe')).toBeVisible();
+  };
+  const save = async (expected: number): Promise<void> => {
+    await page.getByTestId('save-product').click();
+    await expect.poll(categoryCount).toBe(expected);
+  };
+
+  try {
+    await signInAsAdmin(page);
+    await open();
+    // Its own category and "מומלצות" are ticked; the other one is not.
+    await expect(boxes().getByLabel('קרמיקה', { exact: true })).toBeChecked();
+    await expect(boxes().getByLabel('מומלצות', { exact: true })).toBeChecked();
+    await expect(boxes().getByLabel('נרות', { exact: true })).not.toBeChecked();
+
+    // The piece is in the home row while "מומלצות" is ticked.
+    await page.goto('/he');
+    await expect(page.getByTestId('home-row-track')).toContainText(PIECE);
+
+    // Untick "מומלצות": gone from the home row (the row itself stays), still on its category page.
+    await open();
+    await boxes().getByLabel('מומלצות', { exact: true }).uncheck();
+    await save(1);
+    await page.goto('/he');
+    await expect(page.getByTestId('home-row-track')).toBeVisible();
+    await expect(page.getByTestId('home-row-track')).not.toContainText(PIECE);
+    await page.goto('/he/c/sample-ceramics');
+    await expect(page.getByTestId('product-card').filter({ hasText: PIECE })).toHaveCount(1);
+
+    // Tick a second category: it shows on both category pages.
+    await open();
+    await boxes().getByLabel('נרות', { exact: true }).check();
+    await save(2);
+    for (const category of ['sample-ceramics', 'sample-candles']) {
+      await page.goto(`/he/c/${category}`);
+      await expect(page.getByTestId('product-card').filter({ hasText: PIECE })).toHaveCount(1);
+    }
+
+    // Untick everything and try to publish a draft: the missing-category message.
+    await open();
+    await page.getByTestId('set-draft').click();
+    await expect
+      .poll(async () => await scalar<string>(sql`SELECT state FROM product WHERE id = ${mugId}`))
+      .toBe('draft');
+    await open();
+    await boxes().getByLabel('קרמיקה', { exact: true }).uncheck();
+    await boxes().getByLabel('נרות', { exact: true }).uncheck();
+    await save(0);
+    await page.getByTestId('publish').click();
+    await expect(page.getByTestId('publish-errors')).toContainText('קטגוריה');
+  } finally {
+    // Restore the sample data (this is the last test of the file).
+    await resetDb();
+  }
 });

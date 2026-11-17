@@ -26,6 +26,7 @@ import { Spinner } from '@/components/ui/Spinner';
 import { TextArea } from '@/components/ui/TextArea';
 import { TextField } from '@/components/ui/TextField';
 import { lineKey } from '@/lib/cart/key';
+import { whenCartDrawerClosed } from '@/lib/cart/drawer-wait';
 import { clearCart, useCart, useCartReady } from '@/lib/cart/store';
 import { formatMoney, type MoneyLocale } from '@/lib/money';
 import { EMAIL_SHAPE } from '@/lib/validation/email-shape';
@@ -166,12 +167,17 @@ export function CheckoutForm({ config }: { config: CheckoutConfig }) {
   const ready = useCartReady();
   const { items } = useCart();
   const t = useTranslations('checkout');
-  /** Set once an order is placed: clearing the cart must not send the visitor to the cart page. */
+  /** Set once an order is placed: clearing the cart must not send the visitor away from it. */
   const leavingRef = useRef(false);
 
   const empty = ready && items.length === 0;
   useEffect(() => {
-    if (empty && !leavingRef.current) window.location.replace(`/${config.locale}/cart`);
+    // An empty cart has nothing to check out: go to All pieces, but only once the cart drawer is
+    // closed (the visitor may be looking at its empty state, FR-047).
+    if (!empty) return;
+    return whenCartDrawerClosed(() => {
+      if (!leavingRef.current) window.location.replace(`/${config.locale}/shop`);
+    });
   }, [empty, config.locale]);
 
   if (!ready || empty) {
@@ -388,7 +394,7 @@ function CheckoutBody({
             message={problemMessage}
             cartLink={
               problemMessage !== null && (formError === 'lines_unavailable' || flagged)
-                ? { label: t('backToCart'), href: `/${config.locale}/cart` }
+                ? { label: t('backToCart') }
                 : null
             }
             summaryHeading={t('errorSummary')}
@@ -627,7 +633,7 @@ function CheckoutBody({
           />
         </Section>
 
-        <div className="grid gap-4 rounded-card bg-panel p-[18px]">
+        <div className="grid gap-4 rounded-card border border-line bg-paper p-[18px]">
           <p className="text-[13px] leading-relaxed text-ink-2">
             {t.rich('collection', {
               privacy: (chunks) => (
@@ -663,7 +669,7 @@ function CheckoutBody({
       </form>
       <aside
         aria-label={t('summary.label')}
-        className="order-first rounded-card bg-panel p-[18px] lg:sticky lg:top-[88px] lg:order-none"
+        className="order-first rounded-card border border-line bg-paper p-[18px] lg:sticky lg:top-[calc(var(--header-h)+16px)] lg:order-none"
       >
         <details ref={summaryRef} className="group">
           <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 font-bold lg:hidden [&::-webkit-details-marker]:hidden">
@@ -709,7 +715,7 @@ function Section({
   children: ReactNode;
 }) {
   return (
-    <section className="rounded-card bg-panel p-[18px]">
+    <section className="rounded-card border border-line bg-paper p-[18px]">
       <h2 className="mb-3 text-lg font-extrabold">{title}</h2>
       <div className={bare ? undefined : 'grid gap-4'}>{children}</div>
     </section>

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/Button';
-import { Icon } from '@/components/ui/Icon';
+import { Icon } from '@/components/ui/ClientIcon';
 import { Price } from '@/components/ui/Price';
 import { cn } from '@/lib/cn';
 import { formatMoney, type MoneyLocale } from '@/lib/money';
@@ -53,14 +53,15 @@ export function CartLine({
   return (
     <li
       id={lineElementId(line.key)}
+      tabIndex={-1}
       data-testid="cart-line"
       data-flag={line.flag}
       className={cn(
-        'grid grid-cols-[72px_minmax(0,1fr)] gap-x-3.5 rounded-card bg-panel p-3.5',
-        flagged && 'border-[1.5px] border-alert',
+        'grid grid-cols-[72px_minmax(0,1fr)] gap-x-3.5 rounded-card border bg-paper p-3.5',
+        flagged ? 'border-[1.5px] border-alert' : 'border-line',
       )}
     >
-      <span className="block h-[90px] w-[72px] overflow-hidden rounded-chip bg-photo">
+      <span className="block h-[72px] w-[72px] overflow-hidden bg-photo">
         {line.imageUrl === null ? null : (
           <img
             src={line.imageUrl}

@@ -5,7 +5,7 @@ import { useEffect, useRef, useState, type ChangeEvent, type SyntheticEvent } fr
 import { submitContact } from '@/app/[locale]/(shop)/contact/actions';
 import { Button } from '@/components/ui/Button';
 import { ErrorSummary } from '@/components/ui/ErrorSummary';
-import { Icon } from '@/components/ui/Icon';
+import { Icon } from '@/components/ui/ClientIcon';
 import { Notice } from '@/components/ui/Notice';
 import { TextArea } from '@/components/ui/TextArea';
 import { TextField } from '@/components/ui/TextField';
@@ -138,7 +138,7 @@ export function ContactForm({ formToken, locale }: { formToken: string; locale: 
         tabIndex={-1}
         role="status"
         data-testid="contact-sent"
-        className="flex items-start gap-2.5 rounded-2xl bg-sun-soft px-3.5 py-3.5 text-ink"
+        className="flex items-start gap-2.5 rounded-2xl bg-sage px-3.5 py-3.5 text-ink"
       >
         <Icon name="check" className="mt-0.5" />
         <p className="min-w-0 flex-1 font-bold">{t('sent')}</p>

@@ -29,7 +29,7 @@ export default async function ContentListPage() {
           <li
             key={page.slug}
             data-testid="content-card"
-            className="overflow-hidden rounded-card border border-line bg-panel"
+            className="overflow-hidden rounded-card border border-line bg-paper"
           >
             <Link
               href={`/admin/content/${page.slug}`}
@@ -46,8 +46,8 @@ export default async function ContentListPage() {
                   data-testid={`content-badge-${page.slug}`}
                   className={
                     page.ownerEdited
-                      ? 'rounded-pill border-[1.5px] border-field bg-panel px-3 py-0.5 text-[13px] font-bold'
-                      : 'rounded-pill bg-sun-soft px-3 py-0.5 text-[13px] font-bold'
+                      ? 'rounded-pill border-[1.5px] border-field bg-paper px-3 py-0.5 text-[13px] font-bold'
+                      : 'rounded-pill bg-sage px-3 py-0.5 text-[13px] font-bold'
                   }
                 >
                   {page.ownerEdited ? t('list.badgeEdited') : t('list.badgeDraft')}

@@ -1,9 +1,10 @@
 import type { Page } from '@playwright/test';
 import { expect, resetDb, sql, test } from './fixtures';
 
-// US2 catalog, category, search and product-page metadata (tasks.md T070). The three sample
-// products of resetDb(): soy candle (₪45, options +₪10 so the card says "from"), not orderable
-// blue bowl (₪120, category "sample-ceramics"), clay mug (₪65, no English text).
+// US2 catalog (007: the full list is the "All pieces" page, /he/shop), category, search and
+// product-page metadata (tasks.md T070). The three sample products of resetDb(): soy candle (₪45,
+// options +₪10 so the card says "from"), not orderable blue bowl (₪120, category
+// "sample-ceramics"), clay mug (₪65, no English text).
 
 test.describe.configure({ mode: 'serial' });
 
@@ -22,10 +23,10 @@ test.beforeAll(async () => {
   await resetDb();
 });
 
-test('home lists every published product and sorts by newest, price ascending and descending', async ({
+test('All pieces lists every published product and sorts by newest, price ascending and descending', async ({
   page,
 }) => {
-  await page.goto('/he');
+  await page.goto('/he/shop');
   await expect(page.getByTestId('product-card')).toHaveCount(3);
   // Newest first: the products were published in the order candle, bowl, mug.
   expect(await cardNames(page)).toEqual([MUG, BOWL, CANDLE]);
@@ -56,7 +57,7 @@ test('home lists every published product and sorts by newest, price ascending an
 });
 
 test('cards show "from" for option prices and the not-available label', async ({ page }) => {
-  await page.goto('/he');
+  await page.goto('/he/shop');
   const candle = page.getByTestId('product-card').filter({ hasText: CANDLE });
   await expect(candle).toContainText('החל מ־');
   await expect(candle).toContainText('45.00');
@@ -69,7 +70,7 @@ test('cards show "from" for option prices and the not-available label', async ({
 });
 
 test('a category page shows only its products, with the same sorts', async ({ page }) => {
-  await page.goto('/he');
+  await page.goto('/he/shop');
   // "All" is current on the catalog; the category chip leads to the category page.
   const chips = page.getByRole('navigation', { name: 'קטגוריות' });
   await expect(chips.getByRole('link', { name: 'הכול' })).toHaveAttribute('aria-current', 'page');
@@ -186,6 +187,39 @@ test('the product page head carries Open Graph and price tags', async ({ page, b
   expect(await meta('product:price:amount')).toBe('45.00');
 });
 
+test('a product page shows "You may also like" with other pieces and never itself', async ({
+  page,
+}) => {
+  const heading: Record<'he' | 'en', string> = { he: 'אולי תאהבו גם', en: 'You may also like' };
+  for (const locale of ['he', 'en'] as const) {
+    await page.goto(`/${locale}/p/sample-clay-mug`);
+    const section = page.getByTestId('also-like');
+    await expect(section).toBeVisible();
+    await expect(section.getByRole('heading', { level: 2, name: heading[locale] })).toBeVisible();
+    // The two other published samples, never the mug itself.
+    await expect(section.getByTestId('product-card')).toHaveCount(2);
+    await expect(section).not.toContainText(MUG);
+    expect(
+      await section
+        .getByTestId('product-card')
+        .evaluateAll((cards) => cards.map((card) => card.getAttribute('href'))),
+    ).not.toContain(`/${locale}/p/sample-clay-mug`);
+  }
+});
+
+test('with a single published piece the "You may also like" section is absent', async ({
+  page,
+}) => {
+  await sql`UPDATE product SET state = 'draft' WHERE slug IN ('sample-ceramic-bowl', 'sample-soy-candle')`;
+  try {
+    await page.goto('/he/p/sample-clay-mug');
+    await expect(page.getByRole('heading', { level: 1, name: MUG })).toBeVisible();
+    await expect(page.getByTestId('also-like')).toHaveCount(0);
+  } finally {
+    await sql`UPDATE product SET state = 'published' WHERE slug IN ('sample-ceramic-bowl', 'sample-soy-candle')`;
+  }
+});
+
 test('the photo strip scrolls only sideways, so a vertical swipe on it scrolls the page', async ({
   page,
   browserName,
@@ -195,7 +229,7 @@ test('the photo strip scrolls only sideways, so a vertical swipe on it scrolls t
   // overflow-x: auto alone computes overflow-y to auto, and iPhone Safari then gives vertical
   // swipes that start on the photo to the strip instead of the page.
   expect(await track.evaluate((element) => getComputedStyle(element).overflowY)).toBe('hidden');
-  // The photo fills its 4:5 slide exactly; nothing sticks out to scroll to.
+  // The photo fills its square slide exactly; nothing sticks out to scroll to.
   const sizes = await track.evaluate((element) => {
     const photo = element.querySelector('img');
     return {
@@ -207,7 +241,7 @@ test('the photo strip scrolls only sideways, so a vertical swipe on it scrolls t
   });
   expect(sizes.content).toBe(sizes.track);
   expect(Math.abs(sizes.photo - sizes.track)).toBeLessThanOrEqual(1);
-  expect(Math.abs(sizes.track - (sizes.width * 5) / 4)).toBeLessThanOrEqual(1);
+  expect(Math.abs(sizes.track - sizes.width)).toBeLessThanOrEqual(1);
   // Playwright cannot send a mouse wheel (or a touch swipe) in mobile WebKit; there the
   // computed overflow-y and size checks above are what guard the iPhone behaviour.
   if (browserName === 'webkit') return;
@@ -222,7 +256,7 @@ test('an empty catalog and an empty category show friendly messages', async ({ p
     INSERT INTO category (id, slug, name_he, sort_order)
     VALUES (gen_random_uuid(), 'empty-one', 'קטגוריה ריקה',
             (SELECT coalesce(max(sort_order), -1) + 1 FROM category))`;
-  await page.goto('/he');
+  await page.goto('/he/shop');
   await expect(page.getByText('עוד אין כאן יצירות')).toBeVisible();
   await expect(page.getByTestId('product-card')).toHaveCount(0);
 

@@ -1,11 +1,20 @@
 import 'server-only';
+import type { ZodError } from 'zod';
 import { and, asc, count, eq, ne, sql } from 'drizzle-orm';
 import { categoryInputSchema, type CategoryInput } from '@/lib/validation/category';
 import { logActivity } from '@/server/activity/log';
 import { db } from '@/server/db/client';
-import { category, product } from '@/server/db/schema';
+import { category, productCategory } from '@/server/db/schema';
 import type { DbLike } from '@/server/db/types';
-import { fieldFailure, formFailure, ok, zodFailure, type ActionResult, type Actor } from './result';
+import {
+  fieldFailure,
+  formFailure,
+  ok,
+  zodFailure,
+  type ActionResult,
+  type Actor,
+  type Failure,
+} from './result';
 import { isRandomSlug, randomSlug, slugify, uniqueSlug } from './slug';
 
 export interface CategoryRow {
@@ -31,10 +40,11 @@ function activityFor(actor: Actor, action: string, id: string, slug: string) {
 
 /** Categories in display order, each with the number of products (any state) that use it. */
 export async function listCategories(database: DbLike = db): Promise<CategoryRow[]> {
+  // Pieces (any state) linked to the category.
   const counts = database
-    .select({ categoryId: product.categoryId, n: count().as('n') })
-    .from(product)
-    .groupBy(product.categoryId)
+    .select({ categoryId: productCategory.categoryId, n: count().as('n') })
+    .from(productCategory)
+    .groupBy(productCategory.categoryId)
     .as('counts');
   const rows = await database
     .select({
@@ -63,12 +73,27 @@ async function slugTaken(tx: DbLike, slug: string, exceptId?: string): Promise<b
   return rows.length > 0;
 }
 
+/** A too-long name gets its own message on its own field; any other issue is `invalid`. */
+function categoryFailure(error: ZodError): Failure {
+  const failure = zodFailure(error, 'admin.categories.errors.invalid');
+  for (const issue of error.issues) {
+    const field = issue.path[0];
+    if (issue.code === 'too_big' && (field === 'nameHe' || field === 'nameEn')) {
+      failure.fieldErrors = {
+        ...failure.fieldErrors,
+        [field]: 'admin.categories.errors.nameTooLong',
+      };
+    }
+  }
+  return failure;
+}
+
 export async function createCategory(
   actor: Actor,
   input: CategoryInput,
 ): Promise<ActionResult<{ id: string; slug: string }>> {
   const parsed = categoryInputSchema.safeParse(input);
-  if (!parsed.success) return zodFailure(parsed.error, 'admin.categories.errors.invalid');
+  if (!parsed.success) return categoryFailure(parsed.error);
   const { nameHe, nameEn, slug: given } = parsed.data;
   return db.transaction(async (tx) => {
     if (given !== undefined && (await slugTaken(tx, given))) {
@@ -98,7 +123,7 @@ export async function updateCategory(
   input: CategoryInput,
 ): Promise<ActionResult<{ id: string; slug: string }>> {
   const parsed = categoryInputSchema.safeParse(input);
-  if (!parsed.success) return zodFailure(parsed.error, 'admin.categories.errors.invalid');
+  if (!parsed.success) return categoryFailure(parsed.error);
   const { nameHe, nameEn, slug: given } = parsed.data;
   return db.transaction(async (tx) => {
     const [current] = await tx.select().from(category).where(eq(category.id, id));
@@ -163,7 +188,10 @@ export async function deleteCategory(
   return db.transaction(async (tx) => {
     const [current] = await tx.select().from(category).where(eq(category.id, id));
     if (!current) return formFailure('admin.categories.errors.not_found');
-    const [used] = await tx.select({ n: count() }).from(product).where(eq(product.categoryId, id));
+    const [used] = await tx
+      .select({ n: count() })
+      .from(productCategory)
+      .where(eq(productCategory.categoryId, id));
     const products = used?.n ?? 0;
     if (products > 0)
       return formFailure('admin.categories.errors.has_products', { count: products });

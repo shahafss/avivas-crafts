@@ -19,7 +19,7 @@ export async function CategoryChips({
   const t = await getTranslations({ locale, namespace: 'shop.catalog' });
   return (
     <ChipRow label={t('categoriesLabel')}>
-      <ChipLink href={`/${locale}`} current={currentSlug === null}>
+      <ChipLink href={`/${locale}/shop`} current={currentSlug === null}>
         {t('all')}
       </ChipLink>
       {categories.map((category) => {

@@ -7,6 +7,7 @@ import {
   integer,
   pgEnum,
   pgTable,
+  primaryKey,
   text,
   uuid,
 } from 'drizzle-orm/pg-core';
@@ -38,7 +39,6 @@ export const product = pgTable(
   {
     id: id(),
     slug: text('slug').notNull().unique(),
-    categoryId: uuid('category_id').references(() => category.id, { onDelete: 'restrict' }),
     nameHe: text('name_he').notNull(),
     nameEn: text('name_en'),
     descriptionHe: text('description_he'),
@@ -70,8 +70,28 @@ export const product = pgTable(
     ),
     check('product_price_ils_positive', sql`${t.priceIlsMinor} IS NULL OR ${t.priceIlsMinor} > 0`),
     check('product_price_usd_positive', sql`${t.priceUsdMinor} IS NULL OR ${t.priceUsdMinor} > 0`),
-    index('product_category_idx').on(t.categoryId),
     index('product_state_idx').on(t.state),
+  ],
+);
+
+/**
+ * A piece can be in several categories (007 FR-031). A category with pieces cannot be deleted
+ * (`restrict`, as `product.category_id` was); deleting a piece removes its links.
+ */
+export const productCategory = pgTable(
+  'product_category',
+  {
+    productId: uuid('product_id')
+      .notNull()
+      .references(() => product.id, { onDelete: 'cascade' }),
+    categoryId: uuid('category_id')
+      .notNull()
+      .references(() => category.id, { onDelete: 'restrict' }),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.productId, t.categoryId] }),
+    index('product_category_category_idx').on(t.categoryId),
   ],
 );
 

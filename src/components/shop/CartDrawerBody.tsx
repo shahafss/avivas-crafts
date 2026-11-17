@@ -2,13 +2,14 @@
 
 import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
-import { priceCart, type PriceCartResult } from '@/app/[locale]/(shop)/cart/actions';
 import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ErrorSummary } from '@/components/ui/ErrorSummary';
 import { LinkButton } from '@/components/ui/LinkButton';
 import { Notice } from '@/components/ui/Notice';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { priceCart, type PriceCartResult } from '@/lib/cart/actions';
+import { CART_DRAWER_ID, keepDrawerOpen } from '@/lib/cart/drawer';
 import { lineKey } from '@/lib/cart/key';
 import { removeFromCart, setQuantity, useCart, useCartReady } from '@/lib/cart/store';
 import { formatMoney, type MoneyLocale } from '@/lib/money';
@@ -21,11 +22,12 @@ type Outcome =
   | { signature: string; status: 'error' };
 
 /**
- * The cart page body. The lines live on the device; every price and flag comes from
+ * The cart drawer's contents, loaded by `DrawerController` on the first open (research D21,
+ * storefront.md 7.34): one column. The lines live on the device; every price and flag comes from
  * `priceCart`. Totals are the unit prices from the last answer times the quantities in the cart,
- * so changing a quantity needs no new request.
+ * so changing a quantity needs no new request. It scrolls inside `.drawer-scroll`, its host.
  */
-export function CartView({
+export function CartDrawerBody({
   freeShippingOverMinor,
 }: {
   /** The free-shipping threshold in minor units of the zone currency, or null for none. */
@@ -73,7 +75,13 @@ export function CartView({
   }, [ready, signature, attempt, locale]);
 
   if (!ready) {
-    return <Skeleton variant="line" label={t('loading')} className="rounded-card bg-panel p-3.5" />;
+    return (
+      <Skeleton
+        variant="line"
+        label={t('loading')}
+        className="rounded-card border border-line bg-paper p-3.5"
+      />
+    );
   }
   if (items.length === 0) {
     return (
@@ -83,7 +91,7 @@ export function CartView({
           title={t('empty.title')}
           text={t('empty.text')}
           action={
-            <LinkButton href={`/${locale}`} variant="secondary">
+            <LinkButton href={`/${locale}/shop`} variant="secondary">
               {t('empty.action')}
             </LinkButton>
           }
@@ -126,55 +134,57 @@ export function CartView({
   );
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start lg:gap-8">
-      <div className="grid gap-3">
-        {summaryToken > 0 && flagged.length > 0 ? (
-          <div
-            key={summaryToken}
-            ref={(element) => {
-              element?.querySelector<HTMLElement>(`#${SUMMARY_ID}`)?.focus();
+    <div className="grid gap-4">
+      {summaryToken > 0 && flagged.length > 0 ? (
+        <div
+          key={summaryToken}
+          ref={(element) => {
+            element?.querySelector<HTMLElement>(`#${SUMMARY_ID}`)?.focus();
+          }}
+        >
+          <ErrorSummary
+            id={SUMMARY_ID}
+            heading={t('summary.heading')}
+            onSelect={(fieldId) => {
+              // Focus the line itself, inside the drawer (a `#` jump would not move focus).
+              document.getElementById(fieldId)?.focus();
             }}
-          >
-            <ErrorSummary
-              id={SUMMARY_ID}
-              heading={t('summary.heading')}
-              items={flagged.map(({ key, line }) => ({
-                fieldId: lineElementId(key),
-                message: t('summary.item', {
-                  name: line.name === '' ? t('line.gone') : line.name,
-                  reason: flagMessage(line.flag as NonNullable<typeof line.flag>),
-                }),
-              }))}
+            items={flagged.map(({ key, line }) => ({
+              fieldId: lineElementId(key),
+              message: t('summary.item', {
+                name: line.name === '' ? t('line.gone') : line.name,
+                reason: flagMessage(line.flag as NonNullable<typeof line.flag>),
+              }),
+            }))}
+          />
+        </div>
+      ) : null}
+      <ul className="grid gap-3" aria-label={t('linesLabel')}>
+        {rows.map(({ item, key, line }) =>
+          line === undefined ? (
+            <li key={key} className="rounded-card border border-line bg-paper p-3.5">
+              <Skeleton variant="line" label={t('loading')} />
+            </li>
+          ) : (
+            <CartLine
+              key={key}
+              line={line}
+              quantity={item.quantity}
+              currency={currency}
+              onQuantity={(quantity) => {
+                setQuantity(key, quantity);
+              }}
+              onRemove={() => {
+                removeFromCart(key);
+              }}
             />
-          </div>
-        ) : null}
-        <ul className="grid gap-3" aria-label={t('linesLabel')}>
-          {rows.map(({ item, key, line }) =>
-            line === undefined ? (
-              <li key={key} className="rounded-card bg-panel p-3.5">
-                <Skeleton variant="line" label={t('loading')} />
-              </li>
-            ) : (
-              <CartLine
-                key={key}
-                line={line}
-                quantity={item.quantity}
-                currency={currency}
-                onQuantity={(quantity) => {
-                  setQuantity(key, quantity);
-                }}
-                onRemove={() => {
-                  removeFromCart(key);
-                }}
-              />
-            ),
-          )}
-        </ul>
-      </div>
+          ),
+        )}
+      </ul>
 
-      <aside
+      <section
         aria-label={t('summary.label')}
-        className="grid gap-3 rounded-card bg-panel p-[18px] lg:sticky lg:top-[88px]"
+        className="grid gap-3 rounded-card border border-line bg-paper p-[18px]"
       >
         <p className="flex items-baseline justify-between gap-3 text-base">
           <span>{t('summary.subtotal')}</span>
@@ -197,16 +207,23 @@ export function CartView({
           onClick={(event) => {
             if (flagged.length > 0) {
               event.preventDefault();
+              keepDrawerOpen(event.nativeEvent);
               setSummaryToken((value) => value + 1);
             }
           }}
         >
           {t('summary.continue')}
         </LinkButton>
-        <LinkButton href={`/${locale}`} variant="quiet" className="justify-self-center">
-          {t('summary.keepShopping')}
-        </LinkButton>
-      </aside>
+        <Button
+          variant="quiet"
+          data-testid="cart-keep-shopping"
+          popoverTarget={CART_DRAWER_ID}
+          popoverTargetAction="hide"
+          className="justify-self-center"
+        >
+          {t('drawer.keepShopping')}
+        </Button>
+      </section>
     </div>
   );
 }

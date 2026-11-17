@@ -310,6 +310,11 @@ https://accounts.google.com`. Spot check: `curl -sI https://<shop domain>/he | g
 13. **HSTS preload decision.** **Do**: decide whether to submit the domain to the HSTS preload
     list later (see **Later**). The shop sends `max-age=63072000; includeSubDomains` without
     `preload` until you decide. Record: `____`.
+14. **Home row has pieces (feature 007).** **Where**: the live `/he` home page and `/admin/products`.
+    **Do**: scroll to the row of pieces. On a fresh database the seed creates "Featured" with no
+    pieces, so the row stays hidden until pieces are ticked. If the row is missing, open a
+    published piece and tick `מומלצות` (owner guide section 13), then save. **Check**: the row
+    shows pieces. Record: `____`.
 
 ## 16. Stopwatch runs (Aviva and a first-time visitor)
 
@@ -340,6 +345,19 @@ agrees the pages match how the shop really works.
 **Do**: cancel every test order ("ביטול ההזמנה"), then remove or unpublish every test product.
 **Check**: the orders list shows no test orders in an open state; the storefront catalog shows
 only real products.
+
+## 18a. Release of feature 007 (storefront redesign)
+
+Only when the shop is already live and 007 is the release being deployed.
+
+1. **Backup first.** **Where**: Render > `avivas-crafts-backup` > Trigger run. **Do**: run a backup
+   and wait for it to finish, before deploying. The 007 migration changes how pieces are linked to
+   categories (a piece can now be in several), so keep a copy that predates it
+   (`ops/backup/README.md`). **Check**: the run succeeded and a new dump is in `ac-backups`.
+2. **Home row.** **Where**: the live `/he` home page, after the deploy. **Do**: scroll to the row of
+   pieces. **Check**: the row shows every published piece (the release puts all existing pieces into
+   "Featured", `מומלצות`); if it is empty, open `/admin/settings` > "דף הבית" and check that the
+   row's category is set. Optionally untick `מומלצות` on pieces Aviva does not want in the row.
 
 ## 19. Announce
 

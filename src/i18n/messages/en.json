@@ -6,6 +6,8 @@
     "menu": "Menu",
     "menuNav": "Site menu",
     "search": "Search",
+    "headerSearch": "Search the shop",
+    "menuSearch": "Search from the menu",
     "allPieces": "All pieces",
     "breadcrumbs": "You are here",
     "home": "Home",
@@ -13,7 +15,8 @@
       "about": "About",
       "shippingReturns": "Shipping & returns",
       "contact": "Contact",
-      "categories": "Categories"
+      "categories": "Categories",
+      "allPieces": "All pieces"
     },
     "announcement": {
       "freeShippingOver": "Free shipping on orders over <money>{amount}</money>",
@@ -33,7 +36,13 @@
       "accessibility": "Accessibility statement",
       "infoNav": "Information about the shop",
       "legalNav": "Legal documents",
-      "cookieSettings": "Cookie settings"
+      "cookieSettings": "Cookie settings",
+      "social": {
+        "label": "My social pages",
+        "instagram": "My Instagram",
+        "facebook": "My Facebook",
+        "tiktok": "My TikTok"
+      }
     },
     "cart": {
       "label": "Cart, {count, plural, =0 {empty} one {1 item} other {# items}}"
@@ -50,7 +59,8 @@
     },
     "toast": {
       "close": "Close"
-    }
+    },
+    "menuClose": "Close menu"
   },
   "shop": {
     "catalog": {
@@ -96,7 +106,7 @@
       "returnsTitle": "Cancellations and returns",
       "returnsText": "The cancellation and return rules are on the shipping and returns page.",
       "readMore": "Go to shipping and returns",
-      "related": "More <cat>{category}</cat>",
+      "alsoLike": "You may also like",
       "relatedLabel": "More pieces"
     },
     "gallery": {
@@ -124,6 +134,7 @@
     "search": {
       "title": "Search",
       "breadcrumbs": "Breadcrumb",
+      "formLabel": "Search pieces",
       "label": "What are you looking for?",
       "button": "Search",
       "results": "{count, plural, one {# piece} other {# pieces}} for “<q>{query}</q>”",
@@ -131,10 +142,38 @@
       "noResultsText": "Try another word, or go to one of the categories.",
       "tooLong": "Searches can be up to 80 characters long.",
       "prompt": "Search by name or description, or go to one of the categories."
+    },
+    "home": {
+      "row": {
+        "viewAll": "View all",
+        "previous": "Previous",
+        "next": "Next"
+      },
+      "hero": {
+        "alt": "Crocheted dolls and animals, balls of wool and needles on a work table, and a woman knitting by the window"
+      },
+      "bannerChild": {
+        "heading": "Made to be played with",
+        "line": "Soft and cuddly, and each one is made just for you.",
+        "button": "See all pieces",
+        "alt": "A toddler playing with a yellow crocheted sheep, with more crocheted animals on the rug"
+      },
+      "bannerShelf": {
+        "heading": "Each one has its own character",
+        "line": "Bears, bunnies, monkeys and more. You choose, and I'll crochet it for you.",
+        "button": "See all pieces",
+        "alt": "A honeycomb shelf full of crocheted dolls and animals: bears, a bunny, monkeys, an elephant, a fox, a lion and a sheep"
+      },
+      "band": {
+        "sentence": "I crochet every piece myself, slowly and with love, only after you order.",
+        "link": "Shop now"
+      }
+    },
+    "allPieces": {
+      "title": "All pieces"
     }
   },
   "cart": {
-    "title": "Your cart",
     "loading": "Loading…",
     "loadError": "I couldn't load your cart. Please try again.",
     "retry": "Try again",
@@ -179,11 +218,15 @@
       "subtotal": "Subtotal",
       "deliveryLater": "Delivery is calculated at checkout",
       "freeShippingOver": "Free shipping over <money>{threshold}</money>",
-      "continue": "Continue to checkout",
-      "keepShopping": "Keep shopping"
+      "continue": "Continue to checkout"
     },
     "errors": {
       "invalid": "I couldn't read your cart. Please refresh the page."
+    },
+    "drawer": {
+      "title": "My cart",
+      "close": "Close cart",
+      "keepShopping": "Keep shopping"
     }
   },
   "checkout": {
@@ -628,7 +671,8 @@
     "confirm_required": "Please confirm the action before it is carried out.",
     "categories": {
       "errors": {
-        "invalid": "The category name is missing or too long (80 characters at most).",
+        "invalid": "The category name is missing or too long (12 characters at most).",
+        "nameTooLong": "The name is too long. Up to 12 characters.",
         "slug_taken": "This address is already used by another category.",
         "not_found": "Category not found.",
         "bad_order": "The category order is not valid. Reload the page and try again.",
@@ -686,6 +730,9 @@
         "invalid_price": "The price must be a positive number with up to two decimals.",
         "invalid_delta": "The extra must be a number, for example 20 or -10."
       },
+      "categoriesLabel": "Categories",
+      "categoriesHint": "You can tick more than one. Pieces in ''{home}'' are shown on the home page.",
+      "categoriesHintNoHome": "You can tick more than one.",
       "missing": {
         "nameHe": "Product name in Hebrew",
         "descriptionHe": "Description in Hebrew",
@@ -739,8 +786,6 @@
         "priceIlsHint": "Required to publish. For example: 180",
         "priceUsd": "Price in dollars (optional)",
         "priceUsdHint": "Used only for orders shipped abroad.",
-        "category": "Category",
-        "categoryNone": "Choose a category",
         "prepTimeHe": "Preparation time (Hebrew)",
         "prepTimeHeHint": "For example: about two weeks",
         "prepTimeEn": "Preparation time (English, optional)"
@@ -853,6 +898,7 @@
       "title": "Settings",
       "intro": "How the shop works: its name, payment, delivery and business details.",
       "save": "Save",
+      "errorSummary": "Please fix a few details",
       "toast": {
         "saved": "Settings saved",
         "zoneSaved": "Delivery zone saved"
@@ -905,6 +951,28 @@
         "addressHe": "Address in Hebrew",
         "addressEn": "Address in English (optional)"
       },
+      "social": {
+        "title": "My social pages",
+        "hint": "If you have a page on one of these networks, paste its address here. An address left empty will not appear on the site.",
+        "instagram": "Instagram page address",
+        "facebook": "Facebook page address",
+        "tiktok": "TikTok page address",
+        "example": {
+          "instagram": "For example: https://www.instagram.com/your-name",
+          "facebook": "For example: https://www.facebook.com/your-name",
+          "tiktok": "For example: https://www.tiktok.com/@your-name"
+        }
+      },
+      "home": {
+        "title": "Home page",
+        "hint": "The home page has a row of pieces that scrolls sideways. Here you choose which category it shows pieces from.",
+        "label": "The home page row shows the category:",
+        "none": "None (the row is not shown)",
+        "header1": "Menu category 1",
+        "header2": "Menu category 2",
+        "headerNone": "None",
+        "headerHint": "These two categories appear in the shop's top menu, after \"All pieces\". The home page row's category appears there too, so you don't need to pick it again. Choose categories that have pieces in them."
+      },
       "notifications": {
         "title": "Notification emails",
         "hint": "New orders and payment alerts are sent to these addresses. Up to three.",
@@ -931,7 +999,24 @@
         "zone_not_found": "The delivery zone wasn't found.",
         "usd_missing": "The zone can't be turned on: published products lack a USD price.",
         "fee": "The delivery fee isn't valid (a number, 0 or more).",
-        "threshold": "The amount isn't valid (a number, 0 or more, or empty)."
+        "threshold": "The amount isn't valid (a number, 0 or more, or empty).",
+        "social": {
+          "invalid": "This isn't a web address. Open your page in the browser, copy the address from the bar at the top and paste it here.",
+          "notHttps": "The address must start with https:// (with an s).",
+          "wrongSite": {
+            "instagram": "This isn't an Instagram address. It must be on instagram.com.",
+            "facebook": "This isn't a Facebook address. It must be on facebook.com.",
+            "tiktok": "This isn't a TikTok address. It must be on tiktok.com."
+          },
+          "noPage": {
+            "instagram": "The page name is missing at the end, for example https://www.instagram.com/your-name",
+            "facebook": "The page name is missing at the end, for example https://www.facebook.com/your-name",
+            "tiktok": "The page name is missing at the end, for example https://www.tiktok.com/@your-name"
+          },
+          "tooLong": "The address is too long. Up to 300 characters."
+        },
+        "home_category_not_found": "The category you chose was not found. Reload the page and try again.",
+        "header_category_not_found": "The category you chose was not found. Reload the page and try again."
       }
     },
     "customers": {

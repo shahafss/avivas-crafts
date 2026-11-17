@@ -35,7 +35,7 @@ export function ErrorSummary({
       role="alert"
       tabIndex={-1}
       aria-labelledby={`${id}-heading`}
-      className="rounded-2xl border-[1.5px] border-alert bg-panel px-3.5 py-3 text-alert"
+      className="rounded-card border-[1.5px] border-alert bg-paper px-3.5 py-3 text-alert"
     >
       <p id={`${id}-heading`} className="flex items-center gap-2 font-bold">
         <Icon name="alert" />

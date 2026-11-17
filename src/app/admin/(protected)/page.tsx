@@ -6,7 +6,7 @@ import { getOrderCounts } from '@/server/orders/admin-orders';
 import { settingsNeedingAttention } from '@/server/settings/settings';
 
 const CARD =
-  'grid min-h-11 gap-1 rounded-card border border-line bg-panel p-5 no-underline hover:bg-sun-soft focus-visible:outline-2 focus-visible:outline-offset-2';
+  'grid min-h-11 gap-1 rounded-card border border-line bg-paper p-5 no-underline hover:bg-sage focus-visible:outline-2 focus-visible:outline-offset-2';
 
 export async function generateMetadata() {
   const t = await getTranslations('admin.dashboard');

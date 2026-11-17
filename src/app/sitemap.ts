@@ -13,6 +13,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const { products, categorySlugs } = await listSitemapEntries();
   const pages: { path: string; lastModified?: Date }[] = [
     { path: '' },
+    { path: '/shop' },
     ...categorySlugs.map((slug) => ({ path: `/c/${slug}` })),
     ...products.map((item) => ({ path: `/p/${item.slug}`, lastModified: item.updatedAt })),
     ...CONTENT_SLUGS.filter((slug) => slug !== 'contact').map((slug) => ({

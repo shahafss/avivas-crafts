@@ -56,7 +56,11 @@ export const updateProductSchema = z
     priceUsdMinor: priceMinorSchema.nullable(),
     prepTimeHe: optionalText(120),
     prepTimeEn: optionalText(120),
-    categoryId: z.uuid().nullable(),
+    // 0-50 category ids, duplicates collapsed (a piece is in a category once).
+    categoryIds: z
+      .array(z.uuid())
+      .max(50)
+      .transform((ids) => [...new Set(ids)]),
     slug: slugSchema,
   })
   .partial()
@@ -98,7 +102,7 @@ export interface PublishFacts {
   descriptionHe: string | null;
   priceIlsMinor: number | null;
   priceUsdMinor: number | null;
-  categoryId: string | null;
+  categoryIds: string[];
   prepTimeHe: string | null;
   imageCount: number;
   /** One entry per option group: its values' deltas. */
@@ -116,7 +120,8 @@ export function missingForPublish(facts: PublishFacts): string[] {
   if (facts.usdZoneEnabled && (facts.priceUsdMinor === null || facts.priceUsdMinor <= 0)) {
     missing.push('priceUsdMinor');
   }
-  if (facts.categoryId === null) missing.push('categoryId');
+  // The message key stays `categoryId`, so the text shown is unchanged.
+  if (facts.categoryIds.length === 0) missing.push('categoryId');
   if ((facts.prepTimeHe ?? '').trim() === '') missing.push('prepTimeHe');
   if (facts.imageCount < 1) missing.push('images');
   const badGroup = facts.groups.some(

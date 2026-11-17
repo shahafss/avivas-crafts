@@ -1,0 +1,4 @@
+ALTER TABLE "shop_settings" ADD COLUMN "header_category_1_id" uuid;--> statement-breakpoint
+ALTER TABLE "shop_settings" ADD COLUMN "header_category_2_id" uuid;--> statement-breakpoint
+ALTER TABLE "shop_settings" ADD CONSTRAINT "shop_settings_header_category_1_id_category_id_fk" FOREIGN KEY ("header_category_1_id") REFERENCES "public"."category"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "shop_settings" ADD CONSTRAINT "shop_settings_header_category_2_id_category_id_fk" FOREIGN KEY ("header_category_2_id") REFERENCES "public"."category"("id") ON DELETE set null ON UPDATE no action;

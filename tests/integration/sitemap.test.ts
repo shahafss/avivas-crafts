@@ -47,7 +47,7 @@ async function make(nameHe: string, categoryId: string, state: 'published' | 'dr
   await updateProduct(actor, created.data.id, {
     descriptionHe: 'תיאור',
     priceIlsMinor: 5000,
-    categoryId,
+    categoryIds: [categoryId],
     prepTimeHe: 'שבוע',
   });
   await addImage(actor, created.data.id, await photo(640, 480, 100));
@@ -73,6 +73,7 @@ describe('sitemap()', () => {
     const urls = entries.map((entry) => entry.url);
     const paths = [
       '',
+      '/shop',
       `/c/${full.data.slug}`,
       `/p/${live.slug}`,
       '/pages/about',

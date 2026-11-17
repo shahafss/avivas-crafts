@@ -43,7 +43,9 @@ export default async function FakePayPage({
 
   return (
     <div className="mx-auto grid w-full max-w-lg gap-4 pt-6 lg:pt-10">
-      <h1 className="text-[28px] leading-[1.15] font-extrabold tracking-tight">{t('title')}</h1>
+      <h1 className="text-[32px] leading-[1.15] font-bold tracking-[-0.01em] text-balance lg:text-[44px]">
+        {t('title')}
+      </h1>
       <Notice tone="attention">{t('notice')}</Notice>
       <p className="text-lg">
         {t('amount')}{' '}

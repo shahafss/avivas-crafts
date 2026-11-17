@@ -1,5 +1,7 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import type { APIResponse, Page } from '@playwright/test';
-import { OIDC_PORT } from './env';
+import { E2E_PORT, OIDC_PORT } from './env';
 import { expect, resetDb, test } from './fixtures';
 import { putCartItem } from './shop-helpers';
 
@@ -118,4 +120,30 @@ test('/api/health answers exactly {"ok":true}', async ({ page }) => {
   const response = await page.request.get('/api/health');
   expect(response.status()).toBe(200);
   expect(await response.text()).toBe('{"ok":true}');
+});
+
+// 007 T021 (contracts/home-photos.md "Serving"): the fingerprinted home photos are cached for a
+// year, are served as WebP with `nosniff`, and the storefront CSP did not change for them.
+test('a home photo is served as WebP with a one-year immutable cache and nosniff', async ({
+  page,
+}) => {
+  const manifest = JSON.parse(
+    readFileSync(join(process.cwd(), 'src/lib/home-photos/manifest.json'), 'utf8'),
+  ) as Record<string, { phone: { file: string; width: number }[] }>;
+  const file = manifest.hero?.phone.find((entry) => entry.width === 565)?.file;
+  if (file === undefined) throw new Error('No hero p565 file in the manifest');
+
+  const response = await page.request.get(`/site-photos/${file}`);
+  expect(response.status()).toBe(200);
+  const headers = response.headers();
+  expect(headers['content-type']).toBe('image/webp');
+  expect(headers['cache-control']).toBe('public, max-age=31536000, immutable');
+  expect(headers['x-content-type-options']).toBe('nosniff');
+
+  // The storefront CSP still allows images from the shop's own origins only (no new host).
+  const home = await page.request.get('/he');
+  const csp = home.headers()['content-security-policy'] ?? '';
+  expect(directive(csp, 'img-src')).toBe(
+    `img-src 'self' http://localhost:${String(E2E_PORT)} data: blob:`,
+  );
 });

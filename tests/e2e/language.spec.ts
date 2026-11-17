@@ -28,10 +28,10 @@ test.beforeEach(({}, testInfo) => {
 /** Paths without the locale prefix, as in contracts/seo.md. */
 const PUBLIC_ROUTES = [
   '',
+  '/shop',
   '/c/sample-ceramics',
   '/p/sample-ceramic-bowl',
   '/search?q=bowl',
-  '/cart',
   '/pages/about',
   '/pages/shipping-returns',
   '/pages/terms',
@@ -41,9 +41,10 @@ const PUBLIC_ROUTES = [
   '/contact',
 ];
 
-const SWITCH_HREF = 'header a[href^="/api/locale"]';
+// 007 (FR-041): the compact switch moved from the header bar into the green strip above it.
+const SWITCH_HREF = '[data-testid="announcement-bar"] a[href^="/api/locale"]';
 
-/** The header's compact switch. */
+/** The compact switch in the green strip (the function keeps its old name for the many callers). */
 const headerSwitch = (page: Page) => page.locator(SWITCH_HREF);
 
 /** Waits until React has attached its handlers to the element (a click before that is lost). */
@@ -91,7 +92,7 @@ async function expectAlternates(page: Page, locale: 'he' | 'en', path: string): 
   });
 }
 
-test('the header switch on /he reads EN, links to /api/locale and lands on /en and back', async ({
+test('the strip switch on /he reads EN, links to /api/locale and lands on /en and back', async ({
   page,
 }) => {
   await page.goto('/he');
@@ -120,8 +121,13 @@ test('the header switch on /he reads EN, links to /api/locale and lands on /en a
 test('the switch keeps the page, the sort and the search across a client navigation', async ({
   page,
 }) => {
-  await page.goto('/he');
+  // 007: the catalog (sort links, category chips) is the "All pieces" page.
+  await page.goto('/he/shop');
   await hydrated(page, 'product-card');
+  await expect(headerSwitch(page)).toHaveAttribute(
+    'href',
+    `/api/locale?to=en&path=${encodeURIComponent('/en/shop')}`,
+  );
   // A marker on window proves the next two steps are client navigations, not full loads.
   await page.evaluate(() => {
     (window as unknown as { __clientNav: boolean }).__clientNav = true;
@@ -162,6 +168,10 @@ test('the cart survives the switch (phones)', async ({ page }, testInfo) => {
   await expect(page).toHaveURL(/\/he\/p\/sample-clay-mug$/);
   await hydrated(page, 'add-to-cart');
   await page.getByTestId('add-to-cart').click();
+  // The add opened the cart drawer (FR-047); the page behind it is inert until it is closed.
+  await expect(page.getByTestId('cart-drawer')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.getByTestId('cart-drawer')).toBeHidden();
   await expect(page.getByTestId('cart-badge')).toHaveText('1');
 
   await headerSwitch(page).click();
@@ -183,9 +193,11 @@ test('the menu and the footer carry the full-word switch', async ({ page }) => {
     await expect(inFooter).toHaveText(word);
     await expect(inFooter).toHaveAttribute('lang', other);
 
-    // The menu button is hidden on desktop widths unless the shop has many categories.
-    const menuButton = page.locator('[popovertarget="site-menu"]:visible');
-    if ((await menuButton.count()) === 0) continue;
+    // The menu button is hidden from 1024 px (the full header row has no menu).
+    const menuButton = page.locator('#site-header [popovertarget="site-menu"]:visible');
+    const wide = (page.viewportSize()?.width ?? 0) >= 1024;
+    await expect(menuButton, `/${locale}: menu button`).toHaveCount(wide ? 0 : 1);
+    if (wide) continue;
     await menuButton.click();
     const inMenu = page.locator(`#site-menu a[href^="/api/locale?to=${other}"]`);
     await expect(inMenu).toBeVisible();
@@ -195,6 +207,11 @@ test('the menu and the footer carry the full-word switch', async ({ page }) => {
 
 test('a 404 page keeps its address in the other language', async ({ page }) => {
   await page.goto('/he/no-such-page');
+  // FR-038: the not-found page's "all pieces" button leads to the All pieces page.
+  await expect(page.getByRole('main').getByRole('link', { name: 'לכל היצירות' })).toHaveAttribute(
+    'href',
+    '/he/shop',
+  );
   await expect(headerSwitch(page)).toHaveAttribute(
     'href',
     `/api/locale?to=en&path=${encodeURIComponent('/en/no-such-page')}`,
@@ -238,7 +255,7 @@ test('without JavaScript the switch still carries the page and the query', async
   await context.close();
 });
 
-test('every public page shows the header switch in both languages', async ({ page }) => {
+test('every public page shows the strip switch in both languages', async ({ page }) => {
   for (const locale of ['he', 'en'] as const) {
     for (const route of PUBLIC_ROUTES) {
       await page.goto(`/${locale}${route}`);
@@ -275,13 +292,13 @@ test('browsing and hovering the switch never set the cookie; pressing it does, f
 }) => {
   await page.goto('/he');
   await page.goto('/he/p/sample-ceramic-bowl');
-  await page.goto('/he/cart');
+  await page.goto('/he/contact');
   await headerSwitch(page).hover();
   await headerSwitch(page).focus();
   expect(await localeCookie(page)).toBeUndefined();
 
   await headerSwitch(page).click();
-  await expect(page).toHaveURL(/\/en\/cart$/);
+  await expect(page).toHaveURL(/\/en\/contact$/);
   const cookie = await localeCookie(page);
   expect(cookie?.value).toBe('en');
   expect(cookie?.httpOnly).toBe(true);
@@ -361,10 +378,13 @@ test('an English order: every step in English, the order and the email stay Engl
   await page.getByTestId('add-to-cart').click();
   await expect(page.getByTestId('added-to-cart-row')).toBeVisible();
 
-  await page.goto('/en/cart');
+  // FR-047: the add opened the cart drawer (there is no cart page); it is English too.
   await expectLocale(page, 'en');
+  await expect(page.getByTestId('cart-drawer')).toBeVisible();
+  await expect(page.getByTestId('cart-line')).toHaveCount(1, { timeout: 20_000 });
+  await expect(page.getByRole('heading', { name: 'My cart' })).toBeVisible();
+  await page.keyboard.press('Escape');
   await expect(headerSwitch(page)).toBeVisible();
-  await expect(page.getByTestId('cart-line')).toHaveCount(1);
 
   await page.goto('/en/checkout');
   await expect(page.getByTestId('checkout-form')).toBeVisible({ timeout: 20_000 });
@@ -467,16 +487,16 @@ test('every public page names its canonical and both language versions (desktop)
   }
 });
 
-test('the sitemap, robots file and noindex pages (desktop)', async ({
-  page,
-  request,
-}, testInfo) => {
+test('the sitemap, robots file and noindex pages (desktop)', async ({ request }, testInfo) => {
   test.skip(testInfo.project.name !== 'chromium-desktop', 'head checks run once, on desktop');
   const sitemap = await request.get('/sitemap.xml');
   expect(sitemap.status()).toBe(200);
   const xml = await sitemap.text();
   expect(xml).toContain('/en/p/sample-ceramic-bowl');
   expect(xml).toContain('/he/p/sample-ceramic-bowl');
+  // 007: the "All pieces" page is listed in both languages.
+  expect(xml).toContain('/he/shop');
+  expect(xml).toContain('/en/shop');
   expect(xml).not.toMatch(/\/(admin|api|cart|checkout|search|order)\b/);
 
   const robots = await request.get('/robots.txt');
@@ -486,9 +506,11 @@ test('the sitemap, robots file and noindex pages (desktop)', async ({
   expect(text).toContain('Disallow: /api/');
   expect(text).toContain('/sitemap.xml');
 
-  for (const path of ['/en/search?q=bowl', '/en/cart', '/en/checkout']) {
-    await page.goto(path);
-    await expect(page.locator('meta[name="robots"]'), path).toHaveAttribute('content', /noindex/);
+  // Read as served HTML: with an empty cart the checkout page sends the browser on to /en/shop (007
+  // T097), so a browser check would race the redirect.
+  for (const path of ['/en/search?q=bowl', '/en/checkout']) {
+    const html = await (await request.get(path)).text();
+    expect(html, path).toMatch(/<meta name="robots" content="[^"]*noindex/);
   }
 
   // The middleware sends no hreflang `Link` header (research R4): the HTML tags are the only ones.
@@ -518,9 +540,10 @@ test('no stray Hebrew on the English cart and checkout (phones)', async ({ page 
   await page.getByTestId('add-to-cart').click();
   await expect(page.getByTestId('added-to-cart-row')).toBeVisible();
 
-  await page.goto('/en/cart');
-  await expect(page.getByTestId('cart-line')).toHaveCount(1);
-  expect(await strayHebrew(page), '/en/cart with an item').toEqual([]);
+  // The add opened the cart drawer (FR-047): no Hebrew in it either.
+  await expect(page.getByTestId('cart-drawer')).toBeVisible();
+  await expect(page.getByTestId('cart-line')).toHaveCount(1, { timeout: 20_000 });
+  expect(await strayHebrew(page), 'the English cart drawer with an item').toEqual([]);
 
   await page.goto('/en/checkout');
   await expect(page.getByTestId('checkout-form')).toBeVisible({ timeout: 20_000 });
@@ -556,10 +579,12 @@ test('axe finds no violations on the home and product pages in both languages', 
     return { style: style.outlineStyle, width: style.outlineWidth };
   });
   expect(ring).toEqual({ style: 'solid', width: '3px' });
-  // Once more with the menu popover open (when this width has a menu button).
+  // Once more with the menu popover open (when this width has a menu button, below 1024 px).
   await page.goto('/en');
-  const menuButton = page.locator('[popovertarget="site-menu"]:visible');
-  if ((await menuButton.count()) > 0) {
+  const menuButton = page.locator('#site-header [popovertarget="site-menu"]:visible');
+  const wide = (page.viewportSize()?.width ?? 0) >= 1024;
+  await expect(menuButton, 'menu button').toHaveCount(wide ? 0 : 1);
+  if (!wide) {
     await menuButton.click();
     await expect(page.locator('#site-menu a[href^="/api/locale?to=he"]')).toBeVisible();
     await expectNoAxeViolations(page, '/en with the menu open');

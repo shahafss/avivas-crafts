@@ -153,6 +153,7 @@ for (const locale of ['he', 'en'] as const) {
       await expect(footer.locator(`a[href="/${locale}/${path}"]`)).toHaveCount(1);
     }
     await expect(footer.getByTestId('footer-cookie-settings')).toHaveCount(0);
+    await expect(footer.getByTestId('footer-social')).toHaveCount(0);
     await expectNoViolations(page);
   });
 

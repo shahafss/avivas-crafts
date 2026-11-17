@@ -5,7 +5,7 @@ export interface PriceProps {
   minor: number;
   currency: Currency;
   locale: MoneyLocale;
-  size?: 'lg' | 'md';
+  size?: 'lg' | 'md' | 'sm';
   /** Translated prefix such as "From"; the price then reads "From ₪120". */
   from?: string;
   /** Translated "incl. VAT", shown after the price (ILS only; the caller decides). */
@@ -25,12 +25,21 @@ export function Price({
   return (
     <span className={cn('inline-flex flex-wrap items-baseline gap-x-2', className)}>
       {from === undefined ? null : (
-        <span className="text-[15px] font-medium text-ink-2">{from}</span>
+        <span
+          className={cn(
+            size === 'sm' ? 'text-sm font-normal' : 'text-[15px] font-medium',
+            'text-ink-2',
+          )}
+        >
+          {from}
+        </span>
       )}
       <bdi
         className={cn(
           'tnum',
-          size === 'lg' ? 'text-2xl leading-tight font-bold' : 'text-[15px] font-medium',
+          size === 'lg' && 'text-2xl leading-tight font-bold',
+          size === 'md' && 'text-[15px] font-medium',
+          size === 'sm' && 'text-sm font-normal text-ink-2',
         )}
       >
         {formatMoney(minor, currency, locale)}

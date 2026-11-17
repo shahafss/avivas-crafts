@@ -5,3 +5,9 @@ allowBuilds:
   esbuild: true
   '@parcel/watcher': false
   '@swc/core': false
+# Accepted risk (2026-11-17): picomatch ReDoS, no patched version exists; reached only through
+# dev tooling (eslint-config-next, next-intl's @parcel/watcher, vitest). Remove once a fix ships.
+# See docs/security/threat-model.md.
+auditConfig:
+  ignoreGhsas:
+    - GHSA-fc5q-39xc-vjpf

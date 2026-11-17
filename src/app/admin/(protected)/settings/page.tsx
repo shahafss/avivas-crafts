@@ -1,5 +1,6 @@
 import { getTranslations } from 'next-intl/server';
 import { SettingsManager } from '@/components/admin/SettingsManager';
+import { listCategories } from '@/server/catalog/categories';
 import { requireAdmin } from '@/server/auth/require-admin';
 import { getEnv } from '@/server/env';
 import { effectivePaymentMethods } from '@/server/payments/availability';
@@ -18,11 +19,12 @@ export async function generateMetadata() {
 
 export default async function SettingsPage() {
   await requireAdmin();
-  const [t, settings, zones, countries] = await Promise.all([
+  const [t, settings, zones, countries, categories] = await Promise.all([
     getTranslations('admin.settings'),
     getSettings(),
     getZones(),
     getZoneCountries(),
+    listCategories(),
   ]);
   // Only needed while a USD zone is switched off: these products block enabling it.
   const usdBlockers = zones.some((zone) => zone.currency === 'USD' && !zone.enabled)
@@ -52,6 +54,12 @@ export default async function SettingsPage() {
           businessPhone: settings.businessPhone,
           businessAddressHe: settings.businessAddressHe,
           businessAddressEn: settings.businessAddressEn,
+          socialFacebookUrl: settings.socialFacebookUrl,
+          socialInstagramUrl: settings.socialInstagramUrl,
+          socialTiktokUrl: settings.socialTiktokUrl,
+          homeCategoryId: settings.homeCategoryId,
+          headerCategory1Id: settings.headerCategory1Id,
+          headerCategory2Id: settings.headerCategory2Id,
           notificationEmails: settings.notificationEmails,
         }}
         zones={[...zones]
@@ -72,6 +80,7 @@ export default async function SettingsPage() {
               .filter((row) => row.zoneId === zone.id)
               .map((row) => row.countryCode),
           }))}
+        categories={categories.map(({ id, nameHe }) => ({ id, nameHe }))}
         usdBlockers={usdBlockers}
         cardPaymentAvailable={
           effectivePaymentMethods(settings, getEnv().PAYMENT_PROVIDER).cardAvailable

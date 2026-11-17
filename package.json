@@ -29,6 +29,7 @@
     "fake-pay:replay": "tsx --conditions=react-server scripts/fake-pay-replay.ts",
     "check:image-metadata": "tsx --conditions=react-server scripts/check-image-metadata.ts",
     "check:css": "tsx --conditions=react-server scripts/check-logical-css.ts",
+    "photos:home": "tsx --conditions=react-server scripts/build-home-photos.ts",
     "dev:outbox": "tsx --conditions=react-server scripts/dev-outbox.ts"
   },
   "dependencies": {

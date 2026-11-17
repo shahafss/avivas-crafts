@@ -34,6 +34,50 @@ const email = z
   .max(254, KEY('email'))
   .regex(EMAIL_SHAPE, KEY('email'));
 
+const SOCIAL_DOMAIN = {
+  facebook: 'facebook.com',
+  instagram: 'instagram.com',
+  tiktok: 'tiktok.com',
+} as const;
+
+/**
+ * One social page address (contracts/social-links.md): trimmed, `https://` added when there is no
+ * scheme, then checked step by step. Empty means "not set" (null). The stored value is the
+ * normalised `href`. Messages are complete translation keys (no placeholders).
+ */
+export function socialUrl(platform: keyof typeof SOCIAL_DOMAIN) {
+  const social = (name: string) => KEY(`social.${name}`);
+  return z
+    .string({ error: social('invalid') })
+    .nullish()
+    .transform((value, ctx): string | null => {
+      const trimmed = value?.trim() ?? '';
+      if (trimmed === '') return null;
+      const fail = (message: string) => {
+        ctx.addIssue({ code: 'custom', message });
+        return z.NEVER;
+      };
+      const text = trimmed.includes('://') ? trimmed : `https://${trimmed}`;
+      let url: URL;
+      try {
+        url = new URL(text);
+      } catch {
+        return fail(social('invalid'));
+      }
+      if (url.protocol !== 'https:') return fail(social('notHttps'));
+      if (url.username !== '' || url.password !== '' || url.port !== '') {
+        return fail(social('invalid'));
+      }
+      const domain = SOCIAL_DOMAIN[platform];
+      if (url.hostname !== domain && !url.hostname.endsWith(`.${domain}`)) {
+        return fail(social(`wrongSite.${platform}`));
+      }
+      if (url.pathname === '' || url.pathname === '/') return fail(social(`noPage.${platform}`));
+      if (url.href.length > 300) return fail(social('tooLong'));
+      return url.href;
+    });
+}
+
 export const settingsInputSchema = z
   .object({
     shopNameHe: required('shopNameHe', 60),
@@ -51,6 +95,21 @@ export const settingsInputSchema = z
     businessPhone: required('businessPhone', 40),
     businessAddressHe: required('businessAddressHe', 300),
     businessAddressEn: optionalText('businessAddressEn', 300),
+    socialFacebookUrl: socialUrl('facebook'),
+    socialInstagramUrl: socialUrl('instagram'),
+    socialTiktokUrl: socialUrl('tiktok'),
+    homeCategoryId: z
+      .uuid({ error: KEY('invalid') })
+      .nullable()
+      .optional(),
+    headerCategory1Id: z
+      .uuid({ error: KEY('invalid') })
+      .nullable()
+      .optional(),
+    headerCategory2Id: z
+      .uuid({ error: KEY('invalid') })
+      .nullable()
+      .optional(),
     notificationEmails: z
       .array(email, { error: KEY('notificationEmails') })
       .min(1, KEY('notificationEmails'))

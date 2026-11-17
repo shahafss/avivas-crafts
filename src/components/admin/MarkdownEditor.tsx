@@ -334,7 +334,7 @@ export function MarkdownEditor({
             onKeyDown={onTabKey}
             className={cn(
               TAB,
-              tab === lang ? 'bg-ink text-panel' : 'border-[1.5px] border-field bg-panel text-ink',
+              tab === lang ? 'bg-ink text-paper' : 'border-[1.5px] border-field bg-paper text-ink',
             )}
           >
             {lang === 'he' ? t('tabHe') : t('tabEn')}
@@ -417,7 +417,7 @@ export function MarkdownEditor({
           <section
             aria-label={t('previewLabel')}
             data-testid="content-preview"
-            className="rounded-card bg-ground p-4"
+            className="rounded-card border border-line bg-paper p-4"
           >
             {previewFailed ? (
               <Notice tone="alert" role="alert">
@@ -444,7 +444,7 @@ export function MarkdownEditor({
         </Link>
       ) : null}
 
-      <div className="sticky bottom-0 z-header -mx-4 border-t border-line bg-panel px-4 py-3 sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:p-0">
+      <div className="sticky bottom-0 z-header -mx-4 border-t border-line bg-paper px-4 py-3 sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:p-0">
         <Button
           type="submit"
           busy={busy}

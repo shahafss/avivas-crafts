@@ -7,16 +7,22 @@ import type { PublicProductCard } from '@/server/catalog/public-queries';
 
 export const CARD_SIZES = '(min-width: 900px) 25vw, (min-width: 640px) 33vw, 50vw';
 
-/** One link: photo well, name (two lines at most), price, and the "not available" label. */
+/**
+ * One link (storefront.md §7.15): square photo well, name (two lines at most), price, and the
+ * "not available" label.
+ */
 export async function ProductCard({
   product,
   locale,
   index,
+  eager,
 }: {
   product: PublicProductCard;
   locale: Locale;
-  /** Position in the grid: the first four photos load at once, the first one with high priority. */
+  /** Position in its list; only the first card of an eager list gets high priority. */
   index: number;
+  /** The photo loads at once (cards at the top of the page); otherwise it is lazy. */
+  eager: boolean;
 }) {
   const t = await getTranslations({ locale, namespace: 'shop.card' });
   const name = pick(locale, product.nameHe, product.nameEn);
@@ -27,7 +33,7 @@ export async function ProductCard({
       data-testid="product-card"
       className="group block min-w-0"
     >
-      <span className="block aspect-[4/5] overflow-hidden rounded-card bg-photo">
+      <span className="block aspect-square overflow-hidden bg-photo">
         {image === null ? null : (
           <img
             src={image.url800}
@@ -36,17 +42,17 @@ export async function ProductCard({
             width={800}
             height={1000}
             alt=""
-            loading={index < 4 ? 'eager' : 'lazy'}
-            fetchPriority={index === 0 ? 'high' : undefined}
+            loading={eager ? 'eager' : 'lazy'}
+            fetchPriority={eager && index === 0 ? 'high' : undefined}
             decoding="async"
-            className="size-full object-cover motion-safe:transition-transform motion-safe:duration-[400ms] motion-safe:ease-out motion-safe:group-hover:scale-[1.03]"
+            className="size-full object-cover object-center motion-safe:transition-transform motion-safe:duration-[400ms] motion-safe:ease-out motion-safe:group-hover:scale-[1.03]"
           />
         )}
       </span>
-      <span className="mt-2.5 block px-1">
+      <span className="mt-2.5 block">
         <span
           {...fallbackAttrs(name)}
-          className="line-clamp-2 block text-base leading-snug font-bold"
+          className="line-clamp-2 block text-[19px] leading-[1.2] font-normal lg:text-[22px]"
         >
           {name.text}
         </span>
@@ -55,6 +61,7 @@ export async function ProductCard({
             minor={product.fromPriceMinor}
             currency="ILS"
             locale={locale}
+            size="sm"
             {...(product.priceVaries ? { from: t('from') } : {})}
           />
         </span>

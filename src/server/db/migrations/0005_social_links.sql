@@ -1,0 +1,6 @@
+ALTER TABLE "shop_settings" ADD COLUMN "social_facebook_url" text;--> statement-breakpoint
+ALTER TABLE "shop_settings" ADD COLUMN "social_instagram_url" text;--> statement-breakpoint
+ALTER TABLE "shop_settings" ADD COLUMN "social_tiktok_url" text;--> statement-breakpoint
+ALTER TABLE "shop_settings" ADD CONSTRAINT "shop_settings_social_facebook_url" CHECK ("shop_settings"."social_facebook_url" IS NULL OR ("shop_settings"."social_facebook_url" LIKE 'https://%' AND char_length("shop_settings"."social_facebook_url") <= 300));--> statement-breakpoint
+ALTER TABLE "shop_settings" ADD CONSTRAINT "shop_settings_social_instagram_url" CHECK ("shop_settings"."social_instagram_url" IS NULL OR ("shop_settings"."social_instagram_url" LIKE 'https://%' AND char_length("shop_settings"."social_instagram_url") <= 300));--> statement-breakpoint
+ALTER TABLE "shop_settings" ADD CONSTRAINT "shop_settings_social_tiktok_url" CHECK ("shop_settings"."social_tiktok_url" IS NULL OR ("shop_settings"."social_tiktok_url" LIKE 'https://%' AND char_length("shop_settings"."social_tiktok_url") <= 300));

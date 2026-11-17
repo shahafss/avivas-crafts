@@ -16,7 +16,7 @@ export function TextArea({ id, label, hint, error, className, rows = 4, ...rest 
         {...rest}
         id={fieldId}
         rows={rows}
-        {...describe(fieldId, { hint, error })}
+        {...describe(fieldId, { hint, error }, rest['aria-describedby'])}
         className={cn(CONTROL, 'min-h-32 py-3 leading-relaxed')}
       />
     </Field>

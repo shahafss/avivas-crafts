@@ -54,7 +54,7 @@ function OrderCard({ row }: { row: AdminOrderListRow }) {
         href={`/admin/orders/${row.id}`}
         prefetch={false}
         data-testid="order-card"
-        className="grid min-h-11 gap-2 rounded-card border border-line bg-panel p-4 hover:bg-sun-soft"
+        className="grid min-h-11 gap-2 rounded-card border border-line bg-paper p-4 hover:bg-sage"
       >
         <span className="flex items-baseline justify-between gap-3">
           <bdi className="tnum text-base font-bold">#{row.orderNumber}</bdi>
