@@ -31,7 +31,7 @@ export async function submitFakePayment(formData: FormData): Promise<void> {
 
   const page = await readFakePage(pageId);
   const updated = await setFakePageResult(pageId, mode === 'fail' ? 'failed' : 'paid');
-  if (page === null || updated === null) redirect(`/${page?.input.locale ?? 'he'}/cart`);
+  if (page === null || updated === null) redirect(`/${page?.input.locale ?? 'he'}/shop`);
 
   const { rawBody, headers } = fakeCallbackParts(pageId);
   const { POST } = await import('@/app/api/payments/[provider]/callback/route');

@@ -16,10 +16,10 @@ export function ChipLink({ href, current = false, className, children, ...rest }
       {...rest}
       aria-current={current ? 'page' : undefined}
       className={cn(
-        'inline-flex min-h-11 snap-start items-center whitespace-nowrap rounded-chip border-[1.5px] px-4 text-[15px] font-medium text-ink transition-colors duration-150 ease-out',
+        'inline-flex min-h-11 snap-start items-center whitespace-nowrap rounded-pill border px-[18px] text-[15px] text-ink transition-colors duration-150 ease-out',
         current
-          ? 'border-ink bg-sun-soft ring-1 ring-inset ring-ink'
-          : 'border-field bg-panel hover:bg-sun-soft',
+          ? 'border-[1.5px] border-ink bg-sage font-bold'
+          : 'border-ink-2 bg-paper hover:bg-photo',
         className,
       )}
     >

@@ -1,5 +1,6 @@
 // Mock Google for local development and E2E tests (pnpm dev:oidc, port 4011).
-// ID token claims `email`, `sub` and `email_verified` come from tests/fixtures/oidc/user.json,
+// ID token claims `email`, `sub` and `email_verified` come from tests/fixtures/oidc/user.json
+// (or $OIDC_MOCK_USER_FILE),
 // which is re-read on every token request so tests can change the signed-in user at any time.
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
@@ -16,10 +17,18 @@ try {
 
 export const OIDC_MOCK_PORT = 4011;
 
-const USER_FILE = resolve(
+// The user file is configurable so E2E runs (tests/e2e/env.ts) use their own file and never
+// overwrite the identity local `pnpm dev` signs in with. Default: the dev file.
+const DEFAULT_USER_FILE = resolve(
   dirname(fileURLToPath(import.meta.url)),
   '../tests/fixtures/oidc/user.json',
 );
+
+function userFile(): string {
+  return process.env.OIDC_MOCK_USER_FILE
+    ? resolve(process.env.OIDC_MOCK_USER_FILE)
+    : DEFAULT_USER_FILE;
+}
 
 interface MockUser {
   email: string;
@@ -34,11 +43,17 @@ const DEFAULT_USER: MockUser = {
 };
 
 function readUser(): MockUser {
-  if (!existsSync(USER_FILE)) {
-    mkdirSync(dirname(USER_FILE), { recursive: true });
-    writeFileSync(USER_FILE, JSON.stringify(DEFAULT_USER, null, 2));
+  const file = userFile();
+  if (!existsSync(file)) {
+    mkdirSync(dirname(file), { recursive: true });
+    writeFileSync(file, JSON.stringify(DEFAULT_USER, null, 2));
   }
-  return { ...DEFAULT_USER, ...(JSON.parse(readFileSync(USER_FILE, 'utf8')) as Partial<MockUser>) };
+  return { ...DEFAULT_USER, ...(JSON.parse(readFileSync(file, 'utf8')) as Partial<MockUser>) };
+}
+
+/** Email of the mock Google user (what `pnpm dev` gives the first admin). */
+export function mockUserEmail(): string {
+  return readUser().email;
 }
 
 export interface OidcMock {

@@ -67,9 +67,11 @@ export function OrderSummary({
             className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-x-3"
           >
             {line.imageUrl === undefined || line.imageUrl === null ? null : (
-              <span className="block h-[60px] w-12 overflow-hidden rounded-chip bg-photo">
+              <span className="block h-12 w-12 overflow-hidden bg-photo">
                 <img
                   src={line.imageUrl}
+                  srcSet={`${line.imageUrl} 400w`}
+                  sizes="48px"
                   width={48}
                   height={60}
                   alt=""

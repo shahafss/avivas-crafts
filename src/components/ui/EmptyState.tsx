@@ -11,8 +11,8 @@ export interface EmptyStateProps {
 
 export function EmptyState({ icon, title, text, action }: EmptyStateProps) {
   return (
-    <div className="flex flex-col items-center gap-3 rounded-card bg-panel px-5 py-10 text-center">
-      <span className="grid size-14 place-items-center rounded-full bg-sun-soft text-ink">
+    <div className="flex flex-col items-center gap-3 rounded-card border border-line bg-paper px-5 py-10 text-center">
+      <span className="grid size-14 place-items-center rounded-full bg-sage text-ink">
         <Icon name={icon} size={26} />
       </span>
       <h2 className="text-xl leading-tight font-extrabold tracking-tight text-balance lg:text-[22px]">

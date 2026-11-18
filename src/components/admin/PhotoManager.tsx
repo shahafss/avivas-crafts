@@ -317,7 +317,7 @@ export function PhotoManager({
               data-testid="photo-item"
               data-image-id={item.id}
               data-main={index === 0 ? 'true' : undefined}
-              className="grid gap-3 rounded-card border border-line bg-panel p-3"
+              className="grid gap-3 rounded-card border border-line bg-paper p-3"
             >
               <div className="flex gap-3">
                 <span className="h-32 w-[102px] shrink-0 overflow-hidden rounded-chip bg-photo">
@@ -399,7 +399,7 @@ export function PhotoManager({
       )}
 
       <div className="grid gap-2">
-        <label className="inline-flex h-12 w-fit cursor-pointer items-center justify-center gap-2 rounded-pill border-[1.5px] border-ink px-6 text-base font-bold has-focus-visible:outline-3 has-focus-visible:outline-offset-3 has-focus-visible:outline-ink hover:bg-sun-soft">
+        <label className="inline-flex h-12 w-fit cursor-pointer items-center justify-center gap-2 rounded-pill border-[1.5px] border-ink px-6 text-base font-bold has-focus-visible:outline-3 has-focus-visible:outline-offset-3 has-focus-visible:outline-ink hover:bg-sage">
           <Icon name="plus" />
           {t('add')}
           <input

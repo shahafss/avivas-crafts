@@ -39,13 +39,13 @@ afterAll(async () => {
 let adminId = '';
 let productId = '';
 let fullToken = '';
-let pendingToken = '';
+let userRoleToken = '';
 
 beforeEach(async () => {
   await testDb.reset();
   const [admin] = await testDb.db
     .insert(adminUser)
-    .values({ displayName: 'Aviva', googleEmail: 'aviva@example.test' })
+    .values({ displayName: 'Aviva', googleEmail: 'aviva@example.test', role: 'admin' })
     .returning({ id: adminUser.id });
   adminId = admin?.id ?? '';
   const [row] = await testDb.db
@@ -53,8 +53,12 @@ beforeEach(async () => {
     .values({ slug: 'p-aaaaaaaa', nameHe: 'בובה' })
     .returning({ id: product.id });
   productId = row?.id ?? '';
-  fullToken = (await createSession(adminId, 'full')).token;
-  pendingToken = (await createSession(adminId, 'pending_passkey', { purpose: 'sign_in' })).token;
+  fullToken = (await createSession(adminId)).token;
+  const [guest] = await testDb.db
+    .insert(adminUser)
+    .values({ displayName: 'Guest', googleEmail: 'guest@example.test', role: 'user' })
+    .returning({ id: adminUser.id });
+  userRoleToken = (await createSession(guest?.id ?? '')).token;
 });
 
 interface UploadOptions {
@@ -84,9 +88,9 @@ async function upload(buffer: Buffer | null, options: UploadOptions = {}): Promi
 }
 
 describe('POST /api/admin/images', () => {
-  it('401 without a session and without a full session', async () => {
+  it('401 without a session, and for a session whose user has role user', async () => {
     expect((await upload(await photo(), { token: null })).status).toBe(401);
-    expect((await upload(await photo(), { token: pendingToken })).status).toBe(401);
+    expect((await upload(await photo(), { token: userRoleToken })).status).toBe(401);
     expect((await upload(await photo(), { token: 'bogus' })).status).toBe(401);
     expect(await testDb.db.select().from(productImage)).toHaveLength(0);
   });
@@ -256,15 +260,15 @@ describe('GET /api/admin/media/[...key]', () => {
     return body.previewUrl.replace('/api/admin/media/', '');
   }
 
-  it('401 without a full session and with a pending session', async () => {
+  it('401 without a session and for a session whose user has role user', async () => {
     const key = await stored();
     expect((await getMedia(request(null), params(key))).status).toBe(401);
-    expect((await getMedia(request(pendingToken), params(key))).status).toBe(401);
+    expect((await getMedia(request(userRoleToken), params(key))).status).toBe(401);
   });
 
   it('401 before the key is looked at, even for a bad key', async () => {
     expect((await getMedia(request(null), params('p/../x-400.webp'))).status).toBe(401);
-    expect((await getMedia(request(pendingToken), params('nonsense'))).status).toBe(401);
+    expect((await getMedia(request(userRoleToken), params('nonsense'))).status).toBe(401);
   });
 
   it('streams the private object with the image headers when signed in', async () => {

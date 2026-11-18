@@ -10,12 +10,13 @@ import {
   pgEnum,
   pgSequence,
   pgTable,
+  primaryKey,
   text,
   unique,
   uuid,
 } from 'drizzle-orm/pg-core';
 import { adminUser, bytea } from './admin';
-import { product } from './catalog';
+import { category, product } from './catalog';
 import { createdAt, currencyEnum, id, localeEnum, tstz, updatedAt } from './_shared';
 
 export const orderNumberSeq = pgSequence('order_number_seq', { startWith: 1001, increment: 1 });
@@ -95,6 +96,21 @@ export const shopSettings = pgTable(
     businessAddressHe: text('business_address_he').notNull(),
     businessAddressEn: text('business_address_en'),
     notificationEmails: text('notification_emails').array().notNull(),
+    // The shop's own public page addresses; null = not shown (007 FR-024).
+    socialFacebookUrl: text('social_facebook_url'),
+    socialInstagramUrl: text('social_instagram_url'),
+    socialTiktokUrl: text('social_tiktok_url'),
+    // The category the home page's row shows; null = no row (007 FR-034).
+    homeCategoryId: uuid('home_category_id').references(() => category.id, {
+      onDelete: 'set null',
+    }),
+    // The two categories the public header lists after "All pieces"; null = none (007 FR-039).
+    headerCategory1Id: uuid('header_category_1_id').references(() => category.id, {
+      onDelete: 'set null',
+    }),
+    headerCategory2Id: uuid('header_category_2_id').references(() => category.id, {
+      onDelete: 'set null',
+    }),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
@@ -117,6 +133,18 @@ export const shopSettings = pgTable(
     check(
       'shop_settings_shop_name_en',
       sql`${t.shopNameEn} IS NULL OR char_length(${t.shopNameEn}) <= 60`,
+    ),
+    check(
+      'shop_settings_social_facebook_url',
+      sql`${t.socialFacebookUrl} IS NULL OR (${t.socialFacebookUrl} LIKE 'https://%' AND char_length(${t.socialFacebookUrl}) <= 300)`,
+    ),
+    check(
+      'shop_settings_social_instagram_url',
+      sql`${t.socialInstagramUrl} IS NULL OR (${t.socialInstagramUrl} LIKE 'https://%' AND char_length(${t.socialInstagramUrl}) <= 300)`,
+    ),
+    check(
+      'shop_settings_social_tiktok_url',
+      sql`${t.socialTiktokUrl} IS NULL OR (${t.socialTiktokUrl} LIKE 'https://%' AND char_length(${t.socialTiktokUrl}) <= 300)`,
     ),
   ],
 );
@@ -142,6 +170,36 @@ export const contentPage = pgTable(
     check('content_page_body_he_len', sql`char_length(${t.bodyHe}) <= 50000`),
     check(
       'content_page_body_en_len',
+      sql`${t.bodyEn} IS NULL OR char_length(${t.bodyEn}) <= 50000`,
+    ),
+  ],
+);
+
+/**
+ * Append-only copy of every version of the Terms and the Privacy Policy that became current
+ * (003 FR-011). `orders.terms_version` / `privacy_version` refer to `(slug, version)`. No code
+ * updates or deletes rows.
+ */
+export const contentPageVersion = pgTable(
+  'content_page_version',
+  {
+    slug: text('slug')
+      .notNull()
+      .references(() => contentPage.slug, { onDelete: 'restrict' }),
+    version: integer('version').notNull(),
+    titleHe: text('title_he').notNull(),
+    titleEn: text('title_en'),
+    bodyHe: text('body_he').notNull(),
+    bodyEn: text('body_en'),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.slug, t.version] }),
+    check('content_page_version_slug', sql`${t.slug} IN ('terms','privacy')`),
+    check('content_page_version_version', sql`${t.version} >= 1`),
+    check('content_page_version_body_he_len', sql`char_length(${t.bodyHe}) <= 50000`),
+    check(
+      'content_page_version_body_en_len',
       sql`${t.bodyEn} IS NULL OR char_length(${t.bodyEn}) <= 50000`,
     ),
   ],

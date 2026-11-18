@@ -1,8 +1,29 @@
 import 'server-only';
-import { and, asc, desc, eq, ilike, inArray, isNull, ne, type SQL } from 'drizzle-orm';
+import {
+  and,
+  asc,
+  desc,
+  eq,
+  exists,
+  ilike,
+  inArray,
+  isNull,
+  ne,
+  notInArray,
+  type SQL,
+} from 'drizzle-orm';
 import { cache } from 'react';
 import { db } from '@/server/db/client';
-import { category, optionGroup, optionValue, product, productImage } from '@/server/db/schema';
+import { pick, type ContentLocale, type Picked } from '@/lib/i18n-fallback';
+import {
+  category,
+  optionGroup,
+  optionValue,
+  product,
+  productCategory,
+  productImage,
+} from '@/server/db/schema';
+import { getSettings } from '@/server/settings/settings';
 import { getStorage } from '@/server/storage';
 import { variantKey } from './public-images';
 
@@ -60,7 +81,10 @@ export interface PublicProduct {
   prepTimeEn: string | null;
   priceIlsMinor: number;
   orderable: boolean;
-  category: { id: string; slug: string; nameHe: string; nameEn: string | null } | null;
+  /** Every category of the piece, in the shop's category order. */
+  categories: PublicCategory[];
+  /** The one category named in the breadcrumb and structured data (FR-037), or null. */
+  mainCategory: PublicCategory | null;
   images: PublicImage[];
   groups: PublicOptionGroup[];
   fromPriceMinor: number;
@@ -204,13 +228,33 @@ function cardSelect() {
 
 const NEWEST = [desc(product.publishedAt), desc(product.createdAt), asc(product.id)] as const;
 
-/** Published products only. Price sorts use the shekel base price, ties newest first (R18). */
+/** The piece has the category among its own (an `EXISTS`, so a piece is never listed twice). */
+function inCategory(categoryId: string): SQL {
+  return exists(
+    db
+      .select({ one: productCategory.productId })
+      .from(productCategory)
+      .where(
+        and(eq(productCategory.productId, product.id), eq(productCategory.categoryId, categoryId)),
+      ),
+  );
+}
+
+/**
+ * Published products only. Price sorts use the shekel base price, ties newest first (R18).
+ * `categoryId` matches through `product_category`; `limit` caps the list.
+ */
 export async function listPublishedProducts(
-  options: { categoryId?: string; sort?: ProductSort; searchPattern?: string } = {},
+  options: {
+    categoryId?: string;
+    sort?: ProductSort;
+    searchPattern?: string;
+    limit?: number;
+  } = {},
 ): Promise<PublicProductCard[]> {
-  const { categoryId, sort = 'newest', searchPattern } = options;
+  const { categoryId, sort = 'newest', searchPattern, limit } = options;
   const filters: (SQL | undefined)[] = [eq(product.state, 'published')];
-  if (categoryId !== undefined) filters.push(eq(product.categoryId, categoryId));
+  if (categoryId !== undefined) filters.push(inCategory(categoryId));
   // `searchPattern` is an already escaped ILIKE pattern (see search.ts).
   if (searchPattern !== undefined) filters.push(ilike(product.searchText, searchPattern));
   const where = and(...filters);
@@ -220,30 +264,81 @@ export async function listPublishedProducts(
       : sort === 'price-desc'
         ? [desc(product.priceIlsMinor), ...NEWEST]
         : [...NEWEST];
-  return toCards(
-    await cardSelect()
-      .where(where)
-      .orderBy(...order),
+  const query = cardSelect()
+    .where(where)
+    .orderBy(...order);
+  return toCards(await (limit === undefined ? query : query.limit(limit)));
+}
+
+/** The piece is linked to any of the categories (an `EXISTS`, so a piece is never listed twice). */
+function inAnyCategory(categoryIds: string[]): SQL {
+  return exists(
+    db
+      .select({ one: productCategory.productId })
+      .from(productCategory)
+      .where(
+        and(
+          eq(productCategory.productId, product.id),
+          inArray(productCategory.categoryId, categoryIds),
+        ),
+      ),
   );
 }
 
-/** Other published products of a category, newest first. */
-export async function listRelatedProducts(
-  categoryId: string,
-  excludeProductId: string,
-  limit: number,
+/**
+ * "You may also like": up to `limit` other published pieces. First those sharing one of
+ * `categoryIds` (the piece's categories without the home-row one), newest first; then, to fill
+ * the list, the newest of the rest. Never the piece itself, never twice (007 D8).
+ */
+export async function listAlsoLike(
+  productId: string,
+  categoryIds: string[],
+  limit = 4,
 ): Promise<PublicProductCard[]> {
-  return toCards(
+  const shared =
+    categoryIds.length === 0
+      ? []
+      : await toCards(
+          await cardSelect()
+            .where(
+              and(
+                eq(product.state, 'published'),
+                ne(product.id, productId),
+                inAnyCategory(categoryIds),
+              ),
+            )
+            .orderBy(...NEWEST)
+            .limit(limit),
+        );
+  const missing = limit - shared.length;
+  if (missing <= 0) return shared;
+  const rest = await toCards(
     await cardSelect()
       .where(
         and(
           eq(product.state, 'published'),
-          eq(product.categoryId, categoryId),
-          ne(product.id, excludeProductId),
+          notInArray(product.id, [productId, ...shared.map((card) => card.id)]),
         ),
       )
       .orderBy(...NEWEST)
-      .limit(limit),
+      .limit(missing),
+  );
+  return [...shared, ...rest];
+}
+
+/**
+ * "You may also like" for a product page: the piece's categories without the home-row category
+ * (it holds every piece, so sharing it says nothing; FR-019, D8), then `listAlsoLike`.
+ */
+export function listAlsoLikeFor(
+  piece: { id: string; categories: readonly { id: string }[] },
+  homeCategoryId: string | null,
+  limit = 4,
+): Promise<PublicProductCard[]> {
+  return listAlsoLike(
+    piece.id,
+    piece.categories.filter((entry) => entry.id !== homeCategoryId).map((entry) => entry.id),
+    limit,
   );
 }
 
@@ -281,7 +376,11 @@ export async function listCategoriesWithProducts(): Promise<PublicCategory[]> {
       sortOrder: category.sortOrder,
     })
     .from(category)
-    .innerJoin(product, and(eq(product.categoryId, category.id), eq(product.state, 'published')))
+    .innerJoin(productCategory, eq(productCategory.categoryId, category.id))
+    .innerJoin(
+      product,
+      and(eq(product.id, productCategory.productId), eq(product.state, 'published')),
+    )
     .orderBy(asc(category.sortOrder));
   return rows.map((row) => ({
     id: row.id,
@@ -291,16 +390,75 @@ export async function listCategoriesWithProducts(): Promise<PublicCategory[]> {
   }));
 }
 
+export interface HomeRow {
+  /** The home-row category's name for the page language (Hebrew, marked, when English is empty). */
+  name: Picked;
+  slug: string;
+  /** Up to 12 published pieces, newest first. */
+  cards: PublicProductCard[];
+}
+
+export const HOME_ROW_LIMIT = 12;
+
+/**
+ * The home page's row (007 FR-034): published pieces of the category named by
+ * `shop_settings.home_category_id`; `null` when none is chosen or it has no published piece.
+ */
+export async function getHomeRow(locale: ContentLocale): Promise<HomeRow | null> {
+  const { homeCategoryId } = await getSettings();
+  if (homeCategoryId === null) return null;
+  const [row] = await db
+    .select({ slug: category.slug, nameHe: category.nameHe, nameEn: category.nameEn })
+    .from(category)
+    .where(eq(category.id, homeCategoryId));
+  if (!row) return null;
+  const cards = await listPublishedProducts({ categoryId: homeCategoryId, limit: HOME_ROW_LIMIT });
+  if (cards.length === 0) return null;
+  return { name: pick(locale, row.nameHe, row.nameEn), slug: row.slug, cards };
+}
+
+/** What the sitemap lists: published products and the categories that hold one. */
+export async function listSitemapEntries(): Promise<{
+  products: { slug: string; updatedAt: Date }[];
+  categorySlugs: string[];
+}> {
+  const [products, categories] = await Promise.all([
+    db
+      .select({ slug: product.slug, updatedAt: product.updatedAt })
+      .from(product)
+      .where(eq(product.state, 'published'))
+      .orderBy(asc(product.slug)),
+    listCategoriesWithProducts(),
+  ]);
+  return { products, categorySlugs: categories.map((item) => item.slug) };
+}
+
 /** `null` for draft, hidden and missing products. Deduplicated within one request. */
 export const getPublishedProductBySlug = cache(
   async (slug: string): Promise<PublicProduct | null> => {
-    const [row] = await db
-      .select({ product, category })
+    const [item] = await db
+      .select()
       .from(product)
-      .leftJoin(category, eq(category.id, product.categoryId))
       .where(and(eq(product.slug, slug), eq(product.state, 'published')));
-    if (!row) return null;
-    const { product: item } = row;
+    if (!item) return null;
+
+    const categories: PublicCategory[] = await db
+      .select({
+        id: category.id,
+        slug: category.slug,
+        nameHe: category.nameHe,
+        nameEn: category.nameEn,
+      })
+      .from(productCategory)
+      .innerJoin(category, eq(category.id, productCategory.categoryId))
+      .where(eq(productCategory.productId, item.id))
+      .orderBy(asc(category.sortOrder));
+    const { homeCategoryId } = await getSettings();
+    // FR-037: the first category that is not the home-row one, else the home-row one, else none.
+    const mainCategory =
+      categories.find((entry) => entry.id !== homeCategoryId) ??
+      categories.find((entry) => entry.id === homeCategoryId) ??
+      null;
 
     const images = await db
       .select({
@@ -360,14 +518,8 @@ export const getPublishedProductBySlug = cache(
       prepTimeEn: item.prepTimeEn,
       priceIlsMinor: base,
       orderable: item.orderable,
-      category: row.category
-        ? {
-            id: row.category.id,
-            slug: row.category.slug,
-            nameHe: row.category.nameHe,
-            nameEn: row.category.nameEn,
-          }
-        : null,
+      categories,
+      mainCategory,
       images: images.map(toImage),
       groups,
       ...priceSpan(

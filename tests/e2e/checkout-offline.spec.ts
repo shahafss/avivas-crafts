@@ -141,27 +141,28 @@ test('the terms link opens the Terms of Sale in a new tab and does not tick the 
   await openCheckout(page);
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),
-    page.locator('a[href$="/pages/terms"]').click(),
+    page.getByTestId('checkout-form').locator('a[href$="/pages/terms"]').click(),
   ]);
   await expect.poll(() => popup.url()).toMatch(/\/he\/pages\/terms$/);
   await popup.close();
   await expect(page.getByTestId('accept-terms')).not.toBeChecked();
 });
 
-test('opening the checkout with an empty cart redirects to the cart', async ({ page }) => {
+test('opening the checkout with an empty cart redirects to All pieces (there is no cart page)', async ({
+  page,
+}) => {
   await page.goto('/he/contact');
   await page.evaluate(() => {
     localStorage.clear();
     sessionStorage.clear();
   });
   await page.goto('/he/checkout');
-  await page.waitForURL(/\/he\/cart$/, { timeout: 20_000 });
-  await expect(page.getByTestId('cart-empty')).toBeVisible();
+  await page.waitForURL(/\/he\/shop$/, { timeout: 20_000 });
 });
 
 test('no account, login or password prompt appears anywhere in the checkout', async ({ page }) => {
   await setCart(page, 'sample-clay-mug', 1);
-  await page.goto('/he/cart');
+  await page.goto('/he/shop');
   await expect(page.locator('input[type="password"]')).toHaveCount(0);
   await openCheckout(page);
   await expect(page.locator('input[type="password"]')).toHaveCount(0);

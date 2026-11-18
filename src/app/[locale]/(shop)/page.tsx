@@ -1,74 +1,93 @@
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { hasLocale } from 'next-intl';
 import { getTranslations } from 'next-intl/server';
-import { CategoryChips } from '@/components/shop/CategoryChips';
-import { ProductGrid } from '@/components/shop/ProductGrid';
-import { SortLinks } from '@/components/shop/SortLinks';
-import { EmptyState } from '@/components/ui/EmptyState';
-import { LinkButton } from '@/components/ui/LinkButton';
+import { HomeHero } from '@/components/shop/HomeHero';
+import { HomeRow } from '@/components/shop/HomeRow';
+import { PhotoBanner } from '@/components/shop/PhotoBanner';
+import { StatementBand } from '@/components/shop/StatementBand';
 import { routing } from '@/i18n/routing';
-import { fallbackAttrs, pick } from '@/lib/i18n-fallback';
-import {
-  listCategoriesWithProducts,
-  listPublishedProducts,
-  type ProductSort,
-} from '@/server/catalog/public-queries';
+import { pick } from '@/lib/i18n-fallback';
+import { getHomeRow } from '@/server/catalog/public-queries';
+import { alternates } from '@/server/seo';
 import { getSettings } from '@/server/settings/settings';
 
-const SORTS: ProductSort[] = ['newest', 'price-asc', 'price-desc'];
+/**
+ * The sections under the row, in the order of the Shopify shop the owner chose (FR-010 as
+ * amended, 2026-11-16): the child banner, the peach band, the shelf banner.
+ */
+const LOWER_SECTIONS = ['bannerChild', 'band', 'bannerShelf'] as const;
 
-export default async function CatalogPage({
+const TEST_IDS = { bannerChild: 'home-banner-child', bannerShelf: 'home-banner-shelf' } as const;
+
+// The layout supplies the title; the home page adds its canonical and language versions.
+export async function generateMetadata({
   params,
-  searchParams,
 }: {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ sort?: string | string[] }>;
-}) {
+}): Promise<Metadata> {
+  const { locale } = await params;
+  if (!hasLocale(routing.locales, locale)) return {};
+  return { alternates: alternates('', locale) };
+}
+
+export default async function HomePage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   if (!hasLocale(routing.locales, locale)) notFound();
-  const { sort: rawSort } = await searchParams;
-  const sort = SORTS.find((value) => value === rawSort) ?? 'newest';
 
-  const [t, settings, products, categories] = await Promise.all([
-    getTranslations({ locale, namespace: 'shop.catalog' }),
+  const [home, settings, row] = await Promise.all([
+    getTranslations({ locale, namespace: 'shop.home' }),
     getSettings(),
-    listPublishedProducts({ sort }),
-    listCategoriesWithProducts(),
+    getHomeRow(locale),
   ]);
-  const shopName = pick(locale, settings.shopNameHe, settings.shopNameEn);
+  const shop = `/${locale}/shop`;
 
   return (
-    <div className="grid gap-5 pt-4 lg:gap-6 lg:pt-6">
-      <div className="grid gap-1.5">
-        <h1
-          {...fallbackAttrs(shopName)}
-          className="text-[28px] leading-[1.15] font-extrabold tracking-tight text-balance lg:text-[34px]"
-        >
-          {shopName.text}
-        </h1>
-        <p className="max-w-[40ch] text-ink-2">{t('intro')}</p>
-      </div>
-
-      {products.length === 0 ? (
-        <EmptyState
-          icon="yarn"
-          title={t('emptyTitle')}
-          text={t('emptyText')}
-          action={
-            <LinkButton href={`/${locale}/contact`} variant="secondary">
-              {t('emptyAction')}
-            </LinkButton>
-          }
-        />
-      ) : (
-        <>
-          {categories.length === 0 ? null : (
-            <CategoryChips locale={locale} categories={categories} currentSlug={null} />
-          )}
-          <SortLinks locale={locale} basePath={`/${locale}`} current={sort} />
-          <ProductGrid products={products} locale={locale} />
-        </>
-      )}
+    <div data-full-bleed>
+      <HomeHero
+        name={pick(locale, settings.shopNameHe, settings.shopNameEn)}
+        alt={home('hero.alt')}
+      />
+      {row === null ? null : <HomeRow row={row} locale={locale} />}
+      {LOWER_SECTIONS.map((section) => {
+        switch (section) {
+          case 'bannerChild':
+            return (
+              <PhotoBanner
+                key={section}
+                id="bannerChild"
+                testId={TEST_IDS.bannerChild}
+                heading={home('bannerChild.heading')}
+                line={home('bannerChild.line')}
+                button={home('bannerChild.button')}
+                href={shop}
+                alt={home('bannerChild.alt')}
+              />
+            );
+          case 'band':
+            return (
+              <StatementBand
+                key={section}
+                sentence={home('band.sentence')}
+                linkText={home('band.link')}
+                href={shop}
+              />
+            );
+          case 'bannerShelf':
+            return (
+              <PhotoBanner
+                key={section}
+                id="bannerShelf"
+                testId={TEST_IDS.bannerShelf}
+                heading={home('bannerShelf.heading')}
+                line={home('bannerShelf.line')}
+                button={home('bannerShelf.button')}
+                href={shop}
+                alt={home('bannerShelf.alt')}
+              />
+            );
+        }
+      })}
     </div>
   );
 }

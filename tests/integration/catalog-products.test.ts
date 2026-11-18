@@ -1,4 +1,4 @@
-import { and, asc, eq } from 'drizzle-orm';
+import { asc, eq } from 'drizzle-orm';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createTestDb, type TestDbHandle } from '../setup/pglite';
 import { makeActor, makeTestStorage, photo, type TestStorage } from '../helpers/catalog';
@@ -10,6 +10,7 @@ import {
   orderLine,
   orders,
   product,
+  productCategory,
   productImage,
   shippingZone,
 } from '@/server/db/schema';
@@ -20,10 +21,12 @@ import {
   deleteCategory,
   listCategories,
   reorderCategories,
+  updateCategory,
 } from '@/server/catalog/categories';
 import { addImage } from '@/server/catalog/images';
 import { listOptionGroups, upsertOptionGroup } from '@/server/catalog/options';
 import { NEW_PRODUCT_NAME_HE } from '@/lib/validation/product';
+import { getEditorData, listAdminProducts } from '@/server/catalog/admin-queries';
 import {
   createProduct,
   deleteProduct,
@@ -79,7 +82,7 @@ async function completeProduct(extra: { priceUsdMinor?: number } = {}): Promise<
     updateProduct(actor, id, {
       descriptionHe: 'בובה בעבודת יד',
       priceIlsMinor: 12000,
-      categoryId,
+      categoryIds: [categoryId],
       prepTimeHe: 'כשבועיים',
       ...extra,
     }),
@@ -93,6 +96,14 @@ async function getProduct(id: string) {
   const [row] = await testDb.db.select().from(product).where(eq(product.id, id));
   if (!row) throw new Error('missing product');
   return row;
+}
+
+async function linkedCategoryIds(productId: string): Promise<string[]> {
+  const rows = await testDb.db
+    .select({ id: productCategory.categoryId })
+    .from(productCategory)
+    .where(eq(productCategory.productId, productId));
+  return rows.map((row) => row.id).sort();
 }
 
 async function activity(action: string) {
@@ -110,8 +121,8 @@ describe('createProduct', () => {
       orderable: true,
       publishedAt: null,
       priceIlsMinor: null,
-      categoryId: null,
     });
+    expect(await linkedCategoryIds(id)).toEqual([]);
     expect(slug).toMatch(/^p-[a-z2-7]{8}$/);
     expect(row.slug).toBe(slug);
     expect(await activity('product.created')).toHaveLength(1);
@@ -670,6 +681,11 @@ describe('option groups', () => {
 });
 
 describe('categories', () => {
+  // The seed's "Featured" category is not part of what these tests count.
+  beforeEach(async () => {
+    await testDb.db.delete(category).where(eq(category.slug, 'featured'));
+  });
+
   it('creates categories with generated slugs and sequential sort_order', async () => {
     const a = await ok(createCategory(actor, { nameHe: 'נרות', nameEn: 'Candles' }));
     const b = await ok(createCategory(actor, { nameHe: 'קרמיקה' }));
@@ -687,7 +703,7 @@ describe('categories', () => {
     const id = await makeCategory();
     for (const name of ['א', 'ב']) {
       const created = await ok(createProduct(actor, { nameHe: name }));
-      await ok(updateProduct(actor, created.id, { categoryId: id }));
+      await ok(updateProduct(actor, created.id, { categoryIds: [id] }));
     }
     const result = await deleteCategory(actor, id, { confirm: true });
     expect(result).toMatchObject({ ok: false, count: 2 });
@@ -733,12 +749,222 @@ describe('categories', () => {
     const keep = await makeCategory('א');
     const drop = await makeCategory('ב');
     const { id } = await ok(createProduct(actor, { nameHe: 'מוצר' }));
-    await ok(updateProduct(actor, id, { categoryId: keep }));
+    await ok(updateProduct(actor, id, { categoryIds: [keep] }));
     await ok(deleteCategory(actor, drop, { confirm: true }));
-    const [row] = await testDb.db
-      .select()
-      .from(product)
-      .where(and(eq(product.id, id), eq(product.categoryId, keep)));
-    expect(row).toBeDefined();
+    expect(await linkedCategoryIds(id)).toEqual([keep]);
+  });
+});
+
+describe('category name length (007 FR-040)', () => {
+  const TOO_LONG = 'admin.categories.errors.nameTooLong';
+  const he13 = 'א'.repeat(13);
+  const he12 = 'א'.repeat(12);
+  const en13 = 'Candle Boxes!'; // 13 characters
+  const en12 = 'Small hearts';
+
+  it('createCategory refuses a 13-character Hebrew or English name with nameTooLong', async () => {
+    expect(await createCategory(actor, { nameHe: he13 })).toMatchObject({
+      ok: false,
+      fieldErrors: { nameHe: TOO_LONG },
+    });
+    expect(await createCategory(actor, { nameHe: 'נרות', nameEn: en13 })).toMatchObject({
+      ok: false,
+      fieldErrors: { nameEn: TOO_LONG },
+    });
+  });
+
+  it('both too long: both fields carry the error', async () => {
+    const result = await createCategory(actor, { nameHe: he13, nameEn: en13 });
+    expect(result).toMatchObject({
+      ok: false,
+      fieldErrors: { nameHe: TOO_LONG, nameEn: TOO_LONG },
+    });
+  });
+
+  it('accepts 12 characters, an English one with a trailing space too (trimmed first)', async () => {
+    expect(await createCategory(actor, { nameHe: he12, nameEn: en12 })).toMatchObject({ ok: true });
+    const trailing = await createCategory(actor, { nameHe: 'נרות', nameEn: `${en12} ` });
+    expect(trailing).toMatchObject({ ok: true });
+    const [stored] = await testDb.db
+      .select({ nameEn: category.nameEn })
+      .from(category)
+      .where(eq(category.id, (trailing as { data: { id: string } }).data.id));
+    expect(stored?.nameEn).toBe('Small hearts');
+  });
+
+  it('accepts a 12-character Hebrew name with a trailing space (trimmed first)', async () => {
+    expect(await createCategory(actor, { nameHe: `${he12} ` })).toMatchObject({ ok: true });
+  });
+
+  it('an empty Hebrew name still gives invalid', async () => {
+    expect(await createCategory(actor, { nameHe: '' })).toMatchObject({
+      ok: false,
+      fieldErrors: { nameHe: 'admin.categories.errors.invalid' },
+    });
+  });
+
+  it('updateCategory applies the same rules', async () => {
+    const id = await makeCategory('נרות');
+    expect(await updateCategory(actor, id, { nameHe: he13 })).toMatchObject({
+      ok: false,
+      fieldErrors: { nameHe: TOO_LONG },
+    });
+    expect(await updateCategory(actor, id, { nameHe: 'נרות', nameEn: en13 })).toMatchObject({
+      ok: false,
+      fieldErrors: { nameEn: TOO_LONG },
+    });
+    expect(await updateCategory(actor, id, { nameHe: he13, nameEn: en13 })).toMatchObject({
+      ok: false,
+      fieldErrors: { nameHe: TOO_LONG, nameEn: TOO_LONG },
+    });
+    expect(await updateCategory(actor, id, { nameHe: he12, nameEn: `${en12} ` })).toMatchObject({
+      ok: true,
+    });
+    expect(await updateCategory(actor, id, { nameHe: '' })).toMatchObject({
+      ok: false,
+      fieldErrors: { nameHe: 'admin.categories.errors.invalid' },
+    });
+  });
+});
+
+describe('several categories per piece (007 FR-031, FR-032)', () => {
+  it('saves categoryIds with two ids, replaces them with one, and allows [] for a draft', async () => {
+    const a = await makeCategory('א');
+    const b = await makeCategory('ב');
+    const { id } = await ok(createProduct(actor, { nameHe: 'בובה' }));
+    await ok(updateProduct(actor, id, { categoryIds: [a, b] }));
+    expect(await linkedCategoryIds(id)).toEqual([a, b].sort());
+    await ok(updateProduct(actor, id, { categoryIds: [b] }));
+    expect(await linkedCategoryIds(id)).toEqual([b]);
+    await ok(updateProduct(actor, id, { categoryIds: [] }));
+    expect(await linkedCategoryIds(id)).toEqual([]);
+  });
+
+  it('writes one product.updated row for a save that changes only the categories, and none when they are the same set', async () => {
+    const a = await makeCategory('א');
+    const b = await makeCategory('ב');
+    const { id } = await ok(createProduct(actor, { nameHe: 'בובה' }));
+    await ok(updateProduct(actor, id, { categoryIds: [a] }));
+    expect(await activity('product.updated')).toHaveLength(1);
+    await ok(updateProduct(actor, id, { categoryIds: [a, b] }));
+    expect(await activity('product.updated')).toHaveLength(2);
+    // The same set in another order is not a change.
+    await ok(updateProduct(actor, id, { categoryIds: [b, a] }));
+    expect(await activity('product.updated')).toHaveLength(2);
+    expect(await linkedCategoryIds(id)).toEqual([a, b].sort());
+  });
+
+  it('collapses duplicate ids and refuses an unknown id without changing anything', async () => {
+    const a = await makeCategory('א');
+    const { id } = await ok(createProduct(actor, { nameHe: 'בובה' }));
+    await ok(updateProduct(actor, id, { categoryIds: [a, a, a] }));
+    expect(await linkedCategoryIds(id)).toEqual([a]);
+
+    const unknown = '00000000-0000-4000-8000-0000000000aa';
+    const result = await updateProduct(actor, id, { categoryIds: [a, unknown] });
+    expect(result).toMatchObject({
+      ok: false,
+      fieldErrors: { categoryIds: 'admin.products.errors.category_not_found' },
+    });
+    expect(await linkedCategoryIds(id)).toEqual([a]);
+  });
+
+  it('refuses unticking every category on a published piece, and publishing with none', async () => {
+    const productId = await completeProduct();
+    const [link] = await testDb.db
+      .select({ id: productCategory.categoryId })
+      .from(productCategory)
+      .where(eq(productCategory.productId, productId));
+    const kept = link?.id ?? '';
+    await ok(setProductState(actor, productId, 'publish'));
+
+    const refused = await updateProduct(actor, productId, { categoryIds: [] });
+    expect(refused).toMatchObject({
+      ok: false,
+      formError: 'admin.products.errors.publish_incomplete',
+      missingFields: ['categoryId'],
+      fieldErrors: { categoryId: 'admin.products.missing.categoryId' },
+    });
+    expect(await linkedCategoryIds(productId)).toEqual([kept]);
+
+    // Another category added and the first removed in one save is fine.
+    const other = await makeCategory('אחרת');
+    await ok(updateProduct(actor, productId, { categoryIds: [other] }));
+    expect(await linkedCategoryIds(productId)).toEqual([other]);
+
+    // Publishing with no category keeps the existing missing-category key.
+    const draft = await completeProduct();
+    await ok(updateProduct(actor, draft, { categoryIds: [] }));
+    const publish = await setProductState(actor, draft, 'publish');
+    expect(publish).toMatchObject({ ok: false, missingFields: ['categoryId'] });
+  });
+
+  it('the products list shows every category name in category order, and the filter finds the piece under each', async () => {
+    const first = await makeCategory('ראשונה');
+    const second = await makeCategory('שנייה');
+    const { id } = await ok(createProduct(actor, { nameHe: 'בובה' }));
+    await ok(updateProduct(actor, id, { categoryIds: [second, first] }));
+    const [row] = await listAdminProducts();
+    expect(row?.categoryNames).toEqual(['ראשונה', 'שנייה']);
+    expect(await listAdminProducts({ categoryId: first })).toHaveLength(1);
+    expect(await listAdminProducts({ categoryId: second })).toHaveLength(1);
+    expect(await listAdminProducts()).toHaveLength(1);
+    const data = await getEditorData(id);
+    expect(data?.product.categoryIds.sort()).toEqual([first, second].sort());
+  });
+
+  it('counts pieces through the links and still blocks deleting a category that has linked pieces', async () => {
+    const a = await makeCategory('א');
+    const b = await makeCategory('ב');
+    for (const name of ['x', 'y']) {
+      const { id } = await ok(createProduct(actor, { nameHe: name }));
+      await ok(updateProduct(actor, id, { categoryIds: [a, b] }));
+    }
+    const { id: lone } = await ok(createProduct(actor, { nameHe: 'z' }));
+    await ok(updateProduct(actor, lone, { categoryIds: [a] }));
+    const counts = Object.fromEntries(
+      (await listCategories()).map((row) => [row.nameHe, row.productCount]),
+    );
+    expect(counts['א']).toBe(3);
+    expect(counts['ב']).toBe(2);
+    expect(await deleteCategory(actor, b, { confirm: true })).toMatchObject({
+      ok: false,
+      count: 2,
+    });
+  });
+});
+
+describe('listAdminProducts › missingEnglish', () => {
+  async function flag(fields: {
+    nameEn?: string | null;
+    descriptionHe?: string | null;
+    descriptionEn?: string | null;
+  }): Promise<boolean> {
+    const { id } = await ok(createProduct(actor, { nameHe: 'בובה' }));
+    await testDb.db.update(product).set(fields).where(eq(product.id, id));
+    const row = (await listAdminProducts()).find((item) => item.id === id);
+    if (!row) throw new Error('missing row');
+    return row.missingEnglish;
+  }
+
+  it('is true when the English name is empty or only spaces', async () => {
+    expect(await flag({ nameEn: null })).toBe(true);
+    expect(await flag({ nameEn: '   ' })).toBe(true);
+  });
+
+  it('is true when a Hebrew description has no English one (empty or only spaces)', async () => {
+    expect(await flag({ nameEn: 'Doll', descriptionHe: 'תיאור', descriptionEn: null })).toBe(true);
+    expect(await flag({ nameEn: 'Doll', descriptionHe: 'תיאור', descriptionEn: '  ' })).toBe(true);
+  });
+
+  it('is false when both English fields are filled', async () => {
+    expect(await flag({ nameEn: 'Doll', descriptionHe: 'תיאור', descriptionEn: 'Text' })).toBe(
+      false,
+    );
+  });
+
+  it('is false when the name is filled and both descriptions are empty', async () => {
+    expect(await flag({ nameEn: 'Doll', descriptionHe: null, descriptionEn: null })).toBe(false);
+    expect(await flag({ nameEn: 'Doll', descriptionHe: '  ', descriptionEn: null })).toBe(false);
   });
 });

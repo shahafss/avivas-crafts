@@ -1,5 +1,8 @@
 import { eq, sql } from 'drizzle-orm';
 import type { PgDatabase } from 'drizzle-orm/pg-core';
+import { loadDrafts } from '@/server/content/drafts';
+import { CONTENT_SLUGS, isVersionedSlug } from '@/server/content/slugs';
+import { recordVersion } from '@/server/content/versions';
 import { category, contentPage, shippingZone, shippingZoneCountry, shopSettings } from './schema';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -26,15 +29,15 @@ export const SEED_PLACEHOLDERS = {
   notificationEmails: ['notify@example.invalid'],
 } as const;
 
-export const CONTENT_SLUGS = [
-  'about',
-  'contact',
-  'privacy',
-  'terms',
-  'cookies',
-  'shipping-returns',
-  'accessibility',
-] as const;
+// Moved to a dependency-free module (003); re-exported for existing imports.
+export { CONTENT_SLUGS };
+
+/** The category the home row shows at release (007 FR-034); the migration creates the same row. */
+export const FEATURED_CATEGORY = {
+  slug: 'featured',
+  nameHe: 'מומלצות',
+  nameEn: 'Featured',
+} as const;
 
 const SAMPLE_CATEGORIES = [
   { slug: 'sample-candles', nameHe: 'נרות', nameEn: 'Candles' },
@@ -44,7 +47,7 @@ const SAMPLE_CATEGORIES = [
 export interface SeedOptions {
   /** Add sample categories (development and test only; the caller decides). */
   samples: boolean;
-  /** Folder with the legal content drafts (used from T112 on). */
+  /** Folder with the supplied content drafts (`<slug>.<he|en>.md`); see `loadDrafts`. */
   contentDir?: string;
 }
 
@@ -54,8 +57,10 @@ export async function runSeed(database: SeedDb, options: SeedOptions): Promise<v
   if (options.samples) {
     // After the transaction: photos go through the image pipeline and storage, which take their own connections.
     // Imported only here, so a deploy-time seed without samples never loads the image libraries.
-    const { seedSampleProducts } = await import('@/server/catalog/sample-products');
+    const { linkSampleProducts, seedSampleProducts } =
+      await import('@/server/catalog/sample-products');
     await seedSampleProducts(database);
+    await linkSampleProducts(database, FEATURED_CATEGORY.slug);
   }
 }
 
@@ -85,7 +90,7 @@ async function seedInTx(db: SeedDb, options: SeedOptions): Promise<void> {
     .values({ zoneId: zone.id, countryCode: 'IL' })
     .onConflictDoNothing();
 
-  await db
+  const insertedSettings = await db
     .insert(shopSettings)
     .values({
       id: 1,
@@ -100,12 +105,22 @@ async function seedInTx(db: SeedDb, options: SeedOptions): Promise<void> {
       businessAddressEn: SEED_PLACEHOLDERS.businessAddressEn,
       notificationEmails: [...SEED_PLACEHOLDERS.notificationEmails],
     })
-    .onConflictDoNothing({ target: shopSettings.id });
+    .onConflictDoNothing({ target: shopSettings.id })
+    .returning({ id: shopSettings.id });
 
-  await db
-    .insert(contentPage)
-    .values(CONTENT_SLUGS.map((slug) => ({ slug, titleHe: 'טיוטה', bodyHe: 'טיוטה' })))
-    .onConflictDoNothing({ target: contentPage.slug });
+  if (options.contentDir === undefined) {
+    const inserted = await db
+      .insert(contentPage)
+      .values(CONTENT_SLUGS.map((slug) => ({ slug, titleHe: 'טיוטה', bodyHe: 'טיוטה' })))
+      .onConflictDoNothing({ target: contentPage.slug })
+      .returning();
+    // Every version an order can refer to has a copy, also in a database seeded without drafts.
+    for (const row of inserted) {
+      if (isVersionedSlug(row.slug)) await recordVersion(db, row);
+    }
+  } else {
+    await loadDrafts(db, options.contentDir);
+  }
 
   if (options.samples) {
     for (const sample of SAMPLE_CATEGORIES) {
@@ -117,6 +132,28 @@ async function seedInTx(db: SeedDb, options: SeedOptions): Promise<void> {
           sortOrder: sql`(SELECT coalesce(max(${category.sortOrder}), -1) + 1 FROM ${category})`,
         })
         .onConflictDoNothing({ target: category.slug });
+    }
+  }
+
+  // "Featured" only for a new settings row or with samples (data-model.md section 5, Seed): an
+  // existing row is never changed (null there means Aviva chose "no row"), and a deploy without
+  // samples never re-creates a "Featured" that was deleted. It comes after the sample categories.
+  const newSettingsRow = insertedSettings.length > 0;
+  if (newSettingsRow || options.samples) {
+    await db
+      .insert(category)
+      .values({
+        ...FEATURED_CATEGORY,
+        sortOrder: sql`(SELECT coalesce(max(${category.sortOrder}), -1) + 1 FROM ${category})`,
+      })
+      .onConflictDoNothing({ target: category.slug });
+    if (newSettingsRow) {
+      await db
+        .update(shopSettings)
+        .set({
+          homeCategoryId: sql`(SELECT ${category.id} FROM ${category} WHERE ${category.slug} = ${FEATURED_CATEGORY.slug})`,
+        })
+        .where(eq(shopSettings.id, 1));
     }
   }
 }

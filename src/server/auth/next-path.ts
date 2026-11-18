@@ -4,7 +4,7 @@ const BASE = 'http://admin.invalid';
 
 /**
  * The same-origin admin path to return to after sign-in, or null (meaning `/admin`).
- * Accepts only a path under `/admin` that is not `/admin/sign-in*` or `/admin/setup*`, has no
+ * Accepts only a path under `/admin` that is not `/admin/sign-in*`, has no
  * `//`, backslash, control character, scheme or dot segment (`..`, also percent-encoded), and is
  * at most 512 characters. The result is the normalised `pathname + search`.
  */
@@ -22,7 +22,7 @@ export function safeAdminNext(path: unknown): string | null {
   const { pathname } = url;
   if (url.origin !== BASE || (pathname !== '/admin' && !pathname.startsWith('/admin/')))
     return null;
-  if (/^\/admin\/(sign-in|setup)(\/|$)/.test(pathname)) return null;
+  if (/^\/admin\/sign-in(\/|$)/.test(pathname)) return null;
   const normalised = pathname + url.search;
   return normalised.length <= MAX_LENGTH ? normalised : null;
 }

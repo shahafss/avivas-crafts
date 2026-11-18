@@ -9,6 +9,7 @@ import { createProduct, setProductState, updateProduct } from '@/server/catalog/
 import type { Actor } from '@/server/catalog/result';
 import {
   adminActivity,
+  category,
   optionValue,
   product,
   shippingZone,
@@ -16,7 +17,14 @@ import {
   shopSettings,
 } from '@/server/db/schema';
 import { runSeed } from '@/server/db/seed';
-import { productsMissingUsdPrice, updateSettings, updateZone } from '@/server/settings/settings';
+import {
+  getSettings,
+  placeholderFields,
+  productsMissingUsdPrice,
+  settingsNeedingAttention,
+  updateSettings,
+  updateZone,
+} from '@/server/settings/settings';
 
 let testDb: TestDbHandle;
 let files: TestStorage;
@@ -30,6 +38,9 @@ vi.mock('@/server/db/client', () => ({
   withTx: <T>(fn: (tx: unknown) => Promise<T>) => testDb.db.transaction(fn),
 }));
 vi.mock('@/server/storage', () => ({ getStorage: () => files.storage }));
+vi.mock('@/server/env', () => ({
+  getEnv: () => ({ APP_ENV: 'test', PAYMENT_PROVIDER: 'fake' }),
+}));
 
 beforeAll(async () => {
   testDb = await createTestDb();
@@ -279,6 +290,120 @@ describe('enabling a USD zone (FR-015, research.md R18)', () => {
   });
 });
 
+describe('social links (US3, FR-024-FR-026)', () => {
+  it('stores the normalised address, writes one activity row without it, and clears with null', async () => {
+    expect(await updateSettings(actor, { socialInstagramUrl: 'instagram.com/aviva' })).toEqual({
+      ok: true,
+      data: undefined,
+    });
+    expect(await settings()).toMatchObject({ socialInstagramUrl: 'https://instagram.com/aviva' });
+    const rows = await testDb.db.select().from(adminActivity);
+    const updated = rows.filter((row) => row.action === 'settings.updated');
+    expect(updated).toHaveLength(1);
+    expect(JSON.stringify(updated[0]?.details)).not.toContain('instagram');
+    expect(await updateSettings(actor, { socialInstagramUrl: null })).toMatchObject({ ok: true });
+    expect(await settings()).toMatchObject({ socialInstagramUrl: null });
+  });
+
+  it('refuses a wrong site with a field error and writes nothing', async () => {
+    const before = (await activity()).length;
+    const result = await updateSettings(actor, {
+      socialInstagramUrl: 'instagram.com/aviva',
+      socialFacebookUrl: 'https://example.com/a',
+    });
+    expect(result).toMatchObject({
+      ok: false,
+      fieldErrors: { socialFacebookUrl: 'admin.settings.errors.social.wrongSite.facebook' },
+    });
+    expect(await settings()).toMatchObject({ socialInstagramUrl: null, socialFacebookUrl: null });
+    expect((await activity()).length).toBe(before);
+  });
+});
+
+describe('home row category (US5, FR-034)', () => {
+  const categoryRow = async () => {
+    const [row] = await testDb.db
+      .insert(category)
+      .values({ slug: 'row-cat', nameHe: 'שורה', sortOrder: 90 })
+      .returning();
+    return row as { id: string };
+  };
+
+  it('sets an existing category, clears it with null, and logs the save', async () => {
+    const cat = await categoryRow();
+    const before = (await activity()).filter((a) => a === 'settings.updated').length;
+    expect(await updateSettings(actor, { homeCategoryId: cat.id })).toMatchObject({ ok: true });
+    expect(await settings()).toMatchObject({ homeCategoryId: cat.id });
+    expect(await updateSettings(actor, { homeCategoryId: null })).toMatchObject({ ok: true });
+    expect(await settings()).toMatchObject({ homeCategoryId: null });
+    const after = (await activity()).filter((a) => a === 'settings.updated').length;
+    expect(after - before).toBe(2);
+  });
+
+  it('refuses an unknown id with a field error and saves nothing', async () => {
+    const cat = await categoryRow();
+    await updateSettings(actor, { homeCategoryId: cat.id });
+    const before = (await activity()).length;
+    const result = await updateSettings(actor, {
+      homeCategoryId: '11111111-1111-4111-8111-111111111111',
+    });
+    expect(result).toMatchObject({
+      ok: false,
+      fieldErrors: { homeCategoryId: 'admin.settings.errors.home_category_not_found' },
+    });
+    expect(await settings()).toMatchObject({ homeCategoryId: cat.id });
+    expect((await activity()).length).toBe(before);
+  });
+});
+
+describe('header categories (007 FR-039)', () => {
+  const unknownId = '11111111-1111-4111-8111-111111111111';
+  let sort = 100;
+  const makeCat = async (slug: string) => {
+    const [row] = await testDb.db
+      .insert(category)
+      .values({ slug, nameHe: slug, sortOrder: sort++ })
+      .returning();
+    return row as { id: string };
+  };
+
+  it('sets both, reads them back with getSettings(), and clears them with null', async () => {
+    const a = await makeCat('hdr-a');
+    const b = await makeCat('hdr-b');
+    expect(
+      await updateSettings(actor, { headerCategory1Id: a.id, headerCategory2Id: b.id }),
+    ).toMatchObject({ ok: true });
+    expect(await settings()).toMatchObject({ headerCategory1Id: a.id, headerCategory2Id: b.id });
+    expect(await getSettings()).toMatchObject({ headerCategory1Id: a.id, headerCategory2Id: b.id });
+    expect(
+      await updateSettings(actor, { headerCategory1Id: null, headerCategory2Id: null }),
+    ).toMatchObject({ ok: true });
+    expect(await getSettings()).toMatchObject({ headerCategory1Id: null, headerCategory2Id: null });
+  });
+
+  it('refuses an unknown id with a field error and saves nothing', async () => {
+    const a = await makeCat('hdr-a');
+    await updateSettings(actor, { headerCategory1Id: a.id });
+    const before = (await activity()).length;
+    const result = await updateSettings(actor, {
+      headerCategory1Id: unknownId,
+      headerCategory2Id: a.id,
+    });
+    expect(result).toMatchObject({
+      ok: false,
+      fieldErrors: { headerCategory1Id: 'admin.settings.errors.header_category_not_found' },
+    });
+    expect(await settings()).toMatchObject({ headerCategory1Id: a.id, headerCategory2Id: null });
+    expect((await activity()).length).toBe(before);
+
+    const second = await updateSettings(actor, { headerCategory2Id: unknownId });
+    expect(second).toMatchObject({
+      ok: false,
+      fieldErrors: { headerCategory2Id: 'admin.settings.errors.header_category_not_found' },
+    });
+  });
+});
+
 describe('activity log', () => {
   it('writes settings.updated and zone.updated rows, and nothing for a refused or unchanged save', async () => {
     await updateSettings(actor, { shopNameHe: 'שם חדש' });
@@ -296,5 +421,46 @@ describe('activity log', () => {
     expect(await activity()).toEqual(['settings.updated', 'zone.updated']);
     const rows = await testDb.db.select().from(adminActivity);
     expect(rows.every((row) => row.adminId === actor.adminId)).toBe(true);
+  });
+});
+
+describe('settingsNeedingAttention (002 US7, research R13)', () => {
+  const setZone = (values: Partial<typeof shippingZone.$inferInsert>) =>
+    testDb.db.update(shippingZone).set(values).where(eq(shippingZone.code, 'IL'));
+  const setInstructions = (value: string | null) =>
+    testDb.db.update(shopSettings).set({ pickupInstructionsHe: value });
+
+  it('lists the seed placeholders, the same as placeholderFields()', async () => {
+    const expected = placeholderFields(await getSettings());
+    expect(expected.length).toBeGreaterThan(0);
+    // The seed always enables pickup in a zone and leaves the pickup instructions empty.
+    // ...and, with offline payment on, the empty Hebrew offline instructions (006 FR-010b).
+    expect(await settingsNeedingAttention()).toEqual([
+      ...expected,
+      'pickupInstructionsHe',
+      'offlineInstructionsHe',
+    ]);
+    // With pickup off, only the placeholders and the offline instructions remain.
+    await testDb.db.update(shippingZone).set({ pickupEnabled: false });
+    expect(await settingsNeedingAttention()).toEqual([...expected, 'offlineInstructionsHe']);
+  });
+
+  it('adds pickupInstructionsHe when an enabled zone offers pickup and the text is empty or blank', async () => {
+    await setZone({ enabled: true, pickupEnabled: true });
+    await setInstructions(null);
+    expect(await settingsNeedingAttention()).toContain('pickupInstructionsHe');
+    await setInstructions('   ');
+    expect(await settingsNeedingAttention()).toContain('pickupInstructionsHe');
+  });
+
+  it('does not list it when pickup is disabled, the zone is disabled or the text is filled', async () => {
+    await setInstructions(null);
+    await setZone({ enabled: true, pickupEnabled: false });
+    expect(await settingsNeedingAttention()).not.toContain('pickupInstructionsHe');
+    await setZone({ enabled: false, pickupEnabled: true });
+    expect(await settingsNeedingAttention()).not.toContain('pickupInstructionsHe');
+    await setZone({ enabled: true, pickupEnabled: true });
+    await setInstructions('איסוף בשבת');
+    expect(await settingsNeedingAttention()).not.toContain('pickupInstructionsHe');
   });
 });

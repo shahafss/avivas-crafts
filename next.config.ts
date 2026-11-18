@@ -47,6 +47,12 @@ const nextConfig: NextConfig = {
     return Promise.resolve([
       // Static security headers for every path, including those the proxy matcher skips.
       { source: '/:path*', headers: staticSecurityHeaders({ https }) },
+      // The home photos' names carry a content fingerprint, so a replaced photo gets a new name
+      // (contracts/home-photos.md "Serving").
+      {
+        source: '/site-photos/:path*',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
+      },
       ...[
         '/admin/:path*',
         '/api/admin/:path*',

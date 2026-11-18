@@ -4,10 +4,10 @@ import { useTranslations } from 'next-intl';
 import { useId, useState } from 'react';
 import { cn } from '@/lib/cn';
 import { MAX_QUANTITY } from '@/lib/cart/store';
-import { Icon } from '@/components/ui/Icon';
+import { Icon } from '@/components/ui/ClientIcon';
 
 const STEP =
-  'grid shrink-0 place-items-center rounded-full text-ink transition-colors duration-150 ease-out hover:bg-sun-soft aria-disabled:text-ink-2 aria-disabled:hover:bg-transparent';
+  'grid shrink-0 place-items-center rounded-full text-ink transition-colors duration-150 ease-out hover:bg-sage aria-disabled:text-ink-2 aria-disabled:hover:bg-transparent';
 
 /**
  * A pill with minus, the value and plus (1 to 20). At a limit the button stays focusable and
@@ -46,8 +46,8 @@ export function QuantityStepper({
       role="group"
       aria-labelledby={labelId}
       className={cn(
-        'inline-flex shrink-0 items-center rounded-pill border-[1.5px] border-field bg-panel px-1',
-        compact ? 'h-10' : 'h-[54px]',
+        'inline-flex shrink-0 items-center rounded-pill border border-ink-2 bg-paper px-1',
+        compact ? 'h-10' : 'h-[52px]',
       )}
     >
       <span id={labelId} className="sr-only">

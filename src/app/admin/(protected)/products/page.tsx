@@ -36,7 +36,7 @@ async function ProductRow({ item }: { item: AdminProductListRow }) {
         href={`/admin/products/${item.id}`}
         prefetch={false}
         data-testid="admin-product-row"
-        className="flex gap-3 rounded-card border border-line bg-panel p-3 hover:bg-sun-soft"
+        className="flex gap-3 rounded-card border border-line bg-paper p-3 hover:bg-sage"
       >
         <span className="grid h-24 w-[77px] shrink-0 place-items-center overflow-hidden rounded-chip bg-photo text-center text-[13px] text-ink-2">
           {item.imageUrl === null ? (
@@ -61,29 +61,44 @@ async function ProductRow({ item }: { item: AdminProductListRow }) {
             ) : (
               <bdi className="tnum">{formatMoney(item.priceIlsMinor, 'ILS', 'he')}</bdi>
             )}
-            {item.categoryNameHe === null ? null : ` · ${item.categoryNameHe}`}
+            {item.categoryNames.length === 0 ? null : ` · ${item.categoryNames.join(', ')}`}
           </span>
           <span className="flex flex-wrap gap-1.5">
             <span
               className={cn(
                 BADGE,
-                item.state === 'published' && 'bg-sun-soft text-ink',
+                item.state === 'published' && 'bg-sage text-ink',
                 item.state === 'draft' && 'bg-photo text-ink',
-                item.state === 'hidden' && 'border-[1.5px] border-field bg-panel text-ink',
+                item.state === 'hidden' && 'border-[1.5px] border-field bg-paper text-ink',
               )}
             >
               {t(`state.${item.state}`)}
             </span>
             {item.orderable ? null : (
-              <span className={cn(BADGE, 'border-[1.5px] border-alert bg-panel text-alert')}>
+              <span className={cn(BADGE, 'border-[1.5px] border-alert bg-paper text-alert')}>
                 {t('notOrderable')}
               </span>
             )}
+            {item.missingEnglish ? (
+              <span
+                className={cn(
+                  BADGE,
+                  'border-[1.5px] border-dashed border-field bg-paper text-ink-2',
+                )}
+              >
+                {t('noEnglish')}
+              </span>
+            ) : null}
           </span>
         </span>
       </Link>
     </li>
   );
+}
+
+export async function generateMetadata() {
+  const t = await getTranslations('admin.products');
+  return { title: t('title') };
 }
 
 export default async function ProductsPage({

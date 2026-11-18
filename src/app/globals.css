@@ -2,53 +2,67 @@
 
 @theme {
   --color-*: initial;
-  --color-ground: #fff8f0;
-  --color-panel: #ffffff;
-  --color-photo: #f8ecdf;
-  --color-ink: #3a2a21;
-  --color-ink-2: #6b5649;
-  --color-line: #eadbcb;
-  --color-field: #977e6e;
-  --color-sun: #f4b43c;
-  --color-sun-hover: #eaa322;
-  --color-sun-soft: #fdebc4;
-  --color-sun-ink: #c9821a;
-  --color-rose: #fce3db;
-  --color-rose-ink: #8a3a2a;
-  --color-peach: #fceadb;
-  --color-alert: #b3261e;
+  --color-paper: #ffffff;
+  --color-photo: #eef2ee;
+  --color-ink: #061406;
+  --color-ink-2: #3e4e3f;
+  --color-line: #dde5dd;
+  --color-field: #6b7d6c;
+  --color-sage: #cfe2d0;
+  --color-sage-hover: #bcd6be;
+  --color-forest: #1e4620;
+  --color-forest-hover: #163518;
+  --color-peach: #f7e5d7;
+  --color-mint: #a3d9a5;
+  --color-alert: #a32018;
+  --color-on-photo: #ffffff;
   --color-transparent: transparent;
   --color-current: currentColor;
 
-  --radius-card: 20px;
-  --radius-chip: 14px;
+  --radius-card: 12px;
+  --radius-chip: 8px;
   --radius-pill: 999px;
 
   --shadow-*: initial;
-  --shadow-float: 0 3px 14px rgb(150 95 50 / 0.1);
+  --shadow-float: 0 3px 14px rgb(6 20 6 / 0.12);
 
   --breakpoint-*: initial;
   --breakpoint-sm: 40rem;
   --breakpoint-lg: 56.25rem;
+  --breakpoint-nav: 64rem;
   --breakpoint-xl: 77.5rem;
 
-  --font-sans: var(--font-heebo), system-ui, sans-serif;
+  --font-sans: var(--font-assistant), system-ui, sans-serif;
 
   --z-index-header: 20;
   --z-index-popover: 30;
   --z-index-banner: 40;
 }
 
+/* Header height and the dark layers behind text on photos (storefront.md 3.3, research D4). */
+:root {
+  --header-h: 64px;
+  --scrim-large: 0.42;
+  --scrim-text: 0.55;
+}
+
+@media (min-width: 56.25rem) {
+  :root {
+    --header-h: 72px;
+  }
+}
+
 @layer base {
   html {
     scroll-behavior: smooth;
+    scroll-padding-top: var(--header-h);
     scrollbar-color: var(--color-line) transparent;
   }
 
   body {
     margin-inline: 0;
     padding-inline: 0;
-    background-color: var(--color-ground);
+    background-color: var(--color-paper);
     color: var(--color-ink);
     font-family: var(--font-sans);
     font-size: 16px;
@@ -57,7 +71,7 @@
   }
 
   ::selection {
-    background-color: var(--color-sun-soft);
+    background-color: var(--color-sage);
     color: var(--color-ink);
   }
 
@@ -130,10 +144,17 @@
 
   *,
   *::before,
-  *::after {
+  *::after,
+  *::backdrop {
     transition: none !important;
-    animation: none !important;
     scroll-behavior: auto !important;
+  }
+
+  *,
+  *::before,
+  *::after,
+  *::backdrop {
+    animation: none !important;
   }
 }
 
@@ -153,4 +174,361 @@
 
 .badge-pop {
   animation: badge-pop 300ms ease-out;
+}
+
+/* ---- Side drawers (storefront.md 7.18, 7.34, research D21). Native popovers in the top layer, full
+   height from `--drawer-top` (the header's top edge on screen, set by `DrawerController`; 0 without
+   JavaScript) so the green strip is neither covered nor dimmed. A drawer sits at the reading start
+   (`drawer-start`) or end (`drawer-end`); `--drawer-off` is its closed offset, signed for the
+   reading direction. ---- */
+html {
+  scrollbar-gutter: stable;
+}
+
+html:has(#site-menu:popover-open, #cart-drawer:popover-open) {
+  overflow: hidden;
+  /* With a visible scrollbar the stable gutter is painted by `html`, not by the page, so the
+     backdrop does not reach it: give it the backdrop's dim over `paper` (storefront.md 7.34). */
+  background-color: color-mix(in srgb, rgb(0 0 0) 40%, var(--color-paper));
+}
+
+.drawer {
+  --drawer-w: min(24rem, calc(100vw - 3rem));
+  position: fixed;
+  inset-block: var(--drawer-top, 0px) 0;
+  inset-inline: auto;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  inline-size: var(--drawer-w);
+  block-size: auto;
+  max-inline-size: none;
+  max-block-size: none;
+  /* Clip, not scroll: the close button counter-translates outside the drawer's box while it slides,
+     and a scroll container would scroll to the focused button (WebKit) and shift it. The content
+     scrolls in `.drawer-scroll` below the head. */
+  overflow: clip;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  translate: var(--drawer-off) 0;
+  transition:
+    translate 300ms cubic-bezier(0.32, 0.72, 0, 1),
+    overlay 300ms allow-discrete,
+    display 300ms allow-discrete;
+}
+
+.drawer-start {
+  inset-inline-start: 0;
+  --drawer-off: calc(-1 * var(--drawer-w));
+}
+.drawer-start:dir(rtl) {
+  --drawer-off: var(--drawer-w);
+}
+.drawer-end {
+  inset-inline-end: 0;
+  --drawer-off: var(--drawer-w);
+}
+.drawer-end:dir(rtl) {
+  --drawer-off: calc(-1 * var(--drawer-w));
+}
+
+.drawer:popover-open {
+  translate: 0 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.drawer-scroll {
+  flex: 1 1 auto;
+  min-block-size: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+@starting-style {
+  .drawer:popover-open {
+    translate: var(--drawer-off) 0;
+  }
+}
+
+.drawer::backdrop {
+  inset-block-start: var(--drawer-top, 0px);
+  background-color: transparent;
+  transition:
+    background-color 300ms cubic-bezier(0.32, 0.72, 0, 1),
+    overlay 300ms allow-discrete,
+    display 300ms allow-discrete;
+}
+
+.drawer:popover-open::backdrop {
+  background-color: rgb(0 0 0 / 0.4);
+}
+
+@starting-style {
+  .drawer:popover-open::backdrop {
+    background-color: transparent;
+  }
+}
+
+/* The first row of a drawer is as tall as the header and has its inline padding, so the close
+   button lands on the pixels of the header button it replaces. */
+.drawer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  block-size: var(--header-h);
+  padding-inline: 1rem;
+}
+
+/* The close button stays still on screen while the drawer slides (it counter-translates by the
+   same amount) and fades in over the header button beneath it. */
+.drawer-close {
+  translate: calc(-1 * var(--drawer-off)) 0;
+  opacity: 0;
+  transition:
+    translate 300ms cubic-bezier(0.32, 0.72, 0, 1),
+    opacity 300ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+.drawer:popover-open .drawer-close {
+  translate: 0 0;
+  opacity: 1;
+}
+
+@starting-style {
+  .drawer:popover-open .drawer-close {
+    translate: calc(-1 * var(--drawer-off)) 0;
+    opacity: 0;
+  }
+}
+
+/* The menu button's three lines (`MenuBurger`), used by the header button and by the close button of
+   the menu drawer so the swap is invisible. Inside an open drawer the top and bottom lines move to
+   the centre and turn +-45 degrees and the middle line fades (same time and easing as the slide). */
+.burger {
+  position: relative;
+  display: block;
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+}
+.burger-line {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-start: calc(50% - 1px);
+  block-size: 2px;
+  border-radius: 1px;
+  background: currentColor;
+  transition:
+    translate 300ms cubic-bezier(0.32, 0.72, 0, 1),
+    rotate 300ms cubic-bezier(0.32, 0.72, 0, 1),
+    opacity 300ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+.burger-line-top {
+  translate: 0 -6px;
+}
+.burger-line-bottom {
+  translate: 0 6px;
+}
+.drawer:popover-open .burger-line-top {
+  translate: 0 0;
+  rotate: 45deg;
+}
+.drawer:popover-open .burger-line-bottom {
+  translate: 0 0;
+  rotate: -45deg;
+}
+.drawer:popover-open .burger-line-mid {
+  opacity: 0;
+}
+
+@starting-style {
+  .drawer:popover-open .burger-line-top {
+    translate: 0 -6px;
+    rotate: 0deg;
+  }
+  .drawer:popover-open .burger-line-bottom {
+    translate: 0 6px;
+    rotate: 0deg;
+  }
+  .drawer:popover-open .burger-line-mid {
+    opacity: 1;
+  }
+}
+
+/* ---- Home row track (storefront.md 7.32): the scrollbar is hidden, the peek and the arrows show
+   that there is more. `scrollbar-width` covers Firefox and current Chromium, the pseudo-element
+   older WebKit. ---- */
+.row-track {
+  scrollbar-width: none;
+}
+.row-track::-webkit-scrollbar {
+  display: none;
+}
+
+/* ---- Home photo sections (storefront.md 3.3, 7.27-7.30, research D4, D5) ---- */
+
+/* Text bands: the dark layer belongs to the text, so it grows with it (any shop name, any line
+   length). The band is as tall as its text; a 48 px feathered edge beyond it fades the layer out
+   (a pseudo-element, so no text sits on the fade). Every band element carries `scrim-band` and one
+   of `scrim-band-top`, `scrim-band-bottom` (the banners have none). */
+.scrim-band {
+  position: relative;
+  background: rgb(0 0 0 / var(--scrim-large));
+}
+
+.scrim-band::after {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+}
+
+/* The hero's top band holds no text: it is only the strip behind the see-through header, as tall as
+   the header plus 140px (research D20). One gradient: at least --scrim-text up to --header-h (the
+   header holds small text), then easing to nothing at the element's own bottom edge, so there is no
+   visible edge. */
+.scrim-band-top {
+  block-size: calc(var(--header-h) + 140px);
+  background: linear-gradient(
+    to bottom,
+    rgb(0 0 0 / 0.62) 0,
+    rgb(0 0 0 / var(--scrim-text)) var(--header-h),
+    rgb(0 0 0 / 0.4) calc(var(--header-h) + 35px),
+    rgb(0 0 0 / 0.22) calc(var(--header-h) + 70px),
+    rgb(0 0 0 / 0.08) calc(var(--header-h) + 105px),
+    rgb(0 0 0 / 0) calc(var(--header-h) + 140px)
+  );
+}
+
+/* The hero's bottom band: feathered at its top edge. */
+.scrim-band-bottom::after {
+  inset-inline: 0;
+  bottom: 100%;
+  height: 48px;
+  background: linear-gradient(to top, rgb(0 0 0 / var(--scrim-large)), transparent);
+}
+
+/* A banner's copy box (no dark layer, owner decision 2026-11-17): full width at the bottom on
+   phones; from 640 px the inline-start half at full height (right in Hebrew, left in English).
+   Plain classes take no `sm:` prefix, hence the media query. */
+@media (min-width: 40rem) {
+  .banner-copy {
+    inline-size: 50%;
+  }
+}
+
+/* A soft shadow for comfort under text on photos; it is not counted for contrast. */
+[data-on-photo] :is(h1, h2, p) {
+  text-shadow: 0 1px 8px rgb(0 0 0 / 0.35);
+}
+
+/* Focus rings: white inside photo sections, the header's own colour in the header. */
+[data-on-photo] :focus-visible {
+  outline-color: var(--color-on-photo);
+}
+
+#site-header :focus-visible {
+  outline-color: currentColor;
+}
+
+/* The search field keeps its own paper fill and ink text over the photo, so its focus ring is the
+   inset forest ring, drawn on the round form (it follows the rounded corners) when anything in it
+   has keyboard focus, in the header and in the menu sheet alike. Unlayered, like the rule above: a
+   Tailwind utility on the field would lose to it (research D20). The inner controls give up their
+   own outline only where `:has` works, so an older browser keeps its default ring. */
+@supports selector(:has(*)) {
+  [data-header-search] :focus-visible {
+    outline: none;
+  }
+
+  [data-header-search]:has(:focus-visible) {
+    outline: 2px solid var(--color-forest);
+    outline-offset: -3px;
+  }
+
+  /* The ring does not move when focus passes from the input to the button, so the button is
+     marked as well (WCAG 2.4.7): a mint fill, the icon stays ink on it. */
+  [data-header-search] button:focus-visible {
+    background-color: var(--color-mint);
+  }
+}
+
+/* The 1 px field outline is a box-shadow (ring-1), which forced colours (Windows high contrast)
+   removes, so the field gets a real border there. */
+@media (forced-colors: active) {
+  [data-header-search] {
+    border: 1px solid CanvasText;
+  }
+}
+
+/* The hero lies under the header: the photo starts right under the free-shipping strip. Until the
+   header's island has run the header is see-through (server-rendered `data-at-top`); without
+   JavaScript it is the frosted white bar and covers the photo's top --header-h. */
+[data-hero] {
+  margin-block-start: calc(-1 * var(--header-h));
+}
+
+/* The white bar (every page, and the home page once scrolled): 85 % paper with a backdrop blur, so
+   blurred shapes of what is behind show through; solid paper where backdrop-filter is missing
+   (owner decision 2026-11-17). Unlayered, so it beats the Tailwind utilities. */
+#site-header {
+  background-color: var(--color-paper);
+  transition:
+    background-color 250ms ease-out,
+    border-color 250ms ease-out,
+    color 250ms ease-out,
+    -webkit-backdrop-filter 250ms ease-out,
+    backdrop-filter 250ms ease-out;
+}
+
+@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+  #site-header {
+    background-color: color-mix(in srgb, var(--color-paper) 85%, transparent);
+    -webkit-backdrop-filter: blur(12px) saturate(1.4);
+    backdrop-filter: blur(12px) saturate(1.4);
+  }
+}
+
+/* Header over the hero (research D5, amended 2026-11-17: a fade in time, not tied to scroll). While
+   the page is scrolled all the way to the top, `HeaderScrollState` keeps `data-at-top` on the
+   header and the home header is see-through; from 1 px of scroll the attribute goes and the
+   transition above fades it to the white bar in 250 ms (and back at the top). No blur at the top:
+   a blur behind a see-through bar would show on the bare photo. Other pages never match. */
+body:has([data-hero]) #site-header[data-at-top] {
+  background-color: transparent;
+  border-color: transparent;
+  color: var(--color-on-photo);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+/* Without JavaScript nothing removes `data-at-top`, so the see-through look would stay at every
+   scroll position, white text on a transparent bar over the page. There the header is always the
+   frosted white bar (readable everywhere; it covers the photo's top --header-h). */
+@media (scripting: none) {
+  body:has([data-hero]) #site-header[data-at-top] {
+    background-color: var(--color-paper);
+    border-color: var(--color-line);
+    color: var(--color-ink);
+  }
+
+  @supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+    body:has([data-hero]) #site-header[data-at-top] {
+      background-color: color-mix(in srgb, var(--color-paper) 85%, transparent);
+      -webkit-backdrop-filter: blur(12px) saturate(1.4);
+      backdrop-filter: blur(12px) saturate(1.4);
+    }
+  }
+}
+
+/* Forced colours: no transparency, no blur, no transition, the same look at the top and below. */
+@media (forced-colors: active) {
+  #site-header,
+  body:has([data-hero]) #site-header[data-at-top] {
+    background-color: Canvas;
+    border-color: var(--color-line);
+    color: CanvasText;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    transition: none;
+  }
 }

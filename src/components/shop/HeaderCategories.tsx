@@ -4,45 +4,80 @@ import type { Locale } from '@/i18n/routing';
 import { fallbackAttrs, pick } from '@/lib/i18n-fallback';
 import type { PublicCategory } from '@/server/catalog/public-queries';
 
-/** From 900 px the header shows this many category links; the rest are in the menu. */
-export const HEADER_CATEGORY_LIMIT = 5;
+const HEADER_LINK =
+  'inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center whitespace-nowrap hover:underline hover:underline-offset-4';
 
-/** Up to five category links for the header pill (shown from 900 px by `Header`). */
-export function HeaderCategoryLinks({
+/**
+ * The links of the header's one row from 1024 px (research D20), in the owner's order: "All pieces",
+ * the header categories (Settings 1 and 2, then the home-row category, picked by
+ * `pickHeaderCategories`), "About", "Shipping & Returns". Every item is `shrink-0`; a category name
+ * sits in an inner span of at most 95 px with an ellipsis, so the link and its focus ring are never
+ * clipped.
+ */
+export async function HeaderNavLinks({
   locale,
   categories,
 }: {
   locale: Locale;
-  categories: PublicCategory[];
+  categories: readonly PublicCategory[];
 }) {
-  return categories.slice(0, HEADER_CATEGORY_LIMIT).map((category) => {
-    const name = pick(locale, category.nameHe, category.nameEn);
-    return (
-      <Link
-        key={category.id}
-        href={`/${locale}/c/${category.slug}`}
-        {...fallbackAttrs(name)}
-        className="inline-flex min-h-11 items-center whitespace-nowrap hover:underline"
-      >
-        {name.text}
-      </Link>
-    );
-  });
+  const t = await getTranslations({ locale, namespace: 'common.nav' });
+  return (
+    <>
+      <li className="shrink-0">
+        <Link href={`/${locale}/shop`} className={HEADER_LINK}>
+          {t('allPieces')}
+        </Link>
+      </li>
+      {categories.map((category) => {
+        const name = pick(locale, category.nameHe, category.nameEn);
+        return (
+          <li key={category.id} className="shrink-0">
+            <Link href={`/${locale}/c/${category.slug}`} className={HEADER_LINK}>
+              <span {...fallbackAttrs(name)} className="block max-w-[95px] truncate">
+                {name.text}
+              </span>
+            </Link>
+          </li>
+        );
+      })}
+      <li className="shrink-0">
+        <Link href={`/${locale}/pages/about`} className={HEADER_LINK}>
+          {t('about')}
+        </Link>
+      </li>
+      <li className="shrink-0">
+        <Link href={`/${locale}/pages/shipping-returns`} className={HEADER_LINK}>
+          {t('shippingReturns')}
+        </Link>
+      </li>
+    </>
+  );
 }
 
-/** Every category as a list at the top of the menu sheet. */
+/**
+ * The menu sheet's "All pieces" and category list. The "Categories" heading shows only when there
+ * are categories; "All pieces" renders either way.
+ */
 export async function MenuCategories({
   locale,
   categories,
 }: {
   locale: Locale;
-  categories: PublicCategory[];
+  categories: readonly PublicCategory[];
 }) {
   const t = await getTranslations({ locale, namespace: 'common.nav' });
   return (
     <div className="mb-2 border-b border-line pb-2">
-      <p className="text-[13px] font-bold text-ink-2">{t('categories')}</p>
+      {categories.length === 0 ? null : (
+        <p className="text-[13px] font-bold text-ink-2">{t('categories')}</p>
+      )}
       <ul className="grid gap-1 text-base font-medium">
+        <li>
+          <Link href={`/${locale}/shop`} className="flex min-h-11 items-center">
+            {t('allPieces')}
+          </Link>
+        </li>
         {categories.map((category) => {
           const name = pick(locale, category.nameHe, category.nameEn);
           return (

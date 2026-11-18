@@ -42,11 +42,7 @@ export function pageUrl(file: string, fill: (segment: string) => string): string
 
 export function apiRouteFiles(): string[] {
   const apiDir = join(REPO_ROOT, 'src/app/api');
-  const wanted = [
-    join(apiDir, 'admin'),
-    join(apiDir, 'auth', 'passkey', 'register'),
-    join(apiDir, 'auth', 'reauth'),
-  ];
+  const wanted = [join(apiDir, 'admin')];
   const files: string[] = [];
   for (const dir of wanted) {
     try {
@@ -58,7 +54,7 @@ export function apiRouteFiles(): string[] {
   return files;
 }
 
-/** `/api/auth/reauth/verify/route.ts` -> `/api/auth/reauth/verify` (dynamic segments filled). */
+/** `/api/admin/images/route.ts` -> `/api/admin/images` (dynamic segments filled). */
 export function routeUrl(file: string, fill: (segment: string) => string): string {
   return pageUrl(file, fill);
 }

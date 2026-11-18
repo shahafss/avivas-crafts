@@ -19,6 +19,8 @@ export default async function globalSetup(): Promise<() => Promise<void>> {
   execFileSync('pnpm', ['db:migrate'], { env, stdio: 'inherit' });
   execFileSync('pnpm', ['db:seed'], { env, stdio: 'inherit' });
 
+  // The mock runs in this process: point it at the E2E user file (see env.ts).
+  process.env.OIDC_MOCK_USER_FILE = serverEnv().OIDC_MOCK_USER_FILE;
   const oidc = await startOidcMock(OIDC_PORT);
   return async () => {
     // Server-side keep-alive connections from the app can hold `stop()` open: do not wait for them.

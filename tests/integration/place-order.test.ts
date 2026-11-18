@@ -30,6 +30,7 @@ import {
   shopSettings,
 } from '@/server/db/schema';
 import { runSeed } from '@/server/db/seed';
+import { formatMoney } from '@/lib/money';
 import { issueFormToken } from '@/server/checkout/form-token';
 import { renderPaymentAttention } from '@/server/email/templates/payment-attention';
 import { renderPaymentMismatch } from '@/server/email/templates/payment-mismatch';
@@ -468,6 +469,10 @@ describe('order emails (contracts/emails.md)', () => {
     expect(body).toContain('העברה בנקאית: בנק 12, סניף 345');
     expect(body).toContain('/pages/shipping-returns');
     expect(body).toContain('/he/order/');
+    for (const part of [mail?.html, mail?.textBody]) {
+      expect(part).toContain('בקישור הזה אפשר לראות בכל רגע איפה ההזמנה עומדת.');
+      expect(part).toContain('למעקב אחרי ההזמנה');
+    }
     // Seller identity (business details of the settings row).
     expect(body).toContain('000000000');
     expect(mail?.html).toContain('lang="he"');
@@ -482,7 +487,21 @@ describe('order emails (contracts/emails.md)', () => {
     expect(body).toContain('about two weeks');
     expect(body).toContain('Bank transfer: bank 12');
     expect(body).toContain('Crocheted doll');
+    expect(body).toContain('/en/order/');
+    for (const part of [mail?.html, mail?.textBody]) {
+      expect(part).toContain('This link shows where your order stands at any time.');
+      expect(part).toContain('Follow your order');
+    }
     expect(mail?.html).toContain('dir="ltr"');
+    expect(mail?.html).toContain('lang="en"');
+    // 005: the total in the English money format, the English policy page, the owner's email in Hebrew.
+    const [order] = await testDb.db.select().from(orders);
+    expect(body).toContain(formatMoney(order?.totalMinor ?? 0, 'ILS', 'en'));
+    expect(body).toContain('http://localhost:3100/en/pages/shipping-returns');
+    const ownerMail = rows.find((row) => row.kind === 'new-order');
+    expect(ownerMail?.orderId).toBe(order?.id);
+    expect(ownerMail?.locale).toBe('he');
+    expect(ownerMail?.html).toContain('lang="he"');
   });
 
   it('a pickup order shows the pickup instructions and no payment instructions once paid for online', async () => {

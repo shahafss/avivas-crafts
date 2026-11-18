@@ -53,6 +53,36 @@ function useFailureText() {
   };
 }
 
+/** The translated error of one field (a name too long shows under its own input), or undefined. */
+function useFieldText() {
+  const t = useTranslations();
+  return (result: Extract<ActionResult, { ok: false }>, field: 'nameHe' | 'nameEn') => {
+    const key = result.fieldErrors?.[field];
+    return key === undefined ? undefined : t(key);
+  };
+}
+
+/**
+ * A refused name save: each name error shows under its own input; any other failure goes to the
+ * form's general error. Shared by the row's edit form and the create form.
+ */
+function useApplyFailure() {
+  const failureText = useFailureText();
+  const fieldText = useFieldText();
+  return (
+    result: Extract<ActionResult, { ok: false }>,
+    setHe: (text: string | undefined) => void,
+    setEn: (text: string | undefined) => void,
+    setOther: (text: string | undefined) => void,
+  ): void => {
+    const he = fieldText(result, 'nameHe');
+    const en = fieldText(result, 'nameEn');
+    setHe(he);
+    setEn(en);
+    if (he === undefined && en === undefined) setOther(failureText(result));
+  };
+}
+
 function CategoryRow({
   item,
   index,
@@ -73,30 +103,34 @@ function CategoryRow({
   onFeedback: (feedback: Feedback) => void;
 }) {
   const t = useTranslations('admin.categories');
-  const failureText = useFailureText();
+  const applyFailure = useApplyFailure();
   const router = useRouter();
   const [nameHe, setNameHe] = useState(item.nameHe);
   const [nameEn, setNameEn] = useState(item.nameEn ?? '');
   const [error, setError] = useState<string | undefined>();
+  const [errorHe, setErrorHe] = useState<string | undefined>();
+  const [errorEn, setErrorEn] = useState<string | undefined>();
   const [saving, startSaving] = useTransition();
 
   function save(event: SyntheticEvent<HTMLFormElement>): void {
     event.preventDefault();
     setError(undefined);
+    setErrorHe(undefined);
+    setErrorEn(undefined);
     startSaving(async () => {
       const result = await actions.updateCategory(item.id, { nameHe, nameEn });
       if (result.ok) {
         onFeedback({ message: t('toast.updated'), tone: 'success' });
         router.refresh();
       } else {
-        setError(failureText(result));
+        applyFailure(result, setErrorHe, setErrorEn, setError);
       }
     });
   }
 
   return (
     <li
-      className="grid gap-3 rounded-card border border-line bg-panel p-4"
+      className="grid gap-3 rounded-card border border-line bg-paper p-4"
       data-testid="category-row"
       data-category-id={item.id}
     >
@@ -107,8 +141,8 @@ function CategoryRow({
           onChange={(event) => {
             setNameHe(event.target.value);
           }}
-          maxLength={80}
-          error={error}
+          maxLength={12}
+          error={errorHe ?? error}
           data-testid="category-name-he"
         />
         <FormField
@@ -117,7 +151,8 @@ function CategoryRow({
           onChange={(event) => {
             setNameEn(event.target.value);
           }}
-          maxLength={80}
+          maxLength={12}
+          error={errorEn}
           dir="ltr"
         />
         <p className="text-sm text-ink-2 sm:col-span-2">
@@ -176,11 +211,13 @@ export function CategoriesManager({
 }) {
   const t = useTranslations('admin.categories');
   const failureText = useFailureText();
+  const applyFailure = useApplyFailure();
   const router = useRouter();
   const hydrated = useHydrated();
   const [newHe, setNewHe] = useState('');
   const [newEn, setNewEn] = useState('');
   const [createError, setCreateError] = useState<string | undefined>();
+  const [createErrorEn, setCreateErrorEn] = useState<string | undefined>();
   const [formError, setFormError] = useState<string | undefined>();
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [deleting, setDeleting] = useState<CategoryItem | null>(null);
@@ -207,6 +244,7 @@ export function CategoriesManager({
   function create(event: SyntheticEvent<HTMLFormElement>): void {
     event.preventDefault();
     setCreateError(undefined);
+    setCreateErrorEn(undefined);
     setFormError(undefined);
     startTransition(async () => {
       const result = await actions.createCategory({ nameHe: newHe, nameEn: newEn });
@@ -216,7 +254,7 @@ export function CategoriesManager({
         setFeedback({ message: t('toast.created'), tone: 'success' });
         router.refresh();
       } else {
-        setCreateError(failureText(result));
+        applyFailure(result, setCreateError, setCreateErrorEn, setCreateError);
       }
     });
   }
@@ -266,7 +304,7 @@ export function CategoriesManager({
     <div className="grid gap-5">
       <form
         onSubmit={create}
-        className="grid gap-3 rounded-card border border-line bg-panel p-4 sm:grid-cols-2"
+        className="grid gap-3 rounded-card border border-line bg-paper p-4 sm:grid-cols-2"
       >
         <h2 className="text-xl font-extrabold sm:col-span-2">{t('add.title')}</h2>
         <FormField
@@ -275,7 +313,7 @@ export function CategoriesManager({
           onChange={(event) => {
             setNewHe(event.target.value);
           }}
-          maxLength={80}
+          maxLength={12}
           error={createError}
           data-testid="category-new-name-he"
         />
@@ -285,7 +323,8 @@ export function CategoriesManager({
           onChange={(event) => {
             setNewEn(event.target.value);
           }}
-          maxLength={80}
+          maxLength={12}
+          error={createErrorEn}
           dir="ltr"
         />
         <div className="sm:col-span-2">

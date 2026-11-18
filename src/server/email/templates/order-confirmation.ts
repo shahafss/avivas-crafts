@@ -12,6 +12,7 @@ import {
   paymentMethodLabel,
   paymentStateLabel,
   pickText,
+  sellerParts,
   totalsParts,
   type OrderEmailData,
 } from './order-parts';
@@ -46,9 +47,7 @@ export function renderOrderConfirmation(data: OrderEmailData): {
   ).trim();
   const orderUrl = `${origin}/${locale}/order/${orderToken}`;
   const policyUrl = `${origin}/${locale}/pages/shipping-returns`;
-  const businessName = pickText(locale, settings.businessNameHe, settings.businessNameEn);
-  const businessAddress = pickText(locale, settings.businessAddressHe, settings.businessAddressEn);
-  const regLine = emailT(locale, 'emails.order.regNumber', { number: settings.businessRegNumber });
+  const seller = sellerParts(settings, locale);
   const quote = emailT(locale, 'emails.order.quoteNumber', { number });
   const cancellation = emailT(locale, 'emails.order.cancellationText');
 
@@ -92,22 +91,17 @@ export function renderOrderConfirmation(data: OrderEmailData): {
   html.push(
     heading(emailT(locale, 'emails.order.cancellation')),
     `<p>${escapeHtml(cancellation)} <a href="${escapeHtml(policyUrl)}">${escapeHtml(policyUrl)}</a></p>`,
-    heading(emailT(locale, 'emails.order.seller')),
-    `<p><bdi>${escapeHtml(businessName)}</bdi><br>${escapeHtml(regLine)}<br><bdi>${escapeHtml(businessAddress)}</bdi><br><bdi>${escapeHtml(settings.businessPhone)}</bdi><br><bdi>${escapeHtml(settings.businessEmail)}</bdi></p>`,
-    `<p><a href="${escapeHtml(orderUrl)}">${escapeHtml(emailT(locale, 'emails.order.viewOrder'))}</a></p>`,
+    seller.html,
+    `<p>${escapeHtml(emailT(locale, 'emails.order.followIntro'))}<br><a href="${escapeHtml(orderUrl)}">${escapeHtml(emailT(locale, 'emails.order.viewOrder'))}</a></p>`,
   );
   text.push(
     '',
     emailT(locale, 'emails.order.cancellation'),
     `${cancellation} ${policyUrl}`,
     '',
-    emailT(locale, 'emails.order.seller'),
-    businessName,
-    regLine,
-    businessAddress,
-    settings.businessPhone,
-    settings.businessEmail,
+    seller.text,
     '',
+    emailT(locale, 'emails.order.followIntro'),
     `${emailT(locale, 'emails.order.viewOrder')}: ${orderUrl}`,
   );
 

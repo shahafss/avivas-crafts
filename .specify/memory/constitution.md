@@ -1,16 +1,27 @@
 <!--
 Sync Impact Report
-- Version change: 1.2.0 → 1.3.0 (MINOR: principle IV guidance relaxed to fit a small family shop;
-  maintainer decision 2026-11-08)
-- Modified principles:
-  - IV. Security by Design: payment confirmation may also come from the shop's authenticated
-    server-to-server query to the provider, or from the owner marking an order paid by hand;
-    admin factors need not be fully independent (synced passkeys are fine); least privilege applies
-    where the platform makes it simple (one database account for the app is fine); logs exclude
-    customers' personal data and secrets, while recording which admin acted is fine
-- Added principles: none
+- Version change: 2.0.0 → 2.0.1 (PATCH: wording; owner decision 2026-11-12)
+- Modified principles: VI. Tested Critical Paths: "admin authentication (including two-factor),
+  access control on every admin route" → "admin authentication and access control on every admin
+  route" (two-factor no longer exists since principle IV v2.0.0 / feature 004)
+- Added/removed sections: none
+- Templates: no template edits required
+- Deferred TODOs: none
+
+Previous report (2.0.0):
+- Version change: 1.4.1 → 2.0.0 (MAJOR: principle IV redefined; owner decision 2026-11-11)
+- Modified principles: IV. Security by Design (title kept)
+  - Admin access: Google sign-in only; the passkey second factor is no longer required; admins
+    are users with role `admin`, set by the owner; no admin management screens, recovery codes or
+    approval steps required
+  - Baseline: OWASP Top 10 only; ASVS Level 2 is no longer a hard minimum
+  - Intro and rationale reworded to fit a two-admin family shop
+- Added sections: none
 - Removed sections: none
 - Templates: plan/spec/tasks templates read this file at runtime; no template edits required
+- Follow-up: existing passkey, recovery-code and setup-link code (spec 001) and the passkey
+  re-check before export/anonymise (spec 003) now exceed the principle; removing them is roadmap
+  item 004. Frozen spec 001 is left as the historical record.
 - Deferred TODOs: none
 -->
 
@@ -53,21 +64,22 @@ Rationale: most shoppers arrive from a phone via a shared link; every extra step
 
 ### IV. Security by Design (NON-NEGOTIABLE)
 
-The shop is held to a high security standard regardless of its small size.
+The shop is secured to a level that fits a small family shop: solid web basics, no card data,
+and no machinery beyond what two admins need.
 
-- **Baseline**: the OWASP Application Security Verification Standard (ASVS) Level 2 and the
-  OWASP Top 10 are the minimum bar. Plans MUST state how each relevant area is met.
+- **Baseline**: the OWASP Top 10 is the minimum bar. Plans MUST state how each relevant item is
+  met. Formal standards such as OWASP ASVS are guidance, not requirements.
 - **Payments**: the shop MUST NOT receive, store, process, or log payment card details. Card
   entry happens only on the payment provider's hosted page or hosted fields. An order is marked
   paid only from the provider's side — a signature-verified confirmation, or the shop's own
   authenticated server-to-server status query to the provider — or by the owner marking it paid by
   hand; never from the browser.
-- **Admin access**: admin sign-in MUST require two factors, at least one of them
-  phishing-resistant (a passkey held by the shop). The other may be an approved identity provider
-  account (e.g., Google) with that provider's 2-step verification on, used instead of a shop
-  password. A passkey synced through that same provider's password manager is acceptable. If the shop ever stores passwords, it stores them only as modern salted hashes.
-  Sign-in is rate-limited and limited to an explicit list of approved admins. Sessions expire
-  after inactivity and can be revoked.
+- **Admin access**: admins sign in with an approved identity provider account (Google), whose
+  own 2-step verification protects it; the shop holds no passwords, passkeys or other second
+  factor. An admin is a user whose role is `admin`, set by the owner directly in the database or
+  deployment; no screens to manage admins, recovery codes or approval steps are required. Sign-in
+  is rate-limited and admitted only for admin users. Sessions expire after inactivity and can be
+  revoked (the owner may do so directly in the database).
 - **Web hardening**: HTTPS everywhere with HSTS; a strict Content Security Policy; secure,
   HttpOnly, SameSite cookies; CSRF protection on every state-changing request; server-side
   validation of all input and context-correct output encoding; no raw query building.
@@ -84,8 +96,10 @@ The shop is held to a high security standard regardless of its small size.
   confirmations) are logged without customers' personal data or secrets (recording which admin acted is fine). Data is backed up automatically,
   encrypted, and a restore is tested before launch.
 
-Rationale: a breach, a payment fraud, or a defaced shop would be costly and damaging for a
-small family business, and there is no security team to react after the fact.
+Rationale: a breach, a payment fraud, or a defaced shop would be costly for a small family
+business, so the basics are non-negotiable; but the shop has two admins who also own the code,
+the settings and the deployment, so access management stays as simple as signing in with Google
+(owner decision 2026-11-11).
 
 ### V. Simplicity and Low Running Cost
 
@@ -103,7 +117,7 @@ Rationale: there is no operations team; the system must run cheaply and quietly 
 
 - Automated tests MUST cover the critical paths: placing an order (cart → checkout →
   payment → confirmation), payment confirmation handling, admin product create/edit/delete,
-  admin authentication (including two-factor), access control on every admin route, cookie
+  admin authentication and access control on every admin route, cookie
   consent behavior, and language switching.
 - A feature is not done until its critical-path tests pass.
 
@@ -155,14 +169,28 @@ compliance is far cheaper to build in than to retrofit.
 
 ## Development Workflow
 
-- Work follows the Spec Kit flow: specify → plan → tasks → implement → converge, with the
-  project maintainer approving each gate.
+- The product vision is `PRODUCT.md`; the order of work is `docs/roadmap.md`. Each roadmap item
+  becomes its own Spec Kit feature when work on it starts (`/speckit-specify`), on a branch
+  `NNN-short-name` created from an up-to-date `dev`. Each feature follows specify → plan → tasks →
+  implement → converge, with the project maintainer approving each gate.
+- Each feature's plan writes its own `data-model.md` and `contracts/` in its spec folder, covering
+  what that feature adds or changes; the code (the Drizzle schema in `src/server/db/schema/`) is
+  the source of truth for the whole data model. `docs/design/storefront.md` is the shop's design
+  system and is binding for every feature: a feature that changes the design updates it, and
+  plans and tasks cite the sections they use. `specs/001-online-crafts-shop` is frozen as the
+  record of the MVP and is not edited.
 - Every implementation batch is reviewed against the spec, plan, and this constitution before
   it is considered complete; violations of principles IV or VII are always Critical.
 - Before public launch: an automated security scan of the running site shows no High or
   Critical findings, the security headers and cookie behavior are verified, and the legal texts
   are reviewed by a qualified legal professional (the project provides drafts, not legal advice).
-- The maintainer commits changes after testing; automated tooling does not commit on its own.
+- Branches: `main` is production and `dev` is integration. A feature branch merges into `dev`
+  through a pull request whose CI check passes (squash merge). `dev` is released to `main` through a
+  pull request with a merge commit, and the release is tagged with its version. Nothing is pushed
+  directly to `dev` or `main`, and neither is ever force-pushed or rewritten.
+- The maintainer creates branches other than Spec Kit feature branches, commits after testing,
+  pushes, and opens and merges pull requests. Automated tooling, including AI agents, does not
+  commit, push, or open or merge pull requests.
 
 ## Governance
 
@@ -173,4 +201,4 @@ compliance is far cheaper to build in than to retrofit.
 - Versioning follows semantic versioning: MAJOR for removing or redefining a principle, MINOR for
   adding a principle or materially expanding guidance, PATCH for wording fixes.
 
-**Version**: 1.3.0 | **Ratified**: 2026-10-31 | **Last Amended**: 2026-11-08
+**Version**: 2.0.1 | **Ratified**: 2026-10-31 | **Last Amended**: 2026-11-12

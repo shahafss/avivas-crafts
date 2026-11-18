@@ -3,9 +3,10 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { useCallback, useState, type ReactNode, type SyntheticEvent } from 'react';
+import { useCallback, useEffect, useState, type ReactNode, type SyntheticEvent } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Checkbox } from '@/components/ui/Checkbox';
+import { ErrorSummary } from '@/components/ui/ErrorSummary';
 import { FormField } from '@/components/ui/FormField';
 import { Notice } from '@/components/ui/Notice';
 import { Toast } from '@/components/ui/Toast';
@@ -31,7 +32,18 @@ export interface SettingsData {
   businessPhone: string;
   businessAddressHe: string;
   businessAddressEn: string | null;
+  socialFacebookUrl: string | null;
+  socialInstagramUrl: string | null;
+  socialTiktokUrl: string | null;
+  homeCategoryId: string | null;
+  headerCategory1Id: string | null;
+  headerCategory2Id: string | null;
   notificationEmails: string[];
+}
+
+export interface CategoryOption {
+  id: string;
+  nameHe: string;
 }
 
 export interface ZoneData {
@@ -59,7 +71,7 @@ interface Feedback {
   tone: 'success' | 'error';
 }
 
-const CARD = 'grid gap-4 rounded-card border border-line bg-panel p-4 sm:p-5';
+const CARD = 'grid gap-4 rounded-card border border-line bg-paper p-4 sm:p-5';
 
 function Section({
   title,
@@ -233,17 +245,22 @@ function ShopNameSection({
 
 function PaymentSection({
   settings,
+  cardPaymentAvailable,
   actions,
   notify,
 }: {
   settings: SettingsData;
+  cardPaymentAvailable: boolean;
   actions: SettingsActions;
   notify: (message: string, tone: 'success' | 'error') => void;
 }) {
   const t = useTranslations('admin.settings');
-  const [online, setOnline] = useState(settings.onlinePaymentEnabled);
-  const [offline, setOffline] = useState(settings.offlinePaymentEnabled);
-  // Until the Markdown editor of the content screens exists, plain text.
+  // With no card provider the shop takes offline payment only (contracts/payment-mode.md): the
+  // stored flags are not shown, and the values below are what a save submits.
+  const [online, setOnline] = useState(cardPaymentAvailable && settings.onlinePaymentEnabled);
+  const [offline, setOffline] = useState(!cardPaymentAvailable || settings.offlinePaymentEnabled);
+  // Plain text on purpose (003 research R1): these texts are shown as plain text in the checkout,
+  // on the order page and in emails, so the Markdown editor of the content screens is not used.
   const [instructionsHe, setInstructionsHe] = useState(settings.offlineInstructionsHe ?? '');
   const [instructionsEn, setInstructionsEn] = useState(settings.offlineInstructionsEn ?? '');
   const { saving, errors, formError, save } = useSaver(notify);
@@ -273,6 +290,8 @@ function PaymentSection({
         <Checkbox
           label={t('payment.online')}
           checked={online}
+          disabled={!cardPaymentAvailable}
+          hint={cardPaymentAvailable ? undefined : t('payment.cardNotSetUp')}
           onChange={(event) => {
             setOnline(event.target.checked);
           }}
@@ -281,6 +300,8 @@ function PaymentSection({
         <Checkbox
           label={t('payment.offline')}
           checked={offline}
+          disabled={!cardPaymentAvailable}
+          hint={cardPaymentAvailable ? undefined : t('payment.offlineMustStayOn')}
           onChange={(event) => {
             setOffline(event.target.checked);
           }}
@@ -566,6 +587,203 @@ function BusinessSection({
   );
 }
 
+const SOCIAL_PLATFORMS = [
+  { platform: 'instagram', key: 'socialInstagramUrl' },
+  { platform: 'facebook', key: 'socialFacebookUrl' },
+  { platform: 'tiktok', key: 'socialTiktokUrl' },
+] as const;
+
+function SocialSection({
+  settings,
+  actions,
+  notify,
+}: {
+  settings: SettingsData;
+  actions: SettingsActions;
+  notify: (message: string, tone: 'success' | 'error') => void;
+}) {
+  const t = useTranslations('admin.settings');
+  const [values, setValues] = useState({
+    socialInstagramUrl: settings.socialInstagramUrl ?? '',
+    socialFacebookUrl: settings.socialFacebookUrl ?? '',
+    socialTiktokUrl: settings.socialTiktokUrl ?? '',
+  });
+  const { saving, errors, formError, save } = useSaver(notify);
+  const summaryItems = SOCIAL_PLATFORMS.flatMap(({ platform, key }) => {
+    const message = errors[key];
+    return message === undefined ? [] : [{ fieldId: `settings-social-${platform}`, message }];
+  });
+  const showSummary = summaryItems.length > 1;
+  // A failed save with several problems moves focus to the summary, so they are read out first.
+  useEffect(() => {
+    if (showSummary) document.getElementById('settings-social-error-summary')?.focus();
+  }, [showSummary, errors]);
+  return (
+    <Section
+      title={t('social.title')}
+      hint={t('social.hint')}
+      saving={saving}
+      saveLabel={t('save')}
+      data-testid="settings-social"
+      onSubmit={(event) => {
+        event.preventDefault();
+        void save(() => actions.updateSettings(values), t('toast.saved'));
+      }}
+    >
+      {showSummary ? (
+        <ErrorSummary
+          id="settings-social-error-summary"
+          heading={t('errorSummary')}
+          items={summaryItems}
+          data-testid="settings-social-error-summary"
+          onSelect={(fieldId) => {
+            document.getElementById(fieldId)?.focus();
+          }}
+        />
+      ) : null}
+      <FormAlert message={formError} />
+      <div className="grid gap-4 sm:grid-cols-2">
+        {SOCIAL_PLATFORMS.map(({ platform, key }) => (
+          <FormField
+            key={key}
+            id={`settings-social-${platform}`}
+            label={t(`social.${platform}`)}
+            hint={t(`social.example.${platform}`)}
+            value={values[key]}
+            maxLength={300}
+            ltr
+            inputMode="url"
+            autoComplete="url"
+            onChange={(event) => {
+              setValues((previous) => ({ ...previous, [key]: event.target.value }));
+            }}
+            error={errors[key]}
+            data-testid={`settings-${key}`}
+          />
+        ))}
+      </div>
+    </Section>
+  );
+}
+
+function HomeSection({
+  settings,
+  categories,
+  actions,
+  notify,
+}: {
+  settings: SettingsData;
+  categories: CategoryOption[];
+  actions: SettingsActions;
+  notify: (message: string, tone: 'success' | 'error') => void;
+}) {
+  const t = useTranslations('admin.settings');
+  const [categoryId, setCategoryId] = useState(settings.homeCategoryId ?? '');
+  const [header1, setHeader1] = useState(settings.headerCategory1Id ?? '');
+  const [header2, setHeader2] = useState(settings.headerCategory2Id ?? '');
+  const { saving, errors, formError, save } = useSaver(notify);
+  const summaryItems = [
+    { fieldId: 'settings-home-category', message: errors.homeCategoryId },
+    { fieldId: 'settings-home-header1', message: errors.headerCategory1Id },
+    { fieldId: 'settings-home-header2', message: errors.headerCategory2Id },
+  ].flatMap(({ fieldId, message }) => (message === undefined ? [] : [{ fieldId, message }]));
+  const showSummary = summaryItems.length > 1;
+  // A failed save with several problems moves focus to the summary, so they are read out first.
+  useEffect(() => {
+    if (showSummary) document.getElementById('settings-home-error-summary')?.focus();
+  }, [showSummary, errors]);
+  return (
+    <Section
+      title={t('home.title')}
+      hint={t('home.hint')}
+      saving={saving}
+      saveLabel={t('save')}
+      data-testid="settings-home"
+      onSubmit={(event) => {
+        event.preventDefault();
+        void save(
+          () =>
+            actions.updateSettings({
+              homeCategoryId: categoryId === '' ? null : categoryId,
+              headerCategory1Id: header1 === '' ? null : header1,
+              headerCategory2Id: header2 === '' ? null : header2,
+            }),
+          t('toast.saved'),
+        );
+      }}
+    >
+      {showSummary ? (
+        <ErrorSummary
+          id="settings-home-error-summary"
+          heading={t('errorSummary')}
+          items={summaryItems}
+          data-testid="settings-home-error-summary"
+          onSelect={(fieldId) => {
+            document.getElementById(fieldId)?.focus();
+          }}
+        />
+      ) : null}
+      <FormAlert message={formError} />
+      <FormField
+        as="select"
+        id="settings-home-category"
+        label={t('home.label')}
+        value={categoryId}
+        onChange={(event) => {
+          setCategoryId(event.target.value);
+        }}
+        error={errors.homeCategoryId}
+        data-testid="settings-homeCategoryId"
+      >
+        <option value="">{t('home.none')}</option>
+        {categories.map((option) => (
+          <option key={option.id} value={option.id}>
+            {option.nameHe}
+          </option>
+        ))}
+      </FormField>
+      <FormField
+        as="select"
+        id="settings-home-header1"
+        hint={t('home.headerHint')}
+        label={t('home.header1')}
+        value={header1}
+        onChange={(event) => {
+          setHeader1(event.target.value);
+        }}
+        error={errors.headerCategory1Id}
+        data-testid="settings-headerCategory1Id"
+      >
+        <option value="">{t('home.headerNone')}</option>
+        {categories.map((option) => (
+          <option key={option.id} value={option.id}>
+            {option.nameHe}
+          </option>
+        ))}
+      </FormField>
+      <FormField
+        as="select"
+        id="settings-home-header2"
+        aria-describedby="settings-home-header1-hint"
+        label={t('home.header2')}
+        value={header2}
+        onChange={(event) => {
+          setHeader2(event.target.value);
+        }}
+        error={errors.headerCategory2Id}
+        data-testid="settings-headerCategory2Id"
+      >
+        <option value="">{t('home.headerNone')}</option>
+        {categories.map((option) => (
+          <option key={option.id} value={option.id}>
+            {option.nameHe}
+          </option>
+        ))}
+      </FormField>
+    </Section>
+  );
+}
+
 function NotificationsSection({
   settings,
   actions,
@@ -631,12 +849,16 @@ function NotificationsSection({
 export function SettingsManager({
   settings,
   zones,
+  categories,
   usdBlockers,
+  cardPaymentAvailable,
   actions,
 }: {
   settings: SettingsData;
   zones: ZoneData[];
+  categories: CategoryOption[];
   usdBlockers: UsdBlocker[];
+  cardPaymentAvailable: boolean;
   actions: SettingsActions;
 }) {
   const t = useTranslations('admin.settings');
@@ -654,7 +876,12 @@ export function SettingsManager({
   return (
     <div className="grid gap-5" data-testid="settings-ready">
       <ShopNameSection settings={settings} actions={actions} notify={notify} />
-      <PaymentSection settings={settings} actions={actions} notify={notify} />
+      <PaymentSection
+        settings={settings}
+        cardPaymentAvailable={cardPaymentAvailable}
+        actions={actions}
+        notify={notify}
+      />
       <PickupSection settings={settings} actions={actions} notify={notify} />
       <section className="grid gap-4">
         <div>
@@ -672,6 +899,14 @@ export function SettingsManager({
         ))}
       </section>
       <BusinessSection settings={settings} actions={actions} notify={notify} />
+      <SocialSection
+        // Remounts after a save, so each field shows the stored (normalised) address.
+        key={`${settings.socialInstagramUrl ?? ''}|${settings.socialFacebookUrl ?? ''}|${settings.socialTiktokUrl ?? ''}`}
+        settings={settings}
+        actions={actions}
+        notify={notify}
+      />
+      <HomeSection settings={settings} categories={categories} actions={actions} notify={notify} />
       <NotificationsSection settings={settings} actions={actions} notify={notify} />
       <Toast
         message={feedback?.message ?? null}

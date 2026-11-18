@@ -1,14 +1,19 @@
+import { readFileSync } from 'node:fs';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { eq, sql } from 'drizzle-orm';
 import { createTestDb, type TestDbHandle } from '../setup/pglite';
 import {
   adminUser,
   category,
+  contentPage,
+  contentPageVersion,
   orderLine,
   orders,
   product,
+  productCategory,
   productImage,
   shippingZone,
+  shopSettings,
 } from '@/server/db/schema';
 
 let testDb: TestDbHandle;
@@ -73,9 +78,12 @@ async function makeCategory(name = 'c', sortOrder = 0): Promise<string> {
 async function makeProduct(categoryId: string | null = null, slug = 'p-1'): Promise<string> {
   const [row] = await testDb.db
     .insert(product)
-    .values({ slug, nameHe: 'מוצר', categoryId })
+    .values({ slug, nameHe: 'מוצר' })
     .returning({ id: product.id });
-  return must(row).id;
+  const productId = must(row).id;
+  if (categoryId !== null)
+    await testDb.db.insert(productCategory).values({ productId, categoryId });
+  return productId;
 }
 
 function image(productId: string, position: number | null, key: string) {
@@ -236,5 +244,139 @@ describe('check constraints', () => {
     }
     await testDb.db.insert(category).values({ slug: 'ok-slug-1', nameHe: 'ק', sortOrder: 50 });
     await testDb.db.insert(product).values({ slug: 'ok-slug-1', nameHe: 'מ' });
+  });
+});
+
+describe('shop_settings social link checks (007 US3)', () => {
+  beforeEach(async () => {
+    await testDb.db.insert(shopSettings).values({
+      shopNameHe: 'חנות',
+      businessNameHe: 'עסק',
+      businessRegNumber: '1',
+      businessEmail: 'a@example.test',
+      businessPhone: '1',
+      businessAddressHe: 'כתובת',
+      notificationEmails: ['a@example.test'],
+    });
+  });
+
+  const columns = ['social_facebook_url', 'social_instagram_url', 'social_tiktok_url'] as const;
+
+  it.each(columns)('%s rejects a non-https value and one over 300 characters', async (column) => {
+    for (const value of ['http://x', `https://${'a'.repeat(293)}`]) {
+      await expect(
+        testDb.db.execute(
+          sql`UPDATE shop_settings SET ${sql.identifier(column)} = ${value} WHERE id = 1`,
+        ),
+      ).rejects.toThrow();
+    }
+    await testDb.db.execute(
+      sql`UPDATE shop_settings SET ${sql.identifier(column)} = ${'https://x.test/a'} WHERE id = 1`,
+    );
+  });
+});
+
+describe('content_page_version', () => {
+  const row = (overrides: Partial<typeof contentPageVersion.$inferInsert> = {}) => ({
+    slug: 'terms',
+    version: 1,
+    titleHe: 'תקנון',
+    bodyHe: 'טקסט',
+    ...overrides,
+  });
+
+  async function seedPage(slug = 'terms'): Promise<void> {
+    await testDb.db.insert(contentPage).values({ slug, titleHe: 'תקנון', bodyHe: 'טקסט' });
+  }
+
+  it('accepts terms and privacy versions and rejects other slugs', async () => {
+    await seedPage('terms');
+    await seedPage('about');
+    await testDb.db.insert(contentPageVersion).values(row());
+    await expect(
+      testDb.db.insert(contentPageVersion).values(row({ slug: 'about' })),
+    ).rejects.toThrow();
+  });
+
+  it('rejects version 0, a duplicate (slug, version) and a missing content page', async () => {
+    await seedPage('terms');
+    await expect(
+      testDb.db.insert(contentPageVersion).values(row({ version: 0 })),
+    ).rejects.toThrow();
+    await testDb.db.insert(contentPageVersion).values(row());
+    await expect(testDb.db.insert(contentPageVersion).values(row())).rejects.toThrow();
+    await expect(
+      testDb.db.insert(contentPageVersion).values(row({ slug: 'privacy' })),
+    ).rejects.toThrow();
+  });
+
+  it('limits bodies to 50,000 characters', async () => {
+    await seedPage('terms');
+    await expect(
+      testDb.db.insert(contentPageVersion).values(row({ bodyHe: 'x'.repeat(50_001) })),
+    ).rejects.toThrow();
+    await expect(
+      testDb.db.insert(contentPageVersion).values(row({ bodyEn: 'x'.repeat(50_001) })),
+    ).rejects.toThrow();
+    await testDb.db.insert(contentPageVersion).values(row({ bodyHe: 'x'.repeat(50_000) }));
+  });
+
+  it('restricts deleting a content page that has versions', async () => {
+    await seedPage('terms');
+    await testDb.db.insert(contentPageVersion).values(row());
+    await expect(
+      testDb.db.delete(contentPage).where(eq(contentPage.slug, 'terms')),
+    ).rejects.toThrow();
+  });
+
+  it('migration 0002 back-fills terms and privacy only, once', async () => {
+    const backfill = readFileSync(
+      new URL('../../src/server/db/migrations/0002_content_page_version.sql', import.meta.url),
+      'utf8',
+    )
+      .split('--> statement-breakpoint')
+      .at(-1);
+    if (backfill === undefined) throw new Error('back-fill statement missing');
+    await testDb.db.insert(contentPage).values([
+      { slug: 'terms', titleHe: 'תקנון', bodyHe: 'א', version: 3 },
+      { slug: 'privacy', titleHe: 'פרטיות', bodyHe: 'ב', version: 2 },
+      { slug: 'about', titleHe: 'אודות', bodyHe: 'ג' },
+    ]);
+    await testDb.client.exec(backfill);
+    await testDb.client.exec(backfill); // ON CONFLICT DO NOTHING: running it again adds nothing
+    const rows = await testDb.db
+      .select({ slug: contentPageVersion.slug, version: contentPageVersion.version })
+      .from(contentPageVersion)
+      .orderBy(contentPageVersion.slug);
+    expect(rows).toEqual([
+      { slug: 'privacy', version: 2 },
+      { slug: 'terms', version: 3 },
+    ]);
+  });
+});
+
+describe('shop_settings header categories (007 FR-039)', () => {
+  it('sets the setting to null when its category is deleted', async () => {
+    await testDb.db.insert(shopSettings).values({
+      shopNameHe: 'חנות',
+      businessNameHe: 'עסק',
+      businessRegNumber: '1',
+      businessEmail: 'a@example.test',
+      businessPhone: '1',
+      businessAddressHe: 'כתובת',
+      notificationEmails: ['a@example.test'],
+    });
+    const one = await makeCategory();
+    const [two] = await testDb.db
+      .insert(category)
+      .values({ slug: 'second-cat', nameHe: 'ב', sortOrder: 60 })
+      .returning({ id: category.id });
+    const twoId = must(two).id;
+    await testDb.db.execute(
+      sql`UPDATE shop_settings SET header_category_1_id = ${one}, header_category_2_id = ${twoId} WHERE id = 1`,
+    );
+    await testDb.db.delete(category).where(eq(category.id, one));
+    const [row] = await testDb.db.select().from(shopSettings);
+    expect(row).toMatchObject({ headerCategory1Id: null, headerCategory2Id: twoId });
   });
 });

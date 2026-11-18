@@ -1,9 +1,13 @@
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import type { ReactNode } from 'react';
-import { Icon } from '@/components/ui/Icon';
 import { IconButton } from '@/components/ui/IconButton';
 import type { Locale } from '@/i18n/routing';
+import type { PublicCategory } from '@/server/catalog/public-queries';
+import { HeaderNavLinks, MenuCategories } from './HeaderCategories';
+import { HeaderScrollState } from './HeaderScrollState';
+import { HeaderSearch } from './HeaderSearch';
+import { MenuBurger } from './MenuBurger';
 
 const MENU_ID = 'site-menu';
 
@@ -11,92 +15,111 @@ export interface HeaderProps {
   locale: Locale;
   /** The shop name; `lang="he"` when an English page falls back to the Hebrew name. */
   brand: { text: string; lang?: 'he' };
-  /** Desktop category links (up to 5), added by the category task. */
-  categoryLinks?: ReactNode;
-  /** Categories inside the menu sheet, added by the category task. */
-  menuCategories?: ReactNode;
-  /** `CartLink` island (T072). */
-  cartLink?: ReactNode;
-  /** `LanguageSwitch` island (T097), compact variant. */
-  languageSwitch?: ReactNode;
-  /** `LanguageSwitch` island in full words, inside the menu. */
-  menuLanguageSwitch?: ReactNode;
-  /** More categories than the header shows: the menu button then stays visible from 900 px. */
-  menuOnDesktop?: boolean;
+  /** The categories in the one-row header: `pickHeaderCategories(settings, categories)`. */
+  headerCategories: readonly PublicCategory[];
+  /** Every category with a published piece, for the menu drawer. */
+  menuCategories: readonly PublicCategory[];
+  /** `CartLink` island. */
+  cartLink: ReactNode;
+  /** `LanguageSwitch` island in full words, inside the menu drawer. */
+  menuLanguageSwitch: ReactNode;
 }
 
-/** Sticky floating pill: brand, category links, language switch, search, cart, menu. */
+/**
+ * Full-width sticky bar (storefront.md 7.18, research D20). Below 1024 px: menu button, brand,
+ * cart. From 1024 px one row in reading order: site links, brand, search field, cart. The menu
+ * drawer is a native popover sliding in from the reading start (`.drawer` in `globals.css`).
+ */
 export async function Header({
   locale,
   brand,
-  categoryLinks,
+  headerCategories,
   menuCategories,
   cartLink,
-  languageSwitch,
   menuLanguageSwitch,
-  menuOnDesktop = false,
 }: HeaderProps) {
   const t = await getTranslations({ locale, namespace: 'common' });
   const base = `/${locale}`;
 
   return (
-    <div className="sticky top-0 z-header bg-ground px-3 py-2.5 lg:px-6 lg:py-4">
-      <header className="mx-auto flex max-w-[1240px] items-center justify-between gap-3 rounded-pill bg-panel py-2 ps-4 pe-2.5 shadow-float">
-        <Link
-          href={base}
-          lang={brand.lang}
-          className="inline-flex min-h-11 items-center text-[clamp(16px,4.6vw,20px)] font-extrabold tracking-tight whitespace-nowrap"
-        >
-          {brand.text}
-        </Link>
-        {categoryLinks === undefined ? null : (
-          <div className="hidden flex-1 items-center gap-5 ps-6 text-[15px] font-medium lg:flex">
-            {categoryLinks}
+    <>
+      <header
+        id="site-header"
+        data-testid="site-header"
+        data-at-top=""
+        className="sticky top-0 z-header h-(--header-h) border-b border-line text-ink"
+      >
+        <div className="mx-auto grid h-full max-w-[1240px] grid-cols-[1fr_minmax(0,auto)_1fr] items-center px-4 nav:flex nav:gap-4">
+          <div className="flex items-center nav:hidden">
+            <IconButton popoverTarget={MENU_ID} label={t('menu')}>
+              <MenuBurger />
+            </IconButton>
           </div>
-        )}
-        <div className="flex items-center">
-          {languageSwitch}
-          <IconButton href={`${base}/search`} label={t('search')}>
-            <Icon name="search" />
-          </IconButton>
-          {cartLink}
-          <IconButton
-            popoverTarget={MENU_ID}
-            label={t('menu')}
-            className={menuOnDesktop ? undefined : 'lg:hidden'}
+          <nav aria-label={t('menuNav')} className="hidden shrink-0 nav:block">
+            <ul className="flex items-center gap-3 text-[15px]">
+              <HeaderNavLinks locale={locale} categories={headerCategories} />
+            </ul>
+          </nav>
+          <Link
+            href={base}
+            lang={brand.lang}
+            data-testid="header-brand"
+            className="inline-flex min-h-11 min-w-0 items-center text-[clamp(19px,4.6vw,22px)] font-bold whitespace-nowrap nav:mx-auto nav:max-w-40"
           >
-            <Icon name="menu" />
-          </IconButton>
+            <span className="truncate">{brand.text}</span>
+          </Link>
+          <div className="hidden shrink-0 nav:block">
+            <HeaderSearch locale={locale} variant="header" />
+          </div>
+          <div className="flex shrink-0 items-center justify-end">{cartLink}</div>
         </div>
       </header>
-      <nav
+      <HeaderScrollState />
+      <div
         id={MENU_ID}
+        data-testid="site-menu"
         popover="auto"
+        role="dialog"
+        aria-modal="true"
         aria-label={t('menuNav')}
-        className="m-0 hidden w-[min(22rem,calc(100vw-1.5rem))] inset-auto end-3 top-[76px] rounded-card bg-panel p-4 text-ink shadow-float popover-open:block"
+        className="drawer drawer-start nav:hidden"
       >
-        {menuCategories}
-        <ul className="grid gap-1 text-base font-medium">
-          <li>
-            <Link href={`${base}/pages/about`} className="flex min-h-11 items-center">
-              {t('nav.about')}
-            </Link>
-          </li>
-          <li>
-            <Link href={`${base}/pages/shipping-returns`} className="flex min-h-11 items-center">
-              {t('nav.shippingReturns')}
-            </Link>
-          </li>
-          <li>
-            <Link href={`${base}/contact`} className="flex min-h-11 items-center">
-              {t('nav.contact')}
-            </Link>
-          </li>
-        </ul>
-        {menuLanguageSwitch === undefined ? null : (
+        <div className="drawer-head">
+          <button
+            type="button"
+            popoverTarget={MENU_ID}
+            popoverTargetAction="hide"
+            autoFocus
+            data-testid="menu-close"
+            aria-label={t('menuClose')}
+            className="drawer-close relative inline-grid size-11 shrink-0 place-items-center rounded-pill hover:bg-current/10"
+          >
+            <MenuBurger />
+          </button>
+        </div>
+        <nav className="drawer-scroll px-4 pb-6">
+          <HeaderSearch locale={locale} variant="menu" />
+          <MenuCategories locale={locale} categories={menuCategories} />
+          <ul className="grid gap-1 text-base font-medium">
+            <li>
+              <Link href={`${base}/pages/about`} className="flex min-h-11 items-center">
+                {t('nav.about')}
+              </Link>
+            </li>
+            <li>
+              <Link href={`${base}/pages/shipping-returns`} className="flex min-h-11 items-center">
+                {t('nav.shippingReturns')}
+              </Link>
+            </li>
+            <li>
+              <Link href={`${base}/contact`} className="flex min-h-11 items-center">
+                {t('nav.contact')}
+              </Link>
+            </li>
+          </ul>
           <div className="mt-2 border-t border-line pt-2">{menuLanguageSwitch}</div>
-        )}
-      </nav>
-    </div>
+        </nav>
+      </div>
+    </>
   );
 }

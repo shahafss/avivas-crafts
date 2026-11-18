@@ -3,8 +3,9 @@ import { and, eq, inArray, isNotNull, isNull, lt, or, gt } from 'drizzle-orm';
 import { pendingCheckout } from '@/server/db/schema';
 import { kickOutbox } from '@/server/email/sender';
 import type { JobTask } from '@/server/jobs/daily-maintenance';
+import { getEnv } from '@/server/env';
 import { getProvider } from '@/server/payments';
-import { PaymentProviderError } from '@/server/payments/provider';
+import { PaymentProviderError, type PaymentProvider } from '@/server/payments/provider';
 import { log } from '@/server/security/logger';
 import { confirmOnlinePayment, type ConfirmOutcome } from './confirm-online-payment';
 import { enqueuePaymentAttention } from './order-emails';
@@ -50,10 +51,17 @@ export const expirePendingCheckoutsTask: JobTask = {
     let deleted = 0;
     let kept = 0;
     for (const row of expired) {
-      const provider = getProvider(row.provider);
+      let provider: PaymentProvider | null = null;
       let outcome: ConfirmOutcome | null = null;
       if (row.providerPageId !== null) {
         try {
+          // A row that names another provider than the configured one (e.g. `payplus` under
+          // `none`) cannot be asked: it takes the failed-status path below (24 h grace, owner
+          // alert, deletion).
+          if (row.provider !== getEnv().PAYMENT_PROVIDER) {
+            throw new PaymentProviderError('fetchPaymentStatus', null, 'provider not configured');
+          }
+          provider = getProvider(row.provider);
           const status = await provider.fetchPaymentStatus(row.providerPageId);
           if (status.status === 'paid' && status.transactionId === null) {
             // Paid, but nothing to confirm it by: as good as a status that could not be read.
@@ -97,7 +105,7 @@ export const expirePendingCheckoutsTask: JobTask = {
       }
       // A mismatch keeps its row (and the customer's contact details) for 30 days.
       if (outcome === 'mismatch') continue;
-      if (row.providerPageId !== null) {
+      if (row.providerPageId !== null && provider !== null) {
         try {
           await provider.disablePaymentPage(row.providerPageId);
         } catch (error) {
@@ -138,7 +146,7 @@ export const paymentRecoverySweepTask: JobTask = {
     let confirmed = 0;
     for (const row of rows) {
       const pageId = row.providerPageId;
-      if (pageId === null) continue;
+      if (pageId === null || row.provider !== getEnv().PAYMENT_PROVIDER) continue;
       // Taken only while still due: the status endpoint may have checked in the meantime.
       const claimed = await database
         .update(pendingCheckout)

@@ -1,8 +1,10 @@
 import { defineConfig, devices } from '@playwright/test';
 import { CONSENT_PORT, E2E_PORT, serverEnv } from './tests/e2e/env';
 
-const STOREFRONT_SPECS = /(cart|checkout-.*|language|privacy|catalog)\.spec\.ts$/;
-const CONSENT_SPEC = /consent\.spec\.ts$/;
+const STOREFRONT_SPECS =
+  /(^|[\\/])(cart|checkout-.*|language|privacy|catalog|order-tracking|contact|home)\.spec\.ts$/;
+// The `consent` project runs on the second server: the consent test category on, no card provider.
+const CONSENT_SPEC = /(consent|no-card-payment)\.spec\.ts$/;
 
 // The app is built once by `pnpm test:e2e`; the web servers only run `pnpm start`.
 export default defineConfig({
@@ -28,12 +30,14 @@ export default defineConfig({
       testIgnore: CONSENT_SPEC,
     },
     {
-      // Storefront specs only: admin sign-in needs Chromium's virtual authenticator.
+      // Storefront specs only. Historical: admin sign-in used to need Chromium's virtual authenticator
+      // (passkeys, removed in 004); it no longer does, so the owner may widen this list.
       name: 'webkit-mobile',
       use: { ...devices['iPhone 14'] },
       testMatch: STOREFRONT_SPECS,
     },
     {
+      // The "second server" project (3101): consent test category and PAYMENT_PROVIDER=none.
       name: 'consent',
       use: {
         ...devices['Desktop Chrome'],
@@ -55,7 +59,13 @@ export default defineConfig({
     {
       command: `pnpm start -p ${String(CONSENT_PORT)}`,
       url: `http://localhost:${String(CONSENT_PORT)}/api/health`,
-      env: { ...serverEnv(CONSENT_PORT), CONSENT_TEST_CATEGORY: 'analytics' },
+      env: {
+        ...serverEnv(CONSENT_PORT),
+        CONSENT_TEST_CATEGORY: 'analytics',
+        // No card provider; the stray host proves the proxy ignores it under `none` (006 FR-010).
+        PAYMENT_PROVIDER: 'none',
+        PAYPLUS_PAYMENT_HOST: 'pay.example.test',
+      },
       reuseExistingServer: !process.env.CI,
       timeout: 120_000,
       // Without this the `pnpm` wrapper is killed but `next-server` lives on and the runner never exits.

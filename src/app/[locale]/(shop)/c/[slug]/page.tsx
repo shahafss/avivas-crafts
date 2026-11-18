@@ -16,7 +16,7 @@ import {
   listPublishedProducts,
   type ProductSort,
 } from '@/server/catalog/public-queries';
-import { getEnv } from '@/server/env';
+import { alternates } from '@/server/seo';
 
 type Params = Promise<{ locale: string; slug: string }>;
 
@@ -27,13 +27,9 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   if (!hasLocale(routing.locales, locale)) return {};
   const category = await getCategoryBySlug(slug);
   if (category === null) return {};
-  const origin = getEnv().APP_ORIGIN;
   return {
     title: pick(locale, category.nameHe, category.nameEn).text,
-    alternates: {
-      canonical: `${origin}/${locale}/c/${category.slug}`,
-      languages: { he: `${origin}/he/c/${category.slug}`, en: `${origin}/en/c/${category.slug}` },
-    },
+    alternates: alternates(`/c/${category.slug}`, locale),
   };
 }
 
@@ -61,7 +57,7 @@ export default async function CategoryPage({
   const name = pick(locale, category.nameHe, category.nameEn);
 
   return (
-    <div className="grid gap-5 pt-2 lg:gap-6">
+    <div className="grid grid-cols-1 gap-5 pt-2 lg:gap-6">
       <Breadcrumbs
         label={t('breadcrumbs')}
         items={[
@@ -72,7 +68,7 @@ export default async function CategoryPage({
       <div className="grid gap-1">
         <h1
           {...fallbackAttrs(name)}
-          className="text-[28px] leading-[1.15] font-extrabold tracking-tight text-balance lg:text-[34px]"
+          className="text-[32px] leading-[1.15] font-bold tracking-[-0.01em] text-balance lg:text-[44px]"
         >
           {name.text}
         </h1>
@@ -87,7 +83,7 @@ export default async function CategoryPage({
           title={t('emptyTitle')}
           text={t('emptyText')}
           action={
-            <LinkButton href={`/${locale}`} variant="secondary">
+            <LinkButton href={`/${locale}/shop`} variant="secondary">
               {t('emptyAction')}
             </LinkButton>
           }

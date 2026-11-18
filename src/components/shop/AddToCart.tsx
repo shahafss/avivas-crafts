@@ -1,10 +1,10 @@
 'use client';
 
-import Link from 'next/link';
-import { useLocale, useTranslations } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/Button';
-import { Icon } from '@/components/ui/Icon';
+import { Icon } from '@/components/ui/ClientIcon';
+import { CART_DRAWER_ID, openCartDrawer } from '@/lib/cart/drawer';
 import { addToCart } from '@/lib/cart/store';
 import { QuantityStepper } from './QuantityStepper';
 
@@ -40,7 +40,6 @@ export function AddToCart({
   invalid: MissingGroup | undefined;
   onMissing: (group: MissingGroup) => void;
 }) {
-  const locale = useLocale();
   const t = useTranslations('cart.add');
   const [quantity, setQuantity] = useState(1);
   const [morphing, setMorphing] = useState(false);
@@ -56,7 +55,7 @@ export function AddToCart({
     [],
   );
 
-  function onPress(): void {
+  function onPress(opener: HTMLElement): void {
     if (firstMissing !== undefined) {
       onMissing(firstMissing);
       return;
@@ -74,6 +73,9 @@ export function AddToCart({
     timer.current = setTimeout(() => {
       setMorphing(false);
     }, MORPH_MS);
+    // FR-047: the drawer shows what was just added; closing it returns focus to this button (the
+    // button itself, not `activeElement`: Safari does not focus a button on click).
+    openCartDrawer(opener);
   }
 
   return (
@@ -83,7 +85,9 @@ export function AddToCart({
         <Button
           variant="primary"
           data-testid="add-to-cart"
-          onClick={onPress}
+          onClick={(event) => {
+            onPress(event.currentTarget);
+          }}
           className="min-w-0 flex-1"
         >
           {morphing ? (
@@ -128,13 +132,14 @@ export function AddToCart({
               </span>
             ),
             cart: (chunks) => (
-              <Link
-                href={`/${locale}/cart`}
+              <button
+                type="button"
+                popoverTarget={CART_DRAWER_ID}
                 data-testid="go-to-cart"
                 className="inline-flex min-h-11 items-center font-bold underline underline-offset-[3px]"
               >
                 {chunks}
-              </Link>
+              </button>
             ),
           })}
         </p>

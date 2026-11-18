@@ -4,14 +4,9 @@ export function isAdminPath(pathname: string): boolean {
   return pathname === '/admin' || pathname.startsWith('/admin/');
 }
 
-/** `/admin/sign-in*` and `/admin/setup`: the pages that need the OIDC origin in `form-action` and are never bounced. */
-export function isSignInOrSetupPath(pathname: string): boolean {
-  return (
-    pathname === '/admin/sign-in' ||
-    pathname.startsWith('/admin/sign-in/') ||
-    pathname === '/admin/setup' ||
-    pathname.startsWith('/admin/setup/')
-  );
+/** `/admin/sign-in*`: the page that needs the OIDC origin in `form-action` and is never bounced. */
+export function isSignInPath(pathname: string): boolean {
+  return pathname === '/admin/sign-in' || pathname.startsWith('/admin/sign-in/');
 }
 
 export interface BounceRequest {
@@ -22,14 +17,14 @@ export interface BounceRequest {
 }
 
 /**
- * A top-level GET of an admin page (not sign-in or setup) coming from another site arrives
+ * A top-level GET of an admin page (not sign-in) coming from another site arrives
  * without the SameSite=Strict admin cookie, so it is answered with a same-site re-navigation.
  */
 export function shouldBounceAdminRequest(request: BounceRequest): boolean {
   return (
     request.method === 'GET' &&
     isAdminPath(request.pathname) &&
-    !isSignInOrSetupPath(request.pathname) &&
+    !isSignInPath(request.pathname) &&
     request.secFetchSite === 'cross-site' &&
     request.secFetchMode === 'navigate'
   );

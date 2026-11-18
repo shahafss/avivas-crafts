@@ -4,7 +4,11 @@
 // `E2E_PORT=3200 CONSENT_PORT=3201 pnpm exec playwright test ...`. Origins derive from them.
 export const E2E_PORT = Number(process.env.E2E_PORT ?? 3100);
 export const CONSENT_PORT = Number(process.env.CONSENT_PORT ?? 3101);
-export const OIDC_PORT = 4011;
+// Not 4011: that is the port of the dev mock (`pnpm dev`), so E2E can run next to a dev server.
+export const OIDC_PORT = Number(process.env.OIDC_PORT ?? 4012);
+// Own mock-user file, separate from the dev one (tests/fixtures/oidc/user.json): the helpers
+// write test identities here, and local `pnpm dev` sign-in must not be affected by E2E runs.
+export const OIDC_USER_FILE = 'tests/fixtures/oidc/user.e2e.json';
 
 export const E2E_DATABASE_URL =
   process.env.E2E_DATABASE_URL ?? 'postgres://postgres:postgres@localhost:5433/avivas_crafts_e2e';
@@ -30,9 +34,8 @@ export function serverEnv(port: number = E2E_PORT): Record<string, string> {
     OIDC_ISSUER: `http://localhost:${String(OIDC_PORT)}`,
     GOOGLE_CLIENT_ID: 'e2e-google-client-id',
     GOOGLE_CLIENT_SECRET: 'e2e-google-client-secret',
-    WEBAUTHN_RP_ID: 'localhost',
-    WEBAUTHN_RP_NAME: 'Aviva Crafts (test)',
     TRUSTED_PROXY_HOPS: '0',
+    OIDC_MOCK_USER_FILE: OIDC_USER_FILE,
   };
 }
 

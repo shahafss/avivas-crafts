@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from 'react';
-import { Icon } from '@/components/ui/Icon';
+import { Icon } from '@/components/ui/ClientIcon';
 import { IconButton } from '@/components/ui/IconButton';
 import { cn } from '@/lib/cn';
 
@@ -20,7 +20,7 @@ export interface GalleryImage {
 }
 
 const MAIN_SIZES = '(min-width: 900px) 55vw, 100vw';
-const OVERLAY = 'bg-panel/94 text-[13px] font-bold text-ink';
+const OVERLAY = 'bg-paper/95 text-[13px] font-bold text-ink';
 const SCROLL_LOCK = 'overflow-hidden';
 
 /**
@@ -119,17 +119,24 @@ export function Gallery({ name, images }: { name: string; images: GalleryImage[]
 
   return (
     <div className="min-w-0">
-      <div className="relative overflow-hidden rounded-card bg-photo">
+      <div className="relative overflow-hidden bg-photo">
         <div
           ref={track}
           data-testid="gallery-track"
-          className="flex aspect-[4/5] snap-x snap-mandatory overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          // A scrollable region needs a keyboard stop (axe scrollable-region-focusable, WCAG 2.1.1).
+          tabIndex={0}
+          role="group"
+          aria-label={t('label', { product: name })}
+          className="peer flex snap-x snap-mandatory overflow-x-auto overflow-y-hidden focus-visible:outline-none overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           {images.map((image, index) => (
+            // Each slide sets its own square box and the photo fills it absolutely: iPhone Safari does
+            // not resolve a child's percentage height against an aspect-ratio parent, so with
+            // h-full the photo grew to its own height and the strip scrolled vertically.
             <div
               key={image.id}
               data-index={index}
-              className="h-full w-full shrink-0 snap-center"
+              className="relative aspect-square w-full shrink-0 snap-center"
               onClick={(event) => {
                 openZoom(event.currentTarget);
               }}
@@ -145,11 +152,18 @@ export function Gallery({ name, images }: { name: string; images: GalleryImage[]
                 loading={index === 0 ? 'eager' : 'lazy'}
                 fetchPriority={index === 0 ? 'high' : undefined}
                 decoding="async"
-                className="size-full cursor-zoom-in object-cover"
+                className="absolute inset-0 size-full cursor-zoom-in object-cover"
               />
             </div>
           ))}
         </div>
+        {/* The keyboard focus ring: a positioned overlay after the strip, because the photos are
+            positioned and would paint over an outline on the strip itself. */}
+        <span
+          data-testid="gallery-focus-ring"
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 peer-focus-visible:-outline-offset-4 peer-focus-visible:outline-3 peer-focus-visible:outline-ink peer-focus-visible:outline-solid"
+        />
         {total > 1 ? (
           <span
             className={cn(
@@ -163,7 +177,7 @@ export function Gallery({ name, images }: { name: string; images: GalleryImage[]
         <span className="absolute end-3 bottom-3">
           <IconButton
             label={t('zoom')}
-            className={cn(OVERLAY, 'hover:bg-panel')}
+            className={cn(OVERLAY, 'hover:bg-paper')}
             onClick={(event) => {
               openZoom(event.currentTarget);
             }}
@@ -175,7 +189,11 @@ export function Gallery({ name, images }: { name: string; images: GalleryImage[]
       </div>
 
       {total > 1 ? (
-        <ul aria-label={t('thumbnails')} className="mt-2 flex gap-2 overflow-x-auto p-1">
+        <ul
+          aria-label={t('thumbnails')}
+          data-testid="gallery-thumbnails"
+          className="mt-2 flex gap-2 overflow-x-auto p-1"
+        >
           {images.map((image, index) => (
             <li key={image.id} className="shrink-0">
               <button
@@ -186,12 +204,13 @@ export function Gallery({ name, images }: { name: string; images: GalleryImage[]
                   goTo(index);
                 }}
                 className={cn(
-                  'relative block h-[90px] w-[72px] overflow-hidden rounded-chip bg-photo',
-                  current === index && 'ring-[3px] ring-sun',
+                  'relative block h-[72px] w-[72px] overflow-hidden bg-photo',
+                  current === index && 'ring-[3px] ring-forest',
                 )}
               >
                 <img
                   src={image.src400}
+                  srcSet={`${image.src400} 400w`}
                   sizes="72px"
                   width={72}
                   height={90}
@@ -200,12 +219,6 @@ export function Gallery({ name, images }: { name: string; images: GalleryImage[]
                   decoding="async"
                   className="size-full object-cover"
                 />
-                {current === index ? (
-                  <span
-                    aria-hidden="true"
-                    className="absolute inset-0 rounded-chip ring-[1.5px] ring-ink ring-inset"
-                  />
-                ) : null}
               </button>
             </li>
           ))}
@@ -233,6 +246,7 @@ export function Gallery({ name, images }: { name: string; images: GalleryImage[]
               <div className="grid min-h-full min-w-full place-items-center">
                 <img
                   src={shown.src1600}
+                  srcSet={`${shown.src1600} 1600w`}
                   sizes="100vw"
                   width={shown.width}
                   height={shown.height}
@@ -251,7 +265,7 @@ export function Gallery({ name, images }: { name: string; images: GalleryImage[]
             <span className="absolute end-3 top-3">
               <IconButton
                 label={t('close')}
-                className="bg-panel/94 hover:bg-panel"
+                className="bg-paper/94 hover:bg-paper"
                 onClick={() => {
                   dialog.current?.close();
                 }}
@@ -267,7 +281,7 @@ export function Gallery({ name, images }: { name: string; images: GalleryImage[]
                   <span className="absolute start-3 top-1/2 -translate-y-1/2">
                     <IconButton
                       label={t('previous')}
-                      className="bg-panel/94 hover:bg-panel"
+                      className="bg-paper/94 hover:bg-paper"
                       onClick={() => {
                         step(-1);
                       }}
@@ -281,7 +295,7 @@ export function Gallery({ name, images }: { name: string; images: GalleryImage[]
                   <span className="absolute end-3 top-1/2 -translate-y-1/2">
                     <IconButton
                       label={t('next')}
-                      className="bg-panel/94 hover:bg-panel"
+                      className="bg-paper/94 hover:bg-paper"
                       onClick={() => {
                         step(1);
                       }}

@@ -1,7 +1,7 @@
 import 'server-only';
-import { eq } from 'drizzle-orm';
+import { eq, inArray } from 'drizzle-orm';
 import sharp from 'sharp';
-import { category, optionGroup, optionValue, product } from '@/server/db/schema';
+import { category, optionGroup, optionValue, product, productCategory } from '@/server/db/schema';
 import type { DbLike } from '@/server/db/types';
 import { addImage, deleteImagesOfProduct } from './images';
 import { syncPublicImages } from './public-images';
@@ -104,6 +104,7 @@ async function samplePhoto(hue: number): Promise<Buffer> {
  */
 export async function seedSampleProducts(database: DbLike): Promise<void> {
   for (const sample of SAMPLES) {
+    // The sample's category must exist (the seed creates it); the link is made by `linkSampleProducts`.
     const [cat] = await database
       .select({ id: category.id })
       .from(category)
@@ -113,7 +114,6 @@ export async function seedSampleProducts(database: DbLike): Promise<void> {
       .insert(product)
       .values({
         slug: sample.slug,
-        categoryId: cat.id,
         nameHe: sample.nameHe,
         nameEn: sample.nameEn,
         descriptionHe: sample.descriptionHe,
@@ -165,6 +165,34 @@ export async function seedSampleProducts(database: DbLike): Promise<void> {
       await deleteImagesOfProduct(created.id, database).catch(() => undefined);
       await database.delete(product).where(eq(product.id, created.id));
       throw error;
+    }
+  }
+}
+
+/**
+ * Links each sample piece to its sample category and to the home-row category (`featuredSlug`),
+ * idempotently, after `seedSampleProducts`. A missing piece or category is skipped.
+ */
+export async function linkSampleProducts(database: DbLike, featuredSlug: string): Promise<void> {
+  const slugs = [...SAMPLES.map((sample) => sample.categorySlug), featuredSlug];
+  const categories = await database
+    .select({ id: category.id, slug: category.slug })
+    .from(category)
+    .where(inArray(category.slug, slugs));
+  const categoryIdBySlug = new Map(categories.map((row) => [row.slug, row.id]));
+  for (const sample of SAMPLES) {
+    const [piece] = await database
+      .select({ id: product.id })
+      .from(product)
+      .where(eq(product.slug, sample.slug));
+    if (!piece) continue;
+    for (const slug of [sample.categorySlug, featuredSlug]) {
+      const categoryId = categoryIdBySlug.get(slug);
+      if (categoryId === undefined) continue;
+      await database
+        .insert(productCategory)
+        .values({ productId: piece.id, categoryId })
+        .onConflictDoNothing();
     }
   }
 }

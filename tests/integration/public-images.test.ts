@@ -66,7 +66,7 @@ async function newProduct(): Promise<string> {
   const updated = await updateProduct(actor, created.data.id, {
     descriptionHe: 'תיאור',
     priceIlsMinor: 9000,
-    categoryId: cat.data.id,
+    categoryIds: [cat.data.id],
     prepTimeHe: 'שבוע',
   });
   if (!updated.ok) throw new Error('update failed');

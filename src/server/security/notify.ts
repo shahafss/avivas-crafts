@@ -29,8 +29,8 @@ function short(address: string): string {
 }
 
 /**
- * Emails every admin's Google address and `notification_emails`. The three repeatable sign-in
- * kinds are throttled to one email per kind per 15 minutes; all others are always sent.
+ * Emails the Google address of every user with role `admin` and `notification_emails`. The
+ * repeatable sign-in kinds are throttled to one email per kind per 15 minutes; others are always sent.
  * Returns the number of emails queued.
  */
 export async function notifyAdmins(
@@ -62,7 +62,10 @@ export async function notifyAdmins(
     if (claimed.length === 0) return 0;
   }
 
-  const admins = await tx.select({ email: adminUser.googleEmail }).from(adminUser);
+  const admins = await tx
+    .select({ email: adminUser.googleEmail })
+    .from(adminUser)
+    .where(eq(adminUser.role, 'admin'));
   // Read through `tx` (not getSettings()): a second connection would not see this transaction.
   const [settings] = await tx.select().from(shopSettings).where(eq(shopSettings.id, 1));
   if (!settings) throw new Error('shop_settings row is missing: run `pnpm db:seed`');

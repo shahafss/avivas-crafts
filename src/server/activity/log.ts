@@ -14,6 +14,7 @@ export const ACTIVITY_DETAIL_KEYS = [
   'state',
   'orderNumber',
   'slug',
+  'role',
 ] as const;
 
 const ALLOWED = new Set<string>(ACTIVITY_DETAIL_KEYS);
@@ -21,7 +22,7 @@ const ALLOWED = new Set<string>(ACTIVITY_DETAIL_KEYS);
 export interface ActivityInput {
   adminId: string | null;
   actorKind: 'admin' | 'unapproved_account' | 'system';
-  /** Admin display name at the time; kept only for `admin` actors. */
+  /** Admin display name at the time (kept for `admin` actors), or a fixed command name for `system`. */
   actorLabel?: string | undefined;
   action: string;
   targetType?: string | undefined;
@@ -44,13 +45,14 @@ export async function logActivity(tx: DbLike, input: ActivityInput): Promise<str
       details[key] = value;
     }
   }
-  const isAdmin = input.actorKind === 'admin';
+  // Never a label for an unapproved account (it could be an email).
+  const keepsLabel = input.actorKind !== 'unapproved_account';
   const [row] = await tx
     .insert(adminActivity)
     .values({
       adminId: input.actorKind === 'unapproved_account' ? null : input.adminId,
       actorKind: input.actorKind,
-      actorLabel: isAdmin ? (input.actorLabel ?? null) : null,
+      actorLabel: keepsLabel ? (input.actorLabel ?? null) : null,
       action: input.action,
       targetType: input.targetType ?? null,
       targetId: input.targetId ?? null,

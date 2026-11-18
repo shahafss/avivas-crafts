@@ -3,7 +3,7 @@ import type { ComponentPropsWithoutRef, ReactNode } from 'react';
 import { cn } from '@/lib/cn';
 
 const CLASSES =
-  'relative inline-grid size-11 shrink-0 place-items-center rounded-full text-ink transition-colors duration-150 ease-out hover:bg-ground';
+  'relative inline-grid size-11 shrink-0 place-items-center rounded-pill text-current transition-colors duration-150 ease-out hover:bg-current/10 disabled:cursor-default disabled:opacity-40 disabled:hover:bg-transparent';
 
 interface Common {
   /** Translated accessible name. */

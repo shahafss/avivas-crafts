@@ -15,7 +15,7 @@ export default async function ProductNotAvailable() {
   return (
     <div className="grid gap-5 pt-6">
       <div className="grid max-w-xl gap-3">
-        <h1 className="text-[28px] leading-[1.15] font-extrabold tracking-tight text-balance lg:text-[34px]">
+        <h1 className="text-[32px] leading-[1.15] font-bold tracking-[-0.01em] text-balance lg:text-[44px]">
           {t('title')}
         </h1>
         {products.length === 0 ? null : <p className="text-ink-2">{t('text')}</p>}
@@ -24,7 +24,7 @@ export default async function ProductNotAvailable() {
         <ProductGrid products={products} locale={locale} label={t('listLabel')} />
       )}
       <div>
-        <LinkButton href={`/${locale}`}>{common('allPieces')}</LinkButton>
+        <LinkButton href={`/${locale}/shop`}>{common('allPieces')}</LinkButton>
       </div>
     </div>
   );

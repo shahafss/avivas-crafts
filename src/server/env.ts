@@ -57,7 +57,7 @@ const baseSchema = z.object({
   EMAIL_DRIVER: z.enum(['resend', 'outbox']),
   RESEND_API_KEY: optional(text),
   EMAIL_FROM: text,
-  PAYMENT_PROVIDER: z.enum(['payplus', 'fake']),
+  PAYMENT_PROVIDER: z.enum(['payplus', 'fake', 'none']),
   PAYPLUS_BASE_URL: optional(text),
   PAYPLUS_API_KEY: optional(text),
   PAYPLUS_SECRET_KEY: optional(text),
@@ -69,8 +69,6 @@ const baseSchema = z.object({
   ),
   GOOGLE_CLIENT_ID: text,
   GOOGLE_CLIENT_SECRET: text,
-  WEBAUTHN_RP_ID: text,
-  WEBAUTHN_RP_NAME: text,
   CONSENT_TEST_CATEGORY: optional(text),
 });
 

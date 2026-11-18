@@ -11,6 +11,7 @@ import { TextField } from '@/components/ui/TextField';
 import { routing } from '@/i18n/routing';
 import { listCategoriesWithProducts } from '@/server/catalog/public-queries';
 import { MAX_QUERY_LENGTH, parseSearchQuery, searchProducts } from '@/server/catalog/search';
+import { alternates } from '@/server/seo';
 
 export async function generateMetadata({
   params,
@@ -20,7 +21,11 @@ export async function generateMetadata({
   const { locale } = await params;
   if (!hasLocale(routing.locales, locale)) return {};
   const t = await getTranslations({ locale, namespace: 'shop.search' });
-  return { title: t('title'), robots: { index: false, follow: true } };
+  return {
+    title: t('title'),
+    robots: { index: false, follow: true },
+    alternates: alternates('/search', locale),
+  };
 }
 
 export default async function SearchPage({
@@ -51,12 +56,12 @@ export default async function SearchPage({
     categories.length === 0 ? null : <CategoryChips locale={locale} categories={categories} />;
 
   return (
-    <div className="grid gap-5 pt-2 lg:gap-6">
+    <div className="grid grid-cols-1 gap-5 pt-2 lg:gap-6">
       <Breadcrumbs
         label={t('breadcrumbs')}
         items={[{ label: common('home'), href: `/${locale}` }, { label: t('title') }]}
       />
-      <h1 className="text-[28px] leading-[1.15] font-extrabold tracking-tight text-balance lg:text-[34px]">
+      <h1 className="text-[32px] leading-[1.15] font-bold tracking-[-0.01em] text-balance lg:text-[44px]">
         {t('title')}
       </h1>
 
@@ -64,6 +69,7 @@ export default async function SearchPage({
         action={`/${locale}/search`}
         method="get"
         role="search"
+        aria-label={t('formLabel')}
         className="flex max-w-xl flex-wrap items-start gap-3"
       >
         <TextField

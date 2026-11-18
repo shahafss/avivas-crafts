@@ -7,9 +7,22 @@ import { Notice } from '@/components/ui/Notice';
 import { routing } from '@/i18n/routing';
 import { formatMoney } from '@/lib/money';
 import { fakeProviderAvailable, isFakePageId, readFakePage } from '@/server/payments/fake';
+import { alternates } from '@/server/seo';
 import { submitFakePayment } from './actions';
 
-export const metadata: Metadata = { robots: { index: false, follow: false } };
+// A page cannot export both `metadata` and `generateMetadata`; this one keeps noindex.
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  if (!hasLocale(routing.locales, locale)) return {};
+  return {
+    robots: { index: false, follow: false },
+    alternates: alternates('/checkout/fake-pay', locale),
+  };
+}
 
 // Development and test only (PAYMENT_PROVIDER=fake, never in production): stands in for the
 // provider's hosted payment page.
@@ -30,7 +43,9 @@ export default async function FakePayPage({
 
   return (
     <div className="mx-auto grid w-full max-w-lg gap-4 pt-6 lg:pt-10">
-      <h1 className="text-[28px] leading-[1.15] font-extrabold tracking-tight">{t('title')}</h1>
+      <h1 className="text-[32px] leading-[1.15] font-bold tracking-[-0.01em] text-balance lg:text-[44px]">
+        {t('title')}
+      </h1>
       <Notice tone="attention">{t('notice')}</Notice>
       <p className="text-lg">
         {t('amount')}{' '}

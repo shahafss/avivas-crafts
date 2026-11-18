@@ -6,6 +6,8 @@
     "menu": "Menu",
     "menuNav": "Site menu",
     "search": "Search",
+    "headerSearch": "Search the shop",
+    "menuSearch": "Search from the menu",
     "allPieces": "All pieces",
     "breadcrumbs": "You are here",
     "home": "Home",
@@ -13,14 +15,34 @@
       "about": "About",
       "shippingReturns": "Shipping & returns",
       "contact": "Contact",
-      "categories": "Categories"
+      "categories": "Categories",
+      "allPieces": "All pieces"
     },
     "announcement": {
       "freeShippingOver": "Free shipping on orders over <money>{amount}</money>",
       "freePickup": "Free self-pickup"
     },
     "footer": {
-      "copyright": "© {year} {shopName}"
+      "copyright": "© {year} {shopName}",
+      "info": "Info",
+      "legal": "Legal",
+      "vat": "VAT registration no. <num>{number}</num>",
+      "about": "About",
+      "shippingReturns": "Shipping & returns",
+      "contact": "Contact",
+      "terms": "Terms of use and sale",
+      "privacy": "Privacy policy",
+      "cookies": "Cookie policy",
+      "accessibility": "Accessibility statement",
+      "infoNav": "Information about the shop",
+      "legalNav": "Legal documents",
+      "cookieSettings": "Cookie settings",
+      "social": {
+        "label": "My social pages",
+        "instagram": "My Instagram",
+        "facebook": "My Facebook",
+        "tiktok": "My TikTok"
+      }
     },
     "cart": {
       "label": "Cart, {count, plural, =0 {empty} one {1 item} other {# items}}"
@@ -37,7 +59,8 @@
     },
     "toast": {
       "close": "Close"
-    }
+    },
+    "menuClose": "Close menu"
   },
   "shop": {
     "catalog": {
@@ -50,7 +73,7 @@
       },
       "gridLabel": "Pieces",
       "emptyTitle": "No pieces here yet",
-      "emptyText": "You can write to me and ask about an order.",
+      "emptyText": "Write to me if you'd like to ask about an order.",
       "emptyAction": "Write to me",
       "categoriesLabel": "Categories",
       "all": "All"
@@ -79,11 +102,11 @@
       "payOnlineAlt": "Or pay me directly: details at checkout",
       "payOffline": "Pay me directly: details at checkout",
       "shippingTitle": "Shipping and pickup",
-      "shippingText": "I make every order after you place it, and then you can have it delivered or collect it.",
+      "shippingText": "I make every piece after you order, then ship it to you or hold it for pickup.",
       "returnsTitle": "Cancellations and returns",
-      "returnsText": "You can read the cancellation and return rules on the shipping and returns page.",
+      "returnsText": "The cancellation and return rules are on the shipping and returns page.",
       "readMore": "Go to shipping and returns",
-      "related": "More <cat>{category}</cat>",
+      "alsoLike": "You may also like",
       "relatedLabel": "More pieces"
     },
     "gallery": {
@@ -98,30 +121,59 @@
     },
     "notAvailable": {
       "title": "This piece isn't available any more",
-      "text": "Maybe you will find something else here that you like:",
+      "text": "Maybe something else here will catch your eye:",
       "listLabel": "Pieces you may like"
     },
     "category": {
       "breadcrumbs": "Breadcrumb",
       "count": "{count, plural, one {# piece} other {# pieces}}",
       "emptyTitle": "No pieces in this category yet",
-      "emptyText": "You can look at all the pieces.",
+      "emptyText": "Have a look at all the pieces instead.",
       "emptyAction": "All pieces"
     },
     "search": {
       "title": "Search",
       "breadcrumbs": "Breadcrumb",
+      "formLabel": "Search pieces",
       "label": "What are you looking for?",
       "button": "Search",
       "results": "{count, plural, one {# piece} other {# pieces}} for “<q>{query}</q>”",
-      "noResultsTitle": "I couldn't find pieces for “<q>{query}</q>”",
+      "noResultsTitle": "I couldn't find any pieces for “<q>{query}</q>”",
       "noResultsText": "Try another word, or go to one of the categories.",
-      "tooLong": "You can search up to 80 characters.",
+      "tooLong": "Searches can be up to 80 characters long.",
       "prompt": "Search by name or description, or go to one of the categories."
+    },
+    "home": {
+      "row": {
+        "viewAll": "View all",
+        "previous": "Previous",
+        "next": "Next"
+      },
+      "hero": {
+        "alt": "Crocheted dolls and animals, balls of wool and needles on a work table, and a woman knitting by the window"
+      },
+      "bannerChild": {
+        "heading": "Made to be played with",
+        "line": "Soft and cuddly, and each one is made just for you.",
+        "button": "See all pieces",
+        "alt": "A toddler playing with a yellow crocheted sheep, with more crocheted animals on the rug"
+      },
+      "bannerShelf": {
+        "heading": "Each one has its own character",
+        "line": "Bears, bunnies, monkeys and more. You choose, and I'll crochet it for you.",
+        "button": "See all pieces",
+        "alt": "A honeycomb shelf full of crocheted dolls and animals: bears, a bunny, monkeys, an elephant, a fox, a lion and a sheep"
+      },
+      "band": {
+        "sentence": "I crochet every piece myself, slowly and with love, only after you order.",
+        "link": "Shop now"
+      }
+    },
+    "allPieces": {
+      "title": "All pieces"
     }
   },
   "cart": {
-    "title": "Your cart",
     "loading": "Loading…",
     "loadError": "I couldn't load your cart. Please try again.",
     "retry": "Try again",
@@ -135,7 +187,7 @@
       "label": "Quantity",
       "decrease": "Remove one",
       "increase": "Add one",
-      "atMin": "You can't order fewer than one.",
+      "atMin": "The minimum is one.",
       "atMax": "You can order up to {max} of each item."
     },
     "add": {
@@ -166,11 +218,15 @@
       "subtotal": "Subtotal",
       "deliveryLater": "Delivery is calculated at checkout",
       "freeShippingOver": "Free shipping over <money>{threshold}</money>",
-      "continue": "Continue to checkout",
-      "keepShopping": "Keep shopping"
+      "continue": "Continue to checkout"
     },
     "errors": {
       "invalid": "I couldn't read your cart. Please refresh the page."
+    },
+    "drawer": {
+      "title": "My cart",
+      "close": "Close cart",
+      "keepShopping": "Keep shopping"
     }
   },
   "checkout": {
@@ -193,7 +249,7 @@
     },
     "title": "Finish your order",
     "loading": "Loading…",
-    "quoting": "Working it out…",
+    "quoting": "Calculating…",
     "busy": "One moment…",
     "backToCart": "Back to the cart",
     "backToShop": "Back to the shop",
@@ -202,8 +258,8 @@
     "rate_limited": "Too many requests. Please try again in a few minutes.",
     "form_expired": "I couldn't send the form. Reload the page and try again.",
     "shop_not_ready": "The shop isn't open for orders yet. Please try again later.",
-    "payment_unavailable_method": "The payment method you chose isn't available right now. Choose another one.",
-    "delivery_unavailable": "The delivery option you chose isn't available right now. Choose another one.",
+    "payment_unavailable_method": "The payment method you chose isn't available right now. Please choose another one.",
+    "delivery_unavailable": "The delivery option you chose isn't available right now. Please choose another one.",
     "lines_unavailable": "Some items in your order can't be ordered right now.",
     "payment_unavailable": "Online payment isn't available right now. Try again, or choose to pay me directly.",
     "link_expired": "This link is no longer active.",
@@ -240,7 +296,7 @@
       "online": "Secure payment on the site",
       "onlineHint": "By credit card, on the payment company's secure page",
       "offline": "Pay me directly",
-      "offlineHint": "After you order you'll get the payment details: transfer, Bit, PayBox or cash on pickup"
+      "offlineHint": "After you order, you'll get the payment details (bank transfer, Bit, PayBox, or cash on pickup)"
     },
     "note": {
       "toggle": "Add a note (optional)",
@@ -254,7 +310,7 @@
       "label": "I'd like to get updates by email",
       "hint": "Consent to receive updates and promotional emails. You can withdraw it at any time."
     },
-    "collection": "The details are needed to handle your order and to contact you about it. You aren't legally required to provide them, but without them an order can't be placed. Who receives them and how they are kept: <privacy>Privacy Policy</privacy>.",
+    "collection": "I need these details to handle your order and contact you about it. You aren't legally required to provide them, but without them I can't take your order. Who receives them and how they are kept is described in the <privacy>Privacy Policy</privacy>.",
     "seller": "{name} · Reg. no. {regNumber}",
     "summary": {
       "label": "Order summary",
@@ -283,11 +339,11 @@
       "switchOffline": "Pay me directly instead",
       "totalChanged": "The price has changed since you started your order. The new total is {total}.",
       "confirmContinue": "Confirm and continue",
-      "switched": "Your order continues as direct payment to me. All the details were emailed to you.",
+      "switched": "Your order will continue as a direct payment to me. I've emailed you all the details.",
       "mismatch": "There was a problem with the payment amount. I'll contact you soon.",
       "expired": "This link is no longer active",
       "toCart": "To the cart",
-      "timeout": "The payment is still being checked. A confirmation will reach you by email."
+      "timeout": "I'm still checking your payment. You'll get a confirmation by email."
     },
     "fakePay": {
       "title": "Fake payment page",
@@ -302,8 +358,35 @@
   "order": {
     "title": "Your order",
     "heading": "Thank you! Your order is in",
+    "headingLater": "Your order",
     "numberLabel": "Order number",
     "emailSent": "A confirmation was also sent by email.",
+    "progress": "Order progress",
+    "steps": {
+      "received": "Received",
+      "making": "Being made",
+      "shipped": "Shipped",
+      "ready": "Ready for pickup",
+      "completed": "Completed"
+    },
+    "tracking": {
+      "title": "Your order is on its way",
+      "number": "Tracking number"
+    },
+    "pickupReady": {
+      "title": "Your order is ready for pickup",
+      "fallback": "Write to me to arrange pickup"
+    },
+    "cancelled": {
+      "title": "This order was cancelled",
+      "refunded": "Your money was refunded",
+      "willRefund": "Your money will be refunded"
+    },
+    "contact": {
+      "link": "Contact",
+      "phone": "Phone",
+      "email": "Email"
+    },
     "paymentState": {
       "awaiting_payment": "Awaiting payment",
       "paid": "Paid",
@@ -312,8 +395,9 @@
     "howToPay": "How to pay",
     "quoteNumber": "When you transfer, write the order number <n>{number}</n>.",
     "pickup": "Self-pickup",
-    "madePaid": "Now I start crocheting.",
-    "madeAwaiting": "I'll start crocheting when the payment arrives.",
+    "madePaid": "Now I'll start crocheting.",
+    "madeInPreparation": "I'm crocheting your order right now.",
+    "madeAwaiting": "I got your order and will start on it soon.",
     "summary": {
       "label": "Order details",
       "subtotal": "Subtotal",
@@ -327,8 +411,7 @@
     "backToShop": "Back to the shop",
     "expired": {
       "title": "This link is no longer active",
-      "text": "An order link is valid for 30 days. If you need anything about your order, write to me and I'll answer.",
-      "contact": "Contact"
+      "text": "If you need anything about your order, write to me and I'll reply."
     }
   },
   "admin": {
@@ -351,7 +434,221 @@
     "dashboard": {
       "title": "Dashboard",
       "welcome": "Hello, {name}",
-      "intro": "New orders and things that need attention will appear here."
+      "newOrders": "New orders",
+      "awaitingPayment": "Awaiting payment",
+      "nothingWaiting": "No orders are waiting for you right now",
+      "settingsNotice": "Worth completing in Settings:",
+      "toSettings": "To Settings",
+      "settingsFields": {
+        "businessNameHe": "Business name (Hebrew)",
+        "businessNameEn": "Business name (English)",
+        "businessRegNumber": "Business registration number",
+        "businessEmail": "Business email",
+        "businessPhone": "Business phone",
+        "businessAddressHe": "Business address (Hebrew)",
+        "businessAddressEn": "Business address (English)",
+        "notificationEmails": "Notification emails",
+        "pickupInstructionsHe": "Pickup instructions (Hebrew)",
+        "offlineInstructionsHe": "Offline payment instructions in Hebrew"
+      }
+    },
+    "orders": {
+      "status": {
+        "new": "New",
+        "in_preparation": "In preparation",
+        "shipped": "Shipped",
+        "ready_for_pickup": "Ready for pickup",
+        "completed": "Completed",
+        "cancelled": "Cancelled"
+      },
+      "payment": {
+        "awaiting_payment": "Awaiting payment",
+        "paid": "Paid",
+        "refunded": "Refunded"
+      },
+      "paymentMethod": {
+        "online": "Secure payment on the site",
+        "offline": "Pay me directly"
+      },
+      "delivery": {
+        "shipping": "Shipping",
+        "pickup": "Pickup"
+      },
+      "list": {
+        "title": "Orders",
+        "numberLabel": "Go to order number",
+        "numberGo": "Go",
+        "numberNotFound": "I couldn't find order number {number}",
+        "numberInvalid": "An order number is digits only, for example 1023",
+        "statusFilter": "Filter by status",
+        "paymentFilter": "Filter by payment",
+        "all": "All",
+        "openChip": "Without cancelled orders",
+        "openChipRemove": "Remove the filter: without cancelled orders",
+        "clear": "Clear the filter",
+        "listLabel": "Orders list",
+        "emptyFiltered": "No orders match the filter",
+        "emptyFilteredText": "Try another filter, or show all orders.",
+        "emptyAll": "No orders yet",
+        "emptyAllText": "When an order comes in it will show here.",
+        "pagingLabel": "List pages",
+        "previous": "Previous",
+        "next": "Next",
+        "pageOf": "Page {page} of {count}"
+      },
+      "detail": {
+        "title": "Order",
+        "allOrders": "All orders",
+        "emailFailed": "The customer did not get the order email. Worth calling them",
+        "failedEmail": {
+          "order-cancelled": "The cancellation email was not sent to the customer",
+          "order-refunded": "The refund email was not sent to the customer"
+        },
+        "anonymised": "The customer can no longer be contacted",
+        "items": "Items",
+        "option": "{group}: {value}",
+        "prepTime": "Preparation time: {prepTime}",
+        "subtotal": "Subtotal",
+        "deliveryFee": "Delivery",
+        "free": "Free",
+        "total": "Total",
+        "customer": "Customer",
+        "phone": "Phone",
+        "email": "Email",
+        "delivery": "Delivery method",
+        "note": "Customer's note",
+        "payment": "Payment",
+        "paidAt": "Paid on <d>{date}</d>",
+        "refundedAt": "Refunded on <d>{date}</d>",
+        "tracking": "Tracking number",
+        "pickupNote": "Pickup note",
+        "history": "History",
+        "actions": "Actions",
+        "consent": {
+          "title": "Consents",
+          "terms": "Terms accepted: <d>{date}</d>",
+          "termsVersion": "Terms version {n}",
+          "privacyVersion": "Privacy Policy version {n}",
+          "marketingGiven": "Marketing: agreed on <d>{date}</d>",
+          "marketingWithdrawn": "Marketing: agreed on <d>{given}</d>, withdrawn on <d>{withdrawn}</d>",
+          "marketingNone": "Marketing: not agreed",
+          "marketingCleared": "Marketing: —"
+        }
+      },
+      "history": {
+        "created": "Order received",
+        "payment_confirmed": "Online payment confirmed",
+        "status_changed": "Status: {from} → {to}",
+        "back": "One step back: {from} → {to}",
+        "payment_marked_paid": "Marked as paid",
+        "refunded": "Marked as refunded",
+        "customer_edited": "Customer details updated",
+        "fulfilment_edited": {
+          "trackingNumber": "Tracking number updated",
+          "pickupNote": "Pickup note updated"
+        },
+        "emailFailed": {
+          "order-confirmation": "The order email was not sent to the customer",
+          "order-cancelled": "The cancellation email was not sent to the customer",
+          "order-refunded": "The refund email was not sent to the customer"
+        },
+        "unknown": "Update",
+        "actor": {
+          "system": "The system",
+          "removedAdmin": "A removed admin"
+        },
+        "anonymized": "The customer's details were erased"
+      },
+      "actions": {
+        "back": "Back one step",
+        "edit": "Edit",
+        "save": "Save",
+        "close": "Close",
+        "trackingLabel": "Tracking number (optional)",
+        "pickupNoteLabel": "Pickup note (optional)",
+        "trackingCurrent": "Tracking number",
+        "pickupNoteCurrent": "Pickup note",
+        "noneEntered": "Not entered",
+        "done": {
+          "completed": "This order is completed",
+          "cancelled": "This order is cancelled"
+        },
+        "complete": {
+          "title": "Mark this order as completed?",
+          "body": "Once an order is completed its status cannot be changed.",
+          "bodyUnpaid": "This order is still awaiting payment. You can mark the payment as received and complete it in one go.",
+          "confirm": "Mark as completed",
+          "markPaid": "Mark as paid and complete",
+          "withoutPayment": "Complete without payment"
+        },
+        "toast": {
+          "status": "Status updated: {status}",
+          "back": "Moved back one step",
+          "saved": "Change saved",
+          "paid": "Payment marked as paid",
+          "refunded": "Refund recorded"
+        },
+        "markPaid": "Mark as paid",
+        "markRefunded": "Mark as refunded",
+        "paid": {
+          "title": "Payment received",
+          "body": "Mark the payment as received? This cannot be undone."
+        },
+        "refund": {
+          "title": "Refund",
+          "body": "Mark the money as returned to the customer? The customer will get an email about it. This cannot be undone."
+        }
+      },
+      "cancel": {
+        "back": "Back",
+        "button": "Cancel the order",
+        "title": "Cancel this order?",
+        "body": "The customer will get an email that the order was cancelled.",
+        "confirm": "Cancel the order",
+        "paidReminder": "The order was paid. After cancelling you need to return the money. {method}",
+        "reminderTitle": "The money needs to be returned",
+        "method": {
+          "online": "Paid on the site: return it through the payment company's website.",
+          "offline": "Paid directly: return it the same way it was paid."
+        }
+      },
+      "errors": {
+        "stale": "This order just changed. The page now shows its current state.",
+        "not_allowed": "That cannot be done on this order.",
+        "not_found": "I could not find this order.",
+        "invalid": "That action is not valid. Reload the page and try again.",
+        "tracking_too_long": "Up to 100 characters",
+        "pickup_note_too_long": "Up to 500 characters",
+        "anonymized": "This order's customer details were already deleted, so they cannot be edited."
+      },
+      "customer": {
+        "title": "Correct the customer's details",
+        "intro": "You can correct the name, phone, email and address. Items, amounts and delivery method do not change.",
+        "fullName": "Full name",
+        "phone": "Phone",
+        "email": "Email",
+        "country": "Country",
+        "countryName": {
+          "IL": "Israel"
+        },
+        "city": "City",
+        "line1": "Street and number",
+        "line2": "Apartment, entrance (optional)",
+        "postalCode": "Postal code (optional)",
+        "save": "Save",
+        "saved": "Details saved",
+        "errorSummary": "Please fix a few details",
+        "errors": {
+          "fullName": "Write a name of 2 to 100 characters",
+          "phone": "The phone number does not look right",
+          "email": "The email address does not look right",
+          "city": "Write a city",
+          "line1": "Write a street and number",
+          "line2": "Up to 200 characters",
+          "postalCodeIl": "An Israeli postal code has 7 digits",
+          "postalCode": "Up to 12 characters"
+        }
+      }
     },
     "notFound": {
       "title": "Page not found",
@@ -361,88 +658,21 @@
     "auth": {
       "signIn": {
         "title": "Sign in to the shop admin",
-        "intro": "Sign-in has two steps: your Google account first, then the passkey on your device.",
+        "intro": "Sign in with the admin's Google account.",
         "google": "Sign in with Google",
         "errors": {
           "not_allowed": "This account is not allowed to manage the shop.",
           "expired": "The link expired or was already used. Try signing in again.",
           "error": "Sign-in did not work. Try again.",
-          "rate_limited": "Too many sign-in attempts. Try again in a few minutes.",
-          "blocked": "Sign-in is temporarily blocked after failed attempts. Try again in 15 minutes."
+          "rate_limited": "Too many sign-in attempts. Try again in a few minutes."
         }
-      },
-      "passkey": {
-        "title": "Confirm with your passkey",
-        "intro": "Step two: confirm it is you with your device's passkey.",
-        "pinHint": "The phone's screen-lock PIN or pattern is enough. No fingerprint or face scan is needed.",
-        "button": "Confirm with passkey",
-        "busy": "Checking...",
-        "lostPasskey": "I lost my passkey",
-        "blockedTitle": "Sign-in is temporarily blocked",
-        "blocked": "There were too many failed attempts. Try again in 15 minutes, or ask the other admin to clear the block.",
-        "backToSignIn": "Back to sign-in"
-      },
-      "recovery": {
-        "title": "Recover access",
-        "intro": "Enter one of the recovery codes you saved. After it is accepted you can add a new passkey, which only works once the other admin approves it.",
-        "codeLabel": "Recovery code",
-        "codeHint": "12 characters, dashes or spaces are fine",
-        "submit": "Check the code",
-        "invalid": "The code is wrong or was already used.",
-        "blocked": "Too many attempts. Try again in 15 minutes.",
-        "failed": "That did not work. Try again.",
-        "needsOtherTitle": "Recovery needs another admin",
-        "needsOther": "Recovery needs another admin with an active passkey, and there is none right now. Please contact the person who maintains the site.",
-        "end": "I understand, end sign-in",
-        "registerTitle": "Add a new passkey",
-        "registerIntro": "The code was accepted. Name the device and confirm the passkey.",
-        "deviceLabel": "Device name",
-        "devicePlaceholder": "For example: Aviva's phone",
-        "register": "Add passkey",
-        "waitingTitle": "Waiting for approval",
-        "waiting": "The new passkey is waiting for the other admin's approval. You can sign in once they approve it.",
-        "toSignIn": "To the sign-in page"
-      },
-      "setup": {
-        "title": "First sign-in setup",
-        "intro": "Before the first sign-in, connect your Google account and add a passkey for this device.",
-        "google": "Continue with Google",
-        "missingToken": "The setup link is missing or invalid. Ask for a new one.",
-        "registerTitle": "Add a passkey",
-        "registerIntro": "Name the device and confirm the passkey.",
-        "deviceLabel": "Device name",
-        "devicePlaceholder": "For example: Aviva's phone",
-        "register": "Add passkey",
-        "codesTitle": "Your recovery codes",
-        "codesIntro": "Keep these codes somewhere safe, for example printed. Each code works once and they will not be shown again.",
-        "codesWarning": "Recovering with a code also needs the other admin's approval.",
-        "copy": "Copy the codes",
-        "copied": "Codes copied",
-        "print": "Print",
-        "saved": "I saved the codes",
-        "codesList": "Recovery codes"
-      },
-      "passkeyButton": {
-        "cancelled": "The confirmation was cancelled or not completed. You can try again.",
-        "unsupported": "This browser does not support passkeys.",
-        "failed": "The confirmation did not work. Try again.",
-        "blocked": "Sign-in is temporarily blocked after failed attempts. Try again in 15 minutes.",
-        "sessionExpired": "The sign-in expired. Start again.",
-        "noOtherAdmin": "A passkey cannot be added right now because no other admin has an active passkey.",
-        "alreadyRegistered": "This passkey is already registered.",
-        "needLabel": "Please name the device."
-      },
-      "reauth": {
-        "title": "Confirm with your passkey",
-        "text": "This is a security action, so please confirm again with your passkey.",
-        "confirm": "Confirm with passkey",
-        "cancel": "Cancel"
       }
     },
     "confirm_required": "Please confirm the action before it is carried out.",
     "categories": {
       "errors": {
-        "invalid": "The category name is missing or too long (80 characters at most).",
+        "invalid": "The category name is missing or too long (12 characters at most).",
+        "nameTooLong": "The name is too long. Up to 12 characters.",
         "slug_taken": "This address is already used by another category.",
         "not_found": "Category not found.",
         "bad_order": "The category order is not valid. Reload the page and try again.",
@@ -500,6 +730,9 @@
         "invalid_price": "The price must be a positive number with up to two decimals.",
         "invalid_delta": "The extra must be a number, for example 20 or -10."
       },
+      "categoriesLabel": "Categories",
+      "categoriesHint": "You can tick more than one. Pieces in ''{home}'' are shown on the home page.",
+      "categoriesHintNoHome": "You can tick more than one.",
       "missing": {
         "nameHe": "Product name in Hebrew",
         "descriptionHe": "Description in Hebrew",
@@ -527,6 +760,7 @@
         "hidden": "Hidden"
       },
       "notOrderable": "Not available to order",
+      "noEnglish": "No English",
       "noPhoto": "No photo",
       "noPrice": "No price",
       "listLabel": "Product list",
@@ -552,8 +786,6 @@
         "priceIlsHint": "Required to publish. For example: 180",
         "priceUsd": "Price in dollars (optional)",
         "priceUsdHint": "Used only for orders shipped abroad.",
-        "category": "Category",
-        "categoryNone": "Choose a category",
         "prepTimeHe": "Preparation time (Hebrew)",
         "prepTimeHeHint": "For example: about two weeks",
         "prepTimeEn": "Preparation time (English, optional)"
@@ -666,6 +898,7 @@
       "title": "Settings",
       "intro": "How the shop works: its name, payment, delivery and business details.",
       "save": "Save",
+      "errorSummary": "Please fix a few details",
       "toast": {
         "saved": "Settings saved",
         "zoneSaved": "Delivery zone saved"
@@ -683,7 +916,9 @@
         "offline": "Direct payment (transfer, Bit, PayBox, cash)",
         "instructionsHe": "Direct payment instructions, in Hebrew",
         "instructionsHint": "Shown to customers after ordering and in the confirmation email, e.g. account details for a transfer.",
-        "instructionsEn": "Direct payment instructions, in English (optional)"
+        "instructionsEn": "Direct payment instructions, in English (optional)",
+        "cardNotSetUp": "Card payment is not set up yet",
+        "offlineMustStayOn": "Direct payment must stay on while card payment is not set up."
       },
       "pickup": {
         "title": "Self-pickup",
@@ -716,6 +951,28 @@
         "addressHe": "Address in Hebrew",
         "addressEn": "Address in English (optional)"
       },
+      "social": {
+        "title": "My social pages",
+        "hint": "If you have a page on one of these networks, paste its address here. An address left empty will not appear on the site.",
+        "instagram": "Instagram page address",
+        "facebook": "Facebook page address",
+        "tiktok": "TikTok page address",
+        "example": {
+          "instagram": "For example: https://www.instagram.com/your-name",
+          "facebook": "For example: https://www.facebook.com/your-name",
+          "tiktok": "For example: https://www.tiktok.com/@your-name"
+        }
+      },
+      "home": {
+        "title": "Home page",
+        "hint": "The home page has a row of pieces that scrolls sideways. Here you choose which category it shows pieces from.",
+        "label": "The home page row shows the category:",
+        "none": "None (the row is not shown)",
+        "header1": "Menu category 1",
+        "header2": "Menu category 2",
+        "headerNone": "None",
+        "headerHint": "These two categories appear in the shop's top menu, after \"All pieces\". The home page row's category appears there too, so you don't need to pick it again. Choose categories that have pieces in them."
+      },
       "notifications": {
         "title": "Notification emails",
         "hint": "New orders and payment alerts are sent to these addresses. Up to three.",
@@ -735,13 +992,168 @@
         "email": "The email address isn't valid.",
         "notificationEmails": "One to three valid email addresses are needed.",
         "last_payment_method": "At least one payment method must stay on.",
+        "card_not_set_up": "Card payment is not set up yet, so offline payment must stay on.",
         "last_delivery_method": "An enabled zone must keep at least one delivery method.",
         "israel_stays_enabled": "The Israel zone must stay on.",
         "pickup_israel_only": "Self-pickup is only possible in Israel.",
         "zone_not_found": "The delivery zone wasn't found.",
         "usd_missing": "The zone can't be turned on: published products lack a USD price.",
         "fee": "The delivery fee isn't valid (a number, 0 or more).",
-        "threshold": "The amount isn't valid (a number, 0 or more, or empty)."
+        "threshold": "The amount isn't valid (a number, 0 or more, or empty).",
+        "social": {
+          "invalid": "This isn't a web address. Open your page in the browser, copy the address from the bar at the top and paste it here.",
+          "notHttps": "The address must start with https:// (with an s).",
+          "wrongSite": {
+            "instagram": "This isn't an Instagram address. It must be on instagram.com.",
+            "facebook": "This isn't a Facebook address. It must be on facebook.com.",
+            "tiktok": "This isn't a TikTok address. It must be on tiktok.com."
+          },
+          "noPage": {
+            "instagram": "The page name is missing at the end, for example https://www.instagram.com/your-name",
+            "facebook": "The page name is missing at the end, for example https://www.facebook.com/your-name",
+            "tiktok": "The page name is missing at the end, for example https://www.tiktok.com/@your-name"
+          },
+          "tooLong": "The address is too long. Up to 300 characters."
+        },
+        "home_category_not_found": "The category you chose was not found. Reload the page and try again.",
+        "header_category_not_found": "The category you chose was not found. Reload the page and try again."
+      }
+    },
+    "customers": {
+      "title": "Customers",
+      "intro": "Look up a customer by email or phone: download their data, stop marketing emails or erase their details.",
+      "search": {
+        "label": "Email or phone",
+        "submit": "Search"
+      },
+      "errors": {
+        "query": "Please enter an email or a phone number"
+      },
+      "results": "Search results",
+      "ordersLabel": "The customer's orders",
+      "summary": {
+        "orders": "{count, plural, =0 {No orders found} one {1 order found} other {# orders found}}",
+        "checkouts": "{count, plural, one {1 payment not completed} other {# payments not completed}}",
+        "emails": "{count, plural, one {1 email} other {# emails}}"
+      },
+      "others": "Other details that appeared on these orders:",
+      "export": "Download data",
+      "withdraw": {
+        "action": "Stop marketing",
+        "title": "Stop marketing emails to this customer?",
+        "body": "The customer will get no marketing emails from the shop. The orders stay as they are, and the original consent date is kept.",
+        "confirm": "Stop marketing emails"
+      },
+      "erase": {
+        "action": "Erase details",
+        "title": "Erase this customer's details?",
+        "body": "Name, phone, email and address will be erased from {count} orders. The orders themselves (amounts and items) are kept for tax records. This cannot be undone.",
+        "bodyEmails": "The customer's stored emails will be erased. This cannot be undone.",
+        "open": "One of these orders is still open. After erasing, you won't be able to contact the customer about it.",
+        "confirm": "Erase details"
+      },
+      "keptCheckouts": "{count, plural, one {# payment still in progress was not erased. It is} other {# payments still in progress were not erased. They are}} deleted automatically within 48 hours, or up to 24 hours later if the payment provider cannot be reached for the final status check (so up to 72 hours; or 30 days if the amount did not match). If the customer completes a payment, a new order with their details will appear, so search again in 3 days.",
+      "stale": "Some orders changed since the search and were not erased. The current result is shown.",
+      "empty": {
+        "title": "No customers found",
+        "text": "Try another email or phone number."
+      },
+      "toast": {
+        "exported": "File downloaded",
+        "withdrawn": "Marketing emails stopped",
+        "erased": "The customer's details were erased"
+      }
+    },
+    "stats": {
+      "title": "Statistics",
+      "intro": "How many people visited the shop and what they looked at. Counting uses no cookies and identifies no one.",
+      "period": {
+        "label": "Period",
+        "d7": "7 days",
+        "d30": "30 days",
+        "d90": "90 days"
+      },
+      "chart": {
+        "title": "Visits per day",
+        "label": "Visits per day over the last {days} days: {total, plural, one {# visit} other {# visits}} in total, {today} today.",
+        "showTable": "Show as table",
+        "day": "Day",
+        "visits": "Visits"
+      },
+      "products": {
+        "title": "Most viewed products",
+        "views": "{count, plural, one {# view} other {# views}}"
+      },
+      "referrers": {
+        "title": "Where they came from",
+        "visits": "{count, plural, one {# visit} other {# visits}}",
+        "direct": "Direct"
+      },
+      "listEmpty": "No data in this period",
+      "empty": {
+        "title": "No data yet",
+        "text": "Once people visit the shop, the numbers will appear here."
+      }
+    },
+    "content": {
+      "title": "Content pages",
+      "intro": "Edit the shop's pages here: About, shipping and returns, terms, privacy and more.",
+      "list": {
+        "label": "Shop pages",
+        "badgeDraft": "Draft supplied with the site",
+        "badgeEdited": "Edited",
+        "updated": "Updated <d>{date}</d>",
+        "versions": "Earlier versions",
+        "versionsOf": "Earlier versions of {title}"
+      },
+      "editor": {
+        "back": "Back to the content pages",
+        "intro": "Changes appear on the site as soon as you save. If you do not write an English text, visitors in English see the Hebrew text.",
+        "tabsLabel": "Page language",
+        "tabHe": "עברית",
+        "tabEn": "English",
+        "tabHasError": "has an error",
+        "titleLabel": "Page title",
+        "bodyLabel": "Page text",
+        "bodyHint": "Use the buttons above the box: heading, bold, list and link.",
+        "toolbarLabel": "Text formatting",
+        "toolHeading": "Heading",
+        "toolBold": "Bold",
+        "toolList": "List",
+        "toolLink": "Link",
+        "linkText": "link text",
+        "previewShow": "Preview",
+        "previewLabel": "How the text will look on the site",
+        "previewEmpty": "There is no text to show yet.",
+        "previewFailed": "The preview cannot be shown right now. Try again.",
+        "save": "Save",
+        "saving": "Saving…",
+        "saved": "Page saved",
+        "unchanged": "Nothing to save: the text is the same as the saved one",
+        "errorSummary": "Please fix a few details",
+        "reload": "Reload",
+        "versionsLink": "Earlier versions of this page",
+        "errorIn": "{language}: {message}"
+      },
+      "versions": {
+        "title": "Earlier versions",
+        "heading": "Earlier versions: {title}",
+        "intro": "Every save of the page keeps a new version. An order links to the version the customer accepted when ordering.",
+        "listLabel": "The versions, newest first",
+        "item": "Version {n} · <d>{date}</d>",
+        "versionTitle": "Earlier version",
+        "meta": "Version {n}, in force from <d>{date}</d>",
+        "englishHeading": "The English text",
+        "backToList": "Back to all versions",
+        "backToEditor": "Back to editing the page"
+      },
+      "errors": {
+        "not_found": "The page was not found",
+        "title_required": "Please write a title",
+        "title_long": "The title is too long (up to 120 characters)",
+        "body_required": "Please write the page text",
+        "body_long": "The text is too long (up to 50,000 characters)",
+        "stale": "The page changed since it was opened here. So as not to overwrite the other change, reload it and add what you wrote again."
       }
     }
   },
@@ -756,71 +1168,6 @@
           "title": "Sign-in with an unapproved Google account",
           "what": "Someone tried to sign in to the shop admin with a Google account that is not an approved admin.",
           "todo": "No action is needed: the account got no access. If this keeps happening, secure the admins' Google accounts."
-        },
-        "blocked": {
-          "title": "Passkey sign-in blocked",
-          "what": "Passkey sign-in was blocked after several failed attempts.",
-          "todo": "If this was not you, secure the admin's Google account. Another admin can clear the block in the admin area."
-        },
-        "passkey_abandoned": {
-          "title": "Sign-in not completed with the passkey",
-          "what": "Someone signed in with an admin's Google account but did not finish the passkey step.",
-          "todo": "If this was not you, secure the admin's Google account."
-        },
-        "admin_added": {
-          "title": "An admin was added",
-          "what": "A new admin was added to the shop.",
-          "todo": "If you did not expect this, check the admin list and remove anyone who should not be there."
-        },
-        "admin_removed": {
-          "title": "An admin was removed",
-          "what": "An admin was removed from the shop.",
-          "todo": "If you did not expect this, check the admin list and contact the maintainer."
-        },
-        "admin_reset": {
-          "title": "An admin's access was reset",
-          "what": "An admin's access was reset by the maintainer.",
-          "todo": "If you did not expect this, contact the maintainer."
-        },
-        "passkey_added": {
-          "title": "A passkey was added",
-          "what": "A passkey was added to an admin account.",
-          "todo": "If you did not expect this, remove the passkey in the admin area and secure the Google account."
-        },
-        "passkey_removed": {
-          "title": "A passkey was removed",
-          "what": "A passkey was removed from an admin account.",
-          "todo": "If you did not expect this, check the passkeys in the admin area."
-        },
-        "recovery_used": {
-          "title": "A recovery code was used",
-          "what": "A recovery code was used to sign in.",
-          "todo": "If this was not you, secure the admin's Google account. A new passkey is waiting for approval by another admin."
-        },
-        "recovery_regenerated": {
-          "title": "Recovery codes were regenerated",
-          "what": "An admin's recovery codes were regenerated.",
-          "todo": "If you did not expect this, secure the admin's Google account."
-        },
-        "recovery_refused": {
-          "title": "A recovery request was refused",
-          "what": "A recovery request was refused because there is no other admin who could approve it.",
-          "todo": "If you did not ask for a recovery, secure the admin's Google account. If you did, contact the maintainer."
-        },
-        "recovery_pending": {
-          "title": "A passkey is waiting for approval",
-          "what": "A new passkey created during a recovery is waiting for approval by another admin.",
-          "todo": "Sign in to the admin area, check that the request is from the admin you expect, and approve or reject it."
-        },
-        "recovery_approved": {
-          "title": "A recovery passkey was approved",
-          "what": "A passkey created during a recovery was approved.",
-          "todo": "If you did not expect this, remove the passkey in the admin area."
-        },
-        "recovery_rejected": {
-          "title": "A recovery passkey was rejected",
-          "what": "A passkey created during a recovery was rejected.",
-          "todo": "If you did not expect this, secure the admin's Google account."
         }
       }
     },
@@ -855,10 +1202,11 @@
       "howToPay": "How to pay",
       "quoteNumber": "When you transfer, write the order number {number}.",
       "cancellation": "Cancelling an order",
-      "cancellationText": "You may cancel a purchase as the law and the shop's cancellation policy allow. Pieces made specially for you fall under the exception in the law. Full details on the shipping, returns and cancellation page:",
+      "cancellationText": "You can cancel a purchase as the law and my cancellation policy allow. Pieces made specially for you are covered by an exception in the law. The full details are on the shipping, returns and cancellation page:",
       "seller": "Seller details",
       "regNumber": "Reg. no. {number}",
-      "viewOrder": "View your order"
+      "followIntro": "This link shows where your order stands at any time.",
+      "viewOrder": "Follow your order"
     },
     "newOrder": {
       "subject": "New order {number} – {shopName}",
@@ -870,6 +1218,17 @@
       "email": "Email",
       "note": "Note",
       "open": "Open the order in the admin"
+    },
+    "contact": {
+      "subject": "New message from the site · {shopName}",
+      "title": "New message from the site",
+      "name": "Name",
+      "email": "Email",
+      "locale": "Site language",
+      "localeHe": "Hebrew",
+      "localeEn": "English",
+      "message": "Message",
+      "footer": "To reply, reply to this email."
     },
     "paymentMismatch": {
       "subject": "Payment amount problem – {shopName}",
@@ -908,12 +1267,43 @@
           "todo": "Check the payment provider's dashboard for a payment, and refund it if needed."
         }
       }
+    },
+    "orderEmailFailed": {
+      "subject": "{shopName}: the email for order {number} was not sent to the customer",
+      "title": "The order email was not sent to the customer",
+      "number": "Order number",
+      "what": "I could not send the customer their order confirmation email, so they have no tracking link. It is worth calling them.",
+      "open": "Open the order"
+    },
+    "cancelled": {
+      "subject": "{shopName}: order {number} was cancelled",
+      "title": "Order cancelled",
+      "intro": "Your order was cancelled.",
+      "number": "Order number",
+      "paid": {
+        "online": "The money will be returned to your card through the payment company.",
+        "offline": "I'll return the money the same way you paid."
+      },
+      "refunded": "Your money has already been returned.",
+      "unpaid": "No payment was taken.",
+      "closing": "Any questions? You can write or call me:"
+    },
+    "refunded": {
+      "subject": "{shopName}: refund for order {number}",
+      "title": "Refund",
+      "intro": "I've refunded your order.",
+      "number": "Order number",
+      "amount": "Refunded amount",
+      "method": {
+        "online": "It will show on your card within a few business days, depending on your card company.",
+        "offline": "The refund was made the same way you paid."
+      }
     }
   },
   "errors": {
     "notFound": {
       "title": "Page not found",
-      "text": "The link may be old or the page may have moved. You can search here, or go to all pieces.",
+      "text": "The link may be old, or the page may have moved. Try searching, or browse all pieces.",
       "searchLabel": "Search",
       "searchPlaceholder": "What are you looking for?",
       "searchButton": "Search"
@@ -925,7 +1315,108 @@
       "home": "Back to the home page"
     }
   },
-  "consent": {},
-  "legal": {},
-  "contact": {}
+  "consent": {
+    "items": {
+      "cart": {
+        "purpose": "Keeps your shopping cart on your device.",
+        "duration": "Until you clear it; items you have not bought are removed after 90 days."
+      },
+      "locale": {
+        "purpose": "Remembers the language you chose. It is only set when you switch language.",
+        "duration": "One year."
+      },
+      "checkout": {
+        "purpose": "Keeps the details you entered at checkout while you go to the payment page and back.",
+        "duration": "Until you close the tab."
+      },
+      "admin": {
+        "purpose": "Keeps the shop owner signed in to the admin area after signing in with Google. Only used by the shop owner.",
+        "duration": "Up to 12 hours."
+      },
+      "oauth": {
+        "purpose": "Ties the Google sign-in round trip to the browser. Only used by the shop owner.",
+        "duration": "10 minutes."
+      },
+      "consent": {
+        "purpose": "Remembers your cookie choice.",
+        "duration": "12 months."
+      },
+      "testOptional": {
+        "purpose": "A test cookie of the site. It exists only in the test setup, and only after you accept.",
+        "duration": "One year."
+      }
+    },
+    "banner": {
+      "title": "Cookies",
+      "text": "This site uses optional cookies only if you agree. You can choose, and change your choice at any time.",
+      "policyLink": "Cookie Policy",
+      "acceptAll": "Accept all",
+      "rejectAll": "Reject all",
+      "settings": "Settings",
+      "busy": "One moment…",
+      "skip": "Skip to cookie settings"
+    },
+    "dialog": {
+      "title": "Cookie settings",
+      "intro": "Choose which optional cookies to turn on. The necessary cookies always work.",
+      "necessaryName": "Necessary cookies",
+      "necessaryText": "Needed for the site to work: the cart, the language and your order details.",
+      "alwaysOn": "Always on",
+      "save": "Save",
+      "close": "Close"
+    },
+    "categories": {
+      "analytics": {
+        "name": "Statistics",
+        "description": "Cookies that help me understand how the site is used."
+      },
+      "marketing": {
+        "name": "Marketing",
+        "description": "Cookies used to tailor advertising."
+      }
+    },
+    "errors": {
+      "unavailable": "A cookie choice is not needed right now.",
+      "invalid": "That choice wasn't valid. Please try again.",
+      "failed": "I couldn't save your choice. Please try again."
+    }
+  },
+  "legal": {
+    "storage": {
+      "caption": "Items stored on your device",
+      "name": "Name",
+      "purpose": "What it is for",
+      "lifetime": "How long",
+      "where": "Where",
+      "adminOnly": "Admin area only",
+      "kind": {
+        "cookie": "Cookie",
+        "localStorage": "Local storage",
+        "sessionStorage": "Tab storage"
+      }
+    }
+  },
+  "contact": {
+    "detailsHeading": "Business details",
+    "formHeading": "Send a message",
+    "fields": {
+      "name": "Name",
+      "email": "Email",
+      "message": "Message"
+    },
+    "counter": "{count} of {max} characters",
+    "submit": "Send",
+    "busy": "One moment…",
+    "errorSummary": "Please fix a few details",
+    "sent": "Your message was sent. I'll reply by email soon.",
+    "errors": {
+      "name": "Please enter your name (at least 2 characters).",
+      "email": "Please enter a valid email address.",
+      "message_short": "The message is too short. Please write at least 10 characters.",
+      "message_long": "The message is too long. You can write up to 5,000 characters.",
+      "expired": "The form has expired. Please reload the page and try again.",
+      "rate_limited": "You've sent several messages in a row. Try again in {minutes, plural, one {1 minute} other {# minutes}}.",
+      "generic": "Something went wrong. Please try again."
+    }
+  }
 }

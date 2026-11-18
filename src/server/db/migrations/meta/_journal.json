@@ -15,6 +15,41 @@
       "when": 1794154191315,
       "tag": "0001_deferrable_unique_constraints",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794257305623,
+      "tag": "0002_content_page_version",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1794470425427,
+      "tag": "0003_simpler_admin_access",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1794851860721,
+      "tag": "0004_product_categories",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1794854189882,
+      "tag": "0005_social_links",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1794865796278,
+      "tag": "0006_header_categories",
+      "breakpoints": true
     }
   ]
 }
