@@ -212,6 +212,22 @@ describe('placeOrder: offline payment', () => {
     const [order] = await testDb.db.select().from(orders);
     expect(order).toMatchObject({ subtotalMinor: 36000, deliveryFeeMinor: 0, totalMinor: 36000 });
   });
+
+  it('in production an order succeeds with every seed placeholder in place, and once the details are filled in', async () => {
+    env.APP_ENV = 'production';
+    expect(await placeOrder(form() as never, ctx)).toMatchObject({ ok: true });
+    await testDb.db.update(shopSettings).set({
+      businessNameHe: 'אביבה בע״מ',
+      businessNameEn: 'Aviva Ltd',
+      businessRegNumber: '515151515',
+      businessEmail: 'hello@aviva.example',
+      businessPhone: '+972521234567',
+      businessAddressHe: 'הרצל 1, חיפה',
+      businessAddressEn: '1 Herzl St, Haifa',
+      notificationEmails: ['aviva@aviva.example'],
+    });
+    expect(await placeOrder(form() as never, ctx)).toMatchObject({ ok: true });
+  });
 });
 
 describe('placeOrder: online payment', () => {
@@ -415,22 +431,6 @@ describe('placeOrder: rejected input leaves no rows', () => {
     });
     expect(await counts()).toEqual({ orders: 0, pending: 0, outbox: 0 });
   });
-
-  it('in production while a seed placeholder remains, but not once the details are filled in', async () => {
-    env.APP_ENV = 'production';
-    await expectRejected(form(), 'checkout.shop_not_ready');
-    await testDb.db.update(shopSettings).set({
-      businessNameHe: 'אביבה בע״מ',
-      businessNameEn: 'Aviva Ltd',
-      businessRegNumber: '515151515',
-      businessEmail: 'hello@aviva.example',
-      businessPhone: '+972521234567',
-      businessAddressHe: 'הרצל 1, חיפה',
-      businessAddressEn: '1 Herzl St, Haifa',
-      notificationEmails: ['aviva@aviva.example'],
-    });
-    expect(await placeOrder(form() as never, ctx)).toMatchObject({ ok: true });
-  });
 });
 
 describe('order emails (contracts/emails.md)', () => {
@@ -474,9 +474,27 @@ describe('order emails (contracts/emails.md)', () => {
       expect(part).toContain('למעקב אחרי ההזמנה');
     }
     // Seller identity (business details of the settings row).
-    expect(body).toContain('000000000');
+    expect(body).not.toContain('000000000');
+    expect(body).not.toContain('מספר עוסק:');
     expect(mail?.html).toContain('lang="he"');
     expect(mail?.html).toContain('dir="rtl"');
+  });
+
+  it('the confirmation email shows the business number only when there is a real one (008 FR-007)', async () => {
+    for (const [number, shown] of [
+      [null, false],
+      ['123456789', true],
+    ] as const) {
+      await testDb.db.delete(emailOutbox);
+      await testDb.db.update(shopSettings).set({ businessRegNumber: number });
+      const rows = await placeWithSentinels();
+      const mail = rows.find((row) => row.kind === 'order-confirmation');
+      for (const part of [mail?.html, mail?.textBody]) {
+        expect(part?.includes('מספר עוסק: 123456789')).toBe(shown);
+        if (!shown) expect(part).not.toContain('מספר עוסק:');
+        expect(part).not.toContain('000000000');
+      }
+    }
   });
 
   it('an English order gets an English email with the English texts', async () => {

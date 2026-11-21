@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import type { ReactNode } from 'react';
+import { logoSrc, logoSrcSet } from '@/lib/brand';
 import { IconButton } from '@/components/ui/IconButton';
 import type { Locale } from '@/i18n/routing';
 import type { PublicCategory } from '@/server/catalog/public-queries';
@@ -62,11 +63,22 @@ export async function Header({
           </nav>
           <Link
             href={base}
-            lang={brand.lang}
             data-testid="header-brand"
-            className="inline-flex min-h-11 min-w-0 items-center text-[clamp(19px,4.6vw,22px)] font-bold whitespace-nowrap nav:mx-auto nav:max-w-40"
+            className="group relative block h-full min-h-11 w-(--logo-size) self-stretch focus-visible:outline-none nav:mx-auto"
           >
-            <span className="truncate">{brand.text}</span>
+            <img
+              data-testid="header-logo"
+              src={logoSrc(176)}
+              srcSet={logoSrcSet()}
+              sizes="(min-width: 900px) 112px, 88px"
+              width={112}
+              height={112}
+              alt={brand.text}
+              lang={brand.lang}
+              decoding="async"
+              className="absolute inset-s-0 inset-bs-[calc(var(--header-h)-var(--logo-overhang))] block size-(--logo-size) max-w-none rounded-full group-focus-visible:outline-3 group-focus-visible:outline-offset-3 group-focus-visible:outline-current"
+            />
+            <span className="sr-only">{t('homeLinkSuffix')}</span>
           </Link>
           <div className="hidden shrink-0 nav:block">
             <HeaderSearch locale={locale} variant="header" />

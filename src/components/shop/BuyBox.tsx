@@ -101,7 +101,6 @@ export function BuyBox({
           currency="ILS"
           locale={locale}
           size="lg"
-          vatLabel={t('vat')}
           {...(open ? { from: t('from') } : {})}
         />
       </div>

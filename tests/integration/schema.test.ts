@@ -355,6 +355,28 @@ describe('content_page_version', () => {
   });
 });
 
+describe('shop_settings business number (008 US2)', () => {
+  const base = {
+    shopNameHe: 'חנות',
+    businessNameHe: 'עסק',
+    businessEmail: 'a@example.test',
+    businessPhone: '1',
+    businessAddressHe: 'כתובת',
+    notificationEmails: ['a@example.test'],
+  };
+
+  it('accepts NULL and a value, and rejects an empty string', async () => {
+    await expect(
+      testDb.db.insert(shopSettings).values({ ...base, businessRegNumber: '' }),
+    ).rejects.toThrow();
+    await testDb.db.insert(shopSettings).values({ ...base, businessRegNumber: null });
+    await testDb.db.update(shopSettings).set({ businessRegNumber: '123456789' });
+    await expect(
+      testDb.db.update(shopSettings).set({ businessRegNumber: '' }),
+    ).rejects.toThrow();
+  });
+});
+
 describe('shop_settings header categories (007 FR-039)', () => {
   it('sets the setting to null when its category is deleted', async () => {
     await testDb.db.insert(shopSettings).values({

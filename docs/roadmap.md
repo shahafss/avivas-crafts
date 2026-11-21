@@ -33,6 +33,7 @@ The vision (who the shop is for, what success means, principles, what is out of 
 | 005 | English version and language switch | yes | Done (dev) | [specs/005-english-language-switch](../specs/005-english-language-switch/) |
 | 006 | Hosting and launch readiness | yes | Done (dev) | [specs/006-launch-readiness](../specs/006-launch-readiness/) |
 | 007 | Storefront redesign (Shopify-like look) | yes | Done (awaiting owner test) | [specs/007-storefront-redesign](../specs/007-storefront-redesign/) |
+| 008 | Post-launch fixes (orders, logo, WhatsApp, business number, link previews) | yes | Done (awaiting owner test) | [specs/008-post-launch-fixes](../specs/008-post-launch-fixes/) |
 
 Numbers are a suggested order. Spec Kit gives each feature the next free number when it is
 created, so if the order changes, the numbers follow the order of creation, not this table.
@@ -137,6 +138,15 @@ in several categories, and Settings chooses the home row's category.
 **Why before launch**: the owner paused the launch on 2026-11-16 to redesign the shop first.
 
 **Source**: owner design discussion 2026-11-16 (decisions recorded in the spec).
+
+### 008 — Post-launch fixes
+
+**Goal**: fix what the first live test showed: orders no longer blocked by sample business details;
+the owner's round logo in the header; a WhatsApp block on the contact page; the business number
+optional and never on the website; no VAT label; a clearer product editor (photos first, field errors);
+a new home band sentence; favicon and link previews.
+
+**Source**: owner decisions 2026-11-20 (recorded in the spec).
 
 ## Later (after launch)
 

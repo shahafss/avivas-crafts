@@ -10,7 +10,9 @@ import { routing } from '@/i18n/routing';
 import { fallbackAttrs } from '@/lib/i18n-fallback';
 import { renderMarkdown } from '@/server/content/markdown';
 import { getPage } from '@/server/content/pages';
-import { alternates } from '@/server/seo';
+import { pageMetadata } from '@/server/seo';
+import { getSettings } from '@/server/settings/settings';
+import { shopNameFor } from '@/server/settings/shop-name';
 
 type Params = Promise<{ locale: string; slug: string }>;
 
@@ -28,9 +30,18 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   const { locale, slug } = await params;
   if (!hasLocale(routing.locales, locale) || !PAGE_SLUGS.includes(slug)) return {};
   const page = await getPage(slug, locale);
-  return page === null
-    ? {}
-    : { title: page.title.text, alternates: alternates(`/pages/${slug}`, locale) };
+  if (page === null) return {};
+  const [settings, common] = await Promise.all([
+    getSettings(),
+    getTranslations({ locale, namespace: 'common' }),
+  ]);
+  const siteName = shopNameFor(settings, locale).text;
+  const description = common('meta.description');
+  const title = page.title.text;
+  return {
+    title,
+    ...pageMetadata({ locale, path: `/pages/${slug}`, title, description, siteName }),
+  };
 }
 
 // A content page (storefront.md §8.9): breadcrumbs, the owner-written title as the only h1 and the

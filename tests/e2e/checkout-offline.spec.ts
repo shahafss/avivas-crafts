@@ -89,6 +89,25 @@ test('offline with pickup: awaiting payment, instructions on the page and in the
   await expect(page.locator('input[type="password"]')).toHaveCount(0);
 });
 
+test('the seller line shows the business name and no business number or VAT wording (008 US2)', async ({
+  page,
+}) => {
+  await setCart(page, 'sample-clay-mug', 1);
+  await openCheckout(page);
+  const text = await page.getByTestId('checkout-form').innerText();
+  expect(text).toContain('שם העסק (להשלמה)');
+  for (const forbidden of [
+    'עוסק מורשה',
+    'VAT registration',
+    'ע.מ.',
+    '000000000',
+    'כולל מע״מ',
+    'incl. VAT',
+  ]) {
+    expect(text, `the checkout shows "${forbidden}"`).not.toContain(forbidden);
+  }
+});
+
 test('"Other country" shows the Israel-only message and submitting is refused', async ({
   page,
 }) => {

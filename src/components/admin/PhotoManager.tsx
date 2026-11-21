@@ -4,10 +4,12 @@ import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState, useTransition, type ChangeEvent } from 'react';
 import { Button } from '@/components/ui/Button';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { FieldError, errorId } from '@/components/ui/Field';
 import { FormField } from '@/components/ui/FormField';
 import { Icon } from '@/components/ui/Icon';
 import { Notice } from '@/components/ui/Notice';
 import { Spinner } from '@/components/ui/Spinner';
+import { cn } from '@/lib/cn';
 import { MAX_IMAGES } from '@/lib/validation/product';
 import type { ActionResult } from '@/server/catalog/result';
 
@@ -29,6 +31,9 @@ export interface PhotoActions {
     alt: { altHe?: string | null; altEn?: string | null },
   ) => Promise<ActionResult>;
 }
+
+const PHOTOS_ID = 'product-photos';
+const PHOTOS_ERROR_ID = errorId(PHOTOS_ID);
 
 /** Upload errors of `POST /api/admin/images` (contracts/http-endpoints.md) that have their own message. */
 const UPLOAD_ERRORS = new Set([
@@ -141,11 +146,17 @@ export function PhotoManager({
   initial,
   actions,
   onFeedback,
+  error: requiredError,
+  onCountChange,
 }: {
   productId: string;
   initial: PhotoItem[];
   actions: PhotoActions;
   onFeedback: (message: string, tone: 'success' | 'error') => void;
+  /** "Required" message from a failed publish; shown as a red outline and a line under the heading. */
+  error?: string | undefined;
+  /** Called with the number of photos whenever it changes. */
+  onCountChange?: ((count: number) => void) | undefined;
 }) {
   const t = useTranslations('admin.products.photos');
   const errors = useTranslations('admin.images.errors');
@@ -160,6 +171,10 @@ export function PhotoManager({
   const counter = useRef(0);
   // After a move the buttons are re-rendered; keyboard focus follows the moved photo.
   const focusAfter = useRef<{ id: string; prefer: string[] } | null>(null);
+
+  useEffect(() => {
+    onCountChange?.(items.length);
+  }, [items.length, onCountChange]);
 
   useEffect(() => {
     const target = focusAfter.current;
@@ -298,7 +313,14 @@ export function PhotoManager({
   }
 
   return (
-    <div className="grid gap-4">
+    <div
+      className={cn(
+        'grid gap-4',
+        requiredError !== undefined &&
+          'rounded-card outline-[1.5px] outline-offset-4 outline-alert',
+      )}
+    >
+      {requiredError === undefined ? null : <FieldError id={PHOTOS_ID}>{requiredError}</FieldError>}
       <p className="text-ink-2">{t('hint')}</p>
 
       {error === undefined ? null : (
@@ -410,6 +432,10 @@ export function PhotoManager({
             disabled={items.length >= MAX_IMAGES}
             className="sr-only"
             data-testid="photo-input"
+            data-field="photos"
+            {...(requiredError === undefined
+              ? {}
+              : { 'aria-invalid': true, 'aria-describedby': PHOTOS_ERROR_ID })}
           />
         </label>
 

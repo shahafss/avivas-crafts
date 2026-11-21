@@ -4,7 +4,7 @@
 
 ## Who is responsible for your data
 
-The owner of the business is the database controller and is responsible for the data collected on this site. The business name, VAT registration number and address are shown at the bottom of every page and on the [Contact](/en/contact) page. For any privacy question, contact us through the contact page or at the email shown at the bottom of the site.
+The owner of the business is the database controller and is responsible for the data collected on this site. The business name, address and contact details are shown at the bottom of every page and on the [Contact](/en/contact) page, and the business number is given in the order emails. For any privacy question, contact us through the contact page or at the email shown at the bottom of the site.
 
 ## What data we collect and why
 

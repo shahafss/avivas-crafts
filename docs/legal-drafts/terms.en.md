@@ -4,7 +4,7 @@
 
 ## Who the seller is
 
-The site is operated by a licensed dealer (an Israeli VAT-registered business). The business name, VAT registration number and address are shown at the bottom of every page and on the [Contact](/en/contact) page, and are not repeated here. When you order on the site you are contracting with this business.
+The business name, address and contact details are shown at the bottom of every page and on the [Contact](/en/contact) page, and are not repeated here. The business number is given in the order emails. When you order on the site you are contracting with this business.
 
 ## Made-to-order goods
 
@@ -12,7 +12,7 @@ Every item on the site is made by hand after you order it. That is why each prod
 
 ## Prices
 
-All prices on the site are in shekels and include VAT. The delivery fee (if any) is shown at checkout before you confirm the order, and the final price including delivery is shown before payment. Prices may be updated, and the price that applies to an order is the one shown when you placed it.
+All prices on the site are in shekels and are final prices. The delivery fee (if any) is shown at checkout before you confirm the order, and the final price including delivery is shown before payment. Prices may be updated, and the price that applies to an order is the one shown when you placed it.
 
 ## Payment methods
 

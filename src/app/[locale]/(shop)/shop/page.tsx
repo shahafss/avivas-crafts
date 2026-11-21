@@ -13,7 +13,9 @@ import {
   listPublishedProducts,
   type ProductSort,
 } from '@/server/catalog/public-queries';
-import { alternates } from '@/server/seo';
+import { pageMetadata } from '@/server/seo';
+import { getSettings } from '@/server/settings/settings';
+import { shopNameFor } from '@/server/settings/shop-name';
 
 const SORTS: ProductSort[] = ['newest', 'price-asc', 'price-desc'];
 
@@ -26,7 +28,17 @@ export async function generateMetadata({
   const { locale } = await params;
   if (!hasLocale(routing.locales, locale)) return {};
   const t = await getTranslations({ locale, namespace: 'shop.allPieces' });
-  return { title: t('title'), alternates: alternates('/shop', locale) };
+  const [settings, common] = await Promise.all([
+    getSettings(),
+    getTranslations({ locale, namespace: 'common' }),
+  ]);
+  const siteName = shopNameFor(settings, locale).text;
+  const description = common('meta.description');
+  const title = t('title');
+  return {
+    title,
+    ...pageMetadata({ locale, path: '/shop', title, description, siteName }),
+  };
 }
 
 /** "All pieces" (007 FR-033, research D19): the catalog that used to be the home page. */

@@ -42,6 +42,8 @@
 /* Header height and the dark layers behind text on photos (storefront.md 3.3, research D4). */
 :root {
   --header-h: 64px;
+  --logo-size: 88px;
+  --logo-overhang: calc(var(--logo-size) / 2);
   --scrim-large: 0.42;
   --scrim-text: 0.55;
 }
@@ -49,13 +51,14 @@
 @media (min-width: 56.25rem) {
   :root {
     --header-h: 72px;
+    --logo-size: 112px;
   }
 }
 
 @layer base {
   html {
     scroll-behavior: smooth;
-    scroll-padding-top: var(--header-h);
+    scroll-padding-top: calc(var(--header-h) + var(--logo-overhang));
     scrollbar-color: var(--color-line) transparent;
   }
 
@@ -501,10 +504,21 @@ body:has([data-hero]) #site-header[data-at-top] {
   backdrop-filter: none;
 }
 
+/* The focused logo's ring is white here (currentColor) and its lower half sits over the bare photo,
+   where a white ring can vanish against bright areas: a soft dark halo under the ring (0-7 px, the
+   ring is drawn 3-6 px out) keeps it visible. */
+body:has([data-hero]) #site-header[data-at-top] [data-testid="header-brand"]:focus-visible img {
+  box-shadow: 0 0 0 7px rgb(6 20 6 / 0.55);
+}
+
 /* Without JavaScript nothing removes `data-at-top`, so the see-through look would stay at every
    scroll position, white text on a transparent bar over the page. There the header is always the
    frosted white bar (readable everywhere; it covers the photo's top --header-h). */
 @media (scripting: none) {
+  body:has([data-hero]) #site-header[data-at-top] [data-testid="header-brand"]:focus-visible img {
+    box-shadow: none;
+  }
+
   body:has([data-hero]) #site-header[data-at-top] {
     background-color: var(--color-paper);
     border-color: var(--color-line);

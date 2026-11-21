@@ -30,7 +30,6 @@ import { log } from '@/server/security/logger';
 import { checkRateLimit } from '@/server/security/rate-limit';
 import {
   getSettings,
-  placeholderFields,
   type Settings,
   type Zone,
 } from '@/server/settings/settings';
@@ -151,9 +150,6 @@ export async function placeOrder(input: unknown, ctx: PlaceOrderContext): Promis
   }
 
   const settings = await getSettings();
-  if (getEnv().APP_ENV === 'production' && placeholderFields(settings).length > 0) {
-    return fail('checkout.shop_not_ready');
-  }
 
   // The light schema first: the country decides the zone, and the zone decides what is allowed.
   const light = checkoutFormSchema.safeParse(input);

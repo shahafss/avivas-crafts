@@ -72,7 +72,6 @@ export default async function CheckoutPage({ params }: { params: Promise<{ local
     seller: {
       name: businessName.text,
       nameLang: businessName.fallback ? 'he' : undefined,
-      regNumber: settings.businessRegNumber,
     },
   };
 

@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { expect, resetDb, sql, test } from './fixtures';
+import { expect, resetDb, sql, test, waitForFormAge } from './fixtures';
 import {
   burgerLines,
   expectDrawerGeometry,
@@ -22,8 +22,15 @@ import {
 
 test.describe.configure({ mode: 'serial' });
 
+// 008 US6: the logo tests (title starts with "logo:") run on the phone project too.
 test.beforeEach(({}, testInfo) => {
-  test.skip(testInfo.project.name !== 'chromium-desktop', 'Run once, in desktop Chromium');
+  const isLogoTest = testInfo.title.startsWith('logo:');
+  test.skip(
+    isLogoTest
+      ? !['chromium-desktop', 'chromium-mobile'].includes(testInfo.project.name)
+      : testInfo.project.name !== 'chromium-desktop',
+    'Run once, in desktop Chromium (logo tests also on the phone project)',
+  );
 });
 
 const LOCALES = ['he', 'en'] as const;
@@ -67,6 +74,33 @@ async function open(page: Page, locale: Locale, screen: Screen): Promise<void> {
   }
   if (screen.name === 'product') await expect(page.getByTestId('also-like')).toBeVisible();
 }
+
+// 008 US2: no business number or VAT wording on the public pages (owner decision, FR-006, FR-008a).
+const TAX_STRINGS = [
+  'עוסק מורשה',
+  'VAT registration',
+  'ע.מ.',
+  '000000000',
+  'כולל מע״מ',
+  'incl. VAT',
+  'including VAT',
+];
+
+test('the home, product and contact pages show no business number and no VAT wording', async ({
+  page,
+}) => {
+  for (const locale of LOCALES) {
+    for (const name of ['home', 'product', 'contact']) {
+      const screen = SCREENS.find((candidate) => candidate.name === name);
+      if (screen === undefined) throw new Error(`no screen ${name}`);
+      await open(page, locale, screen);
+      const text = await page.locator('body').innerText();
+      for (const forbidden of TAX_STRINGS) {
+        expect(text, `${locale} ${name} shows "${forbidden}"`).not.toContain(forbidden);
+      }
+    }
+  }
+});
 
 test('every page has lang and dir for its locale', async ({ page }) => {
   for (const locale of LOCALES) {
@@ -367,7 +401,7 @@ test('on the home page the banner buttons and every header control are 44 by 44 
   }
 });
 
-test('header at 320, 375, 900, 1024 and 1280 px: search is the menu sheet below 1024 px and the field from 1024 px, no visible control overlaps another or the brand, a long name truncates (default and long shop names)', async ({
+test('header at 320, 375, 900, 1024 and 1280 px: search is the menu sheet below 1024 px and the field from 1024 px, no visible control overlaps another or the brand, a long shop name does not widen the logo (default and long shop names)', async ({
   page,
 }) => {
   const [original] = await sql<{ he: string; en: string | null }[]>`
@@ -462,22 +496,15 @@ test('header at 320, 375, 900, 1024 and 1280 px: search is the menu sheet below 
                 expect(overlaps, `${label}: "${a.name}" overlaps "${b.name}"`).toBe(false);
               }
             }
-            const text = await page.getByTestId('header-brand').evaluate((link) => {
-              const span = link.querySelector('span');
-              if (!span) return null;
-              const l = link.getBoundingClientRect();
-              const s = span.getBoundingClientRect();
-              const style = getComputedStyle(span);
-              return {
-                inside: s.left >= l.left - 0.5 && s.right <= l.right + 0.5,
-                clipped: span.scrollWidth > span.clientWidth + 1,
-                ellipsis: style.textOverflow === 'ellipsis' && style.overflowX === 'hidden',
-              };
-            });
-            if (!text) throw new Error(`${label}: no brand text`);
-            expect(text.inside, `${label}: brand text stays inside the brand link`).toBe(true);
-            if (text.clipped)
-              expect(text.ellipsis, `${label}: cut name ends in an ellipsis`).toBe(true);
+            // 008 US6: the brand is the logo image; a long name does not widen it (it is only the
+            // alt text and the link's accessible name).
+            expect(brand.width, `${label}: brand width is the logo size`).toBeLessThanOrEqual(
+              width >= 900 ? 112.5 : 88.5,
+            );
+            await expect(page.getByTestId('header-logo'), `${label}: logo alt`).toHaveAttribute(
+              'alt',
+              name ?? (locale === 'he' ? original.he : (original.en ?? original.he)),
+            );
           }
         }
       }
@@ -813,7 +840,7 @@ test('the brand is centred between the nav and the search form from 1024 px, and
   }
 });
 
-test('from 1024 px a 60-character shop name leaves the brand at most 160 px wide and truncated', async ({
+test('from 1024 px a 60-character shop name leaves the logo at its size and in the alt text and link name', async ({
   page,
 }) => {
   const [original] = await sql<{ he: string; en: string | null }[]>`
@@ -832,18 +859,9 @@ test('from 1024 px a 60-character shop name leaves the brand at most 160 px wide
         await expect(brand, label).toBeVisible();
         const box = await brand.boundingBox();
         if (!box) throw new Error(`${label}: no brand box`);
-        expect(box.width, `${label}: brand width`).toBeLessThanOrEqual(160.5);
-        const text = await brand.evaluate((link) => {
-          const span = link.querySelector('span');
-          if (!span) return null;
-          const style = getComputedStyle(span);
-          return {
-            clipped: span.scrollWidth > span.clientWidth + 1,
-            ellipsis: style.textOverflow === 'ellipsis' && style.overflowX === 'hidden',
-          };
-        });
-        expect(text?.clipped, `${label}: the name is cut`).toBe(true);
-        expect(text?.ellipsis, `${label}: the cut ends in an ellipsis`).toBe(true);
+        expect(box.width, `${label}: brand width`).toBeLessThanOrEqual(112.5);
+        await expect(page.getByTestId('header-logo'), `${label}: alt`).toHaveAttribute('alt', name);
+        await expect(brand, `${label}: link name`).toHaveAccessibleName(homeName(name, locale));
         expectNoOverlap(await visibleHeaderControls(page), label);
         await noSidewaysScroll(page, label);
       }
@@ -1445,4 +1463,221 @@ test('no sideways scroll at 320 and 375 px with the cart drawer or the menu draw
       await page.keyboard.press('Escape');
     }
   }
+});
+
+// ------------------------------------------------------------------ 008 US6: logo in the header
+
+// The name is built from the image alt and the hidden suffix; Chrome may put one space between
+// them, which a screen reader does not voice.
+function homeName(name: string, locale: Locale): RegExp {
+  const suffix = locale === 'he' ? 'דף הבית' : 'home page';
+  const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`^${escaped} ?, ${suffix}$`);
+}
+
+async function logoGeometry(page: Page) {
+  return page.evaluate(() => {
+    const rect = (selector: string) => {
+      const element = document.querySelector(selector);
+      if (!element) throw new Error(`no ${selector}`);
+      const r = element.getBoundingClientRect();
+      return { top: r.top, bottom: r.bottom, left: r.left, right: r.right, height: r.height };
+    };
+    return { logo: rect('[data-testid="header-logo"]'), header: rect('#site-header') };
+  });
+}
+
+function expectHalfOut(geometry: Awaited<ReturnType<typeof logoGeometry>>, label: string): void {
+  const { logo, header } = geometry;
+  expect(logo.top, `${label}: logo starts above the bar's bottom edge`).toBeLessThan(header.bottom);
+  expect(logo.bottom, `${label}: logo ends below the bar's bottom edge`).toBeGreaterThan(
+    header.bottom,
+  );
+  expect(
+    Math.abs(header.bottom - logo.top - logo.height / 2),
+    `${label}: half of the logo hangs below the bar`,
+  ).toBeLessThanOrEqual(1);
+}
+
+test('logo: on a content page it hangs half below the bar while scrolled and the content starts below it at the top', async ({
+  page,
+}) => {
+  for (const locale of LOCALES) {
+    for (const path of ['/pages/about', '/p/sample-clay-mug', '/contact']) {
+      const label = `${locale}${path}`;
+      await page.goto(`/${locale}${path}`);
+      await expect(page.getByTestId('header-logo')).toBeVisible();
+      const top = await page.evaluate(() => {
+        const logo = document.querySelector('[data-testid="header-logo"]');
+        const first = document.querySelector('main')?.firstElementChild;
+        if (!logo || !first) throw new Error('missing element');
+        return {
+          logoBottom: logo.getBoundingClientRect().bottom,
+          first: first.getBoundingClientRect().top,
+        };
+      });
+      expect(top.first, `${label}: first content at or below the logo`).toBeGreaterThanOrEqual(
+        top.logoBottom - 0.5,
+      );
+      await page.evaluate(() => {
+        window.scrollTo({ top: 200, behavior: 'instant' });
+      });
+      await page.waitForFunction(() => window.scrollY >= 199);
+      expectHalfOut(await logoGeometry(page), label);
+    }
+  }
+});
+
+test('logo: on the home page at scroll 0 over the photo the same geometry holds', async ({
+  page,
+}) => {
+  for (const locale of LOCALES) {
+    await page.goto(`/${locale}`);
+    await expect(page.getByTestId('header-logo')).toBeVisible();
+    expectHalfOut(await logoGeometry(page), `${locale} home`);
+  }
+});
+
+test('logo: its box never meets the menu button, the cart button or the search field at 320, 375, 1024 and 1280 px', async ({
+  page,
+}) => {
+  for (const width of [320, 375, 1024, 1280]) {
+    await page.setViewportSize({ width, height: 800 });
+    for (const locale of LOCALES) {
+      const label = `${locale} at ${String(width)} px`;
+      await page.goto(`/${locale}`);
+      await expect(page.getByTestId('header-logo')).toBeVisible();
+      const result = await page.evaluate(() => {
+        const logo = document.querySelector('[data-testid="header-logo"]')?.getBoundingClientRect();
+        if (!logo) throw new Error('no logo');
+        const hit = (selector: string): boolean =>
+          [...document.querySelectorAll(selector)].some((element) => {
+            const r = element.getBoundingClientRect();
+            if (r.width === 0 || r.height === 0) return false;
+            return (
+              r.left < logo.right &&
+              r.right > logo.left &&
+              r.top < logo.bottom &&
+              r.bottom > logo.top
+            );
+          });
+        return {
+          menu: hit('#site-header [popovertarget="site-menu"]'),
+          cart: hit('[data-testid="cart-link"]'),
+          search: hit('[data-testid="header-search"]'),
+        };
+      });
+      expect(result, label).toEqual({ menu: false, cart: false, search: false });
+    }
+  }
+});
+
+test('logo: the image alt is the shop name and the link name has the home wording', async ({
+  page,
+}) => {
+  for (const locale of LOCALES) {
+    await page.goto(`/${locale}`);
+    const alt = await page.getByTestId('header-logo').getAttribute('alt');
+    expect(alt, `${locale}: alt`).toBeTruthy();
+    await expect(page.getByTestId('header-brand'), `${locale}: link name`).toHaveAccessibleName(
+      homeName(alt ?? '', locale),
+    );
+    await expect(page.getByRole('link', { name: homeName(alt ?? '', locale) })).toHaveCount(1);
+  }
+});
+
+test('logo: after a checkout error link the focused field is not under the logo', async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-mobile', 'Phone project only');
+  await putCartItem(page, 'sample-clay-mug');
+  await page.goto('/he/checkout');
+  await expect(page.getByTestId('checkout-form')).toBeVisible({ timeout: 20_000 });
+  await waitForFormAge(page);
+  await page.getByTestId('place-order').click();
+  await expect(page.getByTestId('checkout-errors')).toBeVisible();
+  await page.getByTestId('checkout-errors').locator('a').first().click();
+  // Wait until the smooth scroll has stopped.
+  let last = -1;
+  await expect
+    .poll(async () => {
+      const y = await page.evaluate(() => window.scrollY);
+      const settled = y === last;
+      last = y;
+      return settled;
+    })
+    .toBe(true);
+  const result = await page.evaluate(() => {
+    const logo = document.querySelector('[data-testid="header-logo"]')?.getBoundingClientRect();
+    const active = document.activeElement?.getBoundingClientRect();
+    if (!logo || !active) throw new Error('missing element');
+    return { logoBottom: logo.bottom, activeTop: active.top, scrollY: window.scrollY };
+  });
+  expect(result.scrollY, 'the page scrolled to the field').toBeGreaterThan(0);
+  expect(result.activeTop - result.logoBottom, 'field sits just below the logo').toBeLessThan(40);
+  expect(result.activeTop, 'focused field starts below the logo').toBeGreaterThanOrEqual(
+    result.logoBottom - 0.5,
+  );
+});
+
+test('logo: the menu drawer and the cart drawer each cover it', async ({ page }, testInfo) => {
+  await putCartItem(page, 'sample-clay-mug');
+  await page.goto('/he/pages/about');
+  // The header is inert while a drawer is open, and inert elements are skipped by hit testing, so
+  // the test lifts `inert` from the header for the hit test (and restores it) to see what is really
+  // painted at each corner and the centre of the logo. A point inside the drawer's box must hit
+  // the drawer's content. A point outside it (the cart drawer is 24rem wide on desktop) lies under
+  // the backdrop, which is not hit-testable: there the drawer must be open, its backdrop must be
+  // painted and must start at or above the logo's top edge.
+  const covered = async (drawerId: string): Promise<boolean> =>
+    page.evaluate((id) => {
+      const logo = document.querySelector('[data-testid="header-logo"]');
+      const drawer = document.getElementById(id);
+      const header = document.getElementById('site-header');
+      if (!logo || !drawer || !header) throw new Error('missing logo, drawer or header');
+      if (!drawer.matches(':popover-open')) return false;
+      const r = logo.getBoundingClientRect();
+      const d = drawer.getBoundingClientRect();
+      const backdropStyle = getComputedStyle(drawer, '::backdrop');
+      const painted =
+        backdropStyle.backgroundColor !== 'rgba(0, 0, 0, 0)' &&
+        backdropStyle.backgroundColor !== 'transparent';
+      const backdropTop = Number.parseFloat(backdropStyle.top);
+      const spansLogo = painted && Number.isFinite(backdropTop) && backdropTop <= r.top;
+      const wasInert = header.inert;
+      header.inert = false;
+      try {
+        const points: [number, number][] = [
+          [r.left + r.width / 2, r.top + r.height / 2],
+          [r.left, r.top],
+          [r.right - 1, r.top],
+          [r.left, r.bottom - 1],
+          [r.right - 1, r.bottom - 1],
+        ];
+        return points.every(([x, y]) => {
+          const inBox = x >= d.left && x <= d.right && y >= d.top && y <= d.bottom;
+          if (inBox) {
+            const hit = document.elementFromPoint(x, y);
+            return hit !== null && drawer.contains(hit);
+          }
+          return spansLogo;
+        });
+      } finally {
+        header.inert = wasInert;
+      }
+    }, drawerId);
+  if (testInfo.project.name === 'chromium-mobile') {
+    await hydrated(page, 'cart-link');
+    const burger = await page.locator('#site-header [popovertarget="site-menu"]').boundingBox();
+    if (!burger) throw new Error('no menu button');
+    await page.mouse.click(burger.x + burger.width / 2, burger.y + burger.height / 2);
+    await expect(page.getByTestId('site-menu')).toBeVisible();
+    await transitionsDone(page);
+    expect(await covered('site-menu'), 'menu drawer covers the logo').toBe(true);
+    await page.keyboard.press('Escape');
+    await expect(page.getByTestId('site-menu')).toBeHidden();
+  }
+  await openCartDrawer(page);
+  await transitionsDone(page);
+  expect(await covered('cart-drawer'), 'cart drawer covers the logo').toBe(true);
 });

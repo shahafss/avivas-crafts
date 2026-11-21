@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl';
 import { useState, useTransition, type KeyboardEvent } from 'react';
 import { Button } from '@/components/ui/Button';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { FieldError, errorId } from '@/components/ui/Field';
 import { FormField } from '@/components/ui/FormField';
 import { Icon } from '@/components/ui/Icon';
 import { Notice } from '@/components/ui/Notice';
@@ -39,6 +40,10 @@ export interface OptionActions {
     confirm: boolean;
   }) => Promise<ActionResult>;
 }
+
+const OPTIONS_ID = 'product-options';
+const OPTIONS_FIELD = 'options';
+const OPTIONS_ERROR_ID = errorId(OPTIONS_ID);
 
 interface ValueDraft {
   key: number;
@@ -171,6 +176,8 @@ export function OptionGroupsEditor({
   published,
   actions,
   onFeedback,
+  error: requiredError,
+  onChange,
 }: {
   productId: string;
   initial: OptionGroupItem[];
@@ -179,6 +186,10 @@ export function OptionGroupsEditor({
   published: boolean;
   actions: OptionActions;
   onFeedback: (message: string, tone: 'success' | 'error') => void;
+  /** "Required" message from a failed publish; shown as a red outline and a line under the heading. */
+  error?: string | undefined;
+  /** Called when the groups are edited, added or removed. */
+  onChange?: (() => void) | undefined;
 }) {
   const t = useTranslations('admin.products');
   const common = useTranslations();
@@ -189,12 +200,14 @@ export function OptionGroupsEditor({
   const [pending, startTransition] = useTransition();
 
   function patch(key: number, change: (group: GroupDraft) => GroupDraft): void {
+    onChange?.();
     setGroups((current) =>
       current.map((group) => (group.key === key ? { ...change(group), dirty: true } : group)),
     );
   }
 
   function addGroup(): void {
+    onChange?.();
     setGroups((current) => [
       ...current,
       { key: nextKey(), nameHe: '', nameEn: '', values: [], dirty: true },
@@ -279,6 +292,7 @@ export function OptionGroupsEditor({
     if (group.id === undefined) {
       setGroups((current) => current.filter((item) => item.key !== group.key));
       setRemoveGroup(null);
+      onChange?.();
       return;
     }
     const { id } = group;
@@ -287,6 +301,7 @@ export function OptionGroupsEditor({
       setRemoveGroup(null);
       if (result.ok) {
         setGroups((current) => current.filter((item) => item.key !== group.key));
+        onChange?.();
         onFeedback(t('options.deleted'), 'success');
       } else {
         patch(group.key, (current) => ({
@@ -303,11 +318,22 @@ export function OptionGroupsEditor({
   }
 
   return (
-    <div className="grid gap-4">
+    <div
+      className={cn(
+        'grid gap-4',
+        requiredError !== undefined &&
+          'rounded-card outline-[1.5px] outline-offset-4 outline-alert',
+      )}
+      role="group"
+      aria-label={t('sections.options')}
+    >
+      {requiredError === undefined ? null : (
+        <FieldError id={OPTIONS_ID}>{requiredError}</FieldError>
+      )}
       <p className="text-ink-2">{t('options.hint')}</p>
       {groups.length === 0 ? <p className="text-ink-2">{t('options.empty')}</p> : null}
 
-      {groups.map((group) => (
+      {groups.map((group, groupIndex) => (
         <section
           key={group.key}
           className="grid gap-4 rounded-card border border-line bg-paper p-4"
@@ -323,6 +349,11 @@ export function OptionGroupsEditor({
                 patch(group.key, (current) => ({ ...current, nameHe: event.target.value }));
               }}
               data-testid="option-group-name"
+              data-field={groupIndex === 0 ? OPTIONS_FIELD : undefined}
+              aria-invalid={groupIndex === 0 && requiredError !== undefined ? true : undefined}
+              aria-describedby={
+                groupIndex === 0 && requiredError !== undefined ? OPTIONS_ERROR_ID : undefined
+              }
             />
             <FormField
               label={t('options.groupNameEn')}
@@ -485,7 +516,15 @@ export function OptionGroupsEditor({
       ))}
 
       <div>
-        <Button variant="secondary" onClick={addGroup} data-testid="option-group-add">
+        <Button
+          variant="secondary"
+          onClick={addGroup}
+          data-testid="option-group-add"
+          data-field={groups.length === 0 ? OPTIONS_FIELD : undefined}
+          aria-describedby={
+            groups.length === 0 && requiredError !== undefined ? OPTIONS_ERROR_ID : undefined
+          }
+        >
           <Icon name="plus" />
           {t('options.add')}
         </Button>

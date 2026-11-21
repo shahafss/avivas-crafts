@@ -27,6 +27,7 @@ export function TextField({
         id={fieldId}
         dir={ltr ? 'ltr' : undefined}
         {...describe(fieldId, { hint, error }, rest['aria-describedby'])}
+        aria-invalid={error === undefined ? rest['aria-invalid'] : true}
         className={cn(CONTROL, 'h-[52px]', ltr && 'rtl:text-end')}
       />
     </Field>

@@ -27,7 +27,7 @@ export interface SettingsData {
   pickupInstructionsEn: string | null;
   businessNameHe: string;
   businessNameEn: string | null;
-  businessRegNumber: string;
+  businessRegNumber: string | null;
   businessEmail: string;
   businessPhone: string;
   businessAddressHe: string;
@@ -540,16 +540,21 @@ function BusinessSection({
   const [values, setValues] = useState({
     businessNameHe: settings.businessNameHe,
     businessNameEn: settings.businessNameEn ?? '',
-    businessRegNumber: settings.businessRegNumber,
+    businessRegNumber: settings.businessRegNumber ?? '',
     businessEmail: settings.businessEmail,
     businessPhone: settings.businessPhone,
     businessAddressHe: settings.businessAddressHe,
     businessAddressEn: settings.businessAddressEn ?? '',
   });
   const { saving, errors, formError, save } = useSaver(notify);
-  const field = (key: keyof typeof values, label: string, extra: { dir?: 'ltr'; max: number }) => (
+  const field = (
+    key: keyof typeof values,
+    label: string,
+    extra: { dir?: 'ltr'; max: number; hint?: string },
+  ) => (
     <FormField
       label={label}
+      hint={extra.hint}
       value={values[key]}
       maxLength={extra.max}
       dir={extra.dir}
@@ -576,7 +581,11 @@ function BusinessSection({
       <div className="grid gap-4 sm:grid-cols-2">
         {field('businessNameHe', t('business.nameHe'), { max: 120 })}
         {field('businessNameEn', t('business.nameEn'), { dir: 'ltr', max: 120 })}
-        {field('businessRegNumber', t('business.regNumber'), { dir: 'ltr', max: 40 })}
+        {field('businessRegNumber', t('business.regNumber'), {
+          dir: 'ltr',
+          max: 40,
+          hint: t('business.regNumberHint'),
+        })}
         {field('businessPhone', t('business.phone'), { dir: 'ltr', max: 40 })}
         {field('businessEmail', t('business.email'), { dir: 'ltr', max: 254 })}
         <span className="hidden sm:block" />

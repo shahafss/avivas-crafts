@@ -190,7 +190,8 @@ describe('order-refunded (customer)', () => {
       expect(body).toContain(settings?.businessEmail ?? 'missing');
       expect(body).toContain(settings?.businessAddressHe ?? 'missing');
       expect(body).toContain('פרטי העוסק');
-      expect(body).toContain(`ע.מ. ${settings?.businessRegNumber ?? 'missing'}`);
+      expect(body).not.toContain('000000000');
+      expect(body).not.toContain('מספר עוסק:');
     }
     expect(row.subject).toContain(String(created.orderNumber));
     expect(row.subject).toContain('היצירות של אביבה');
@@ -217,10 +218,35 @@ describe('order-refunded (customer)', () => {
       expect(body).toContain('Seller details');
       expect(body).toContain(settings?.businessNameEn ?? 'missing');
       expect(body).toContain(settings?.businessAddressEn ?? 'missing');
-      expect(body).toContain(`Reg. no. ${settings?.businessRegNumber ?? 'missing'}`);
+      expect(body).not.toContain('000000000');
+      expect(body).not.toContain('Business no.');
       expect(body).not.toContain(settings?.businessNameHe ?? 'missing');
     }
     expect(row.subject).toContain(String(created.orderNumber));
+  });
+
+  it('shows the business number only when there is a real one (008 FR-007)', async () => {
+    for (const [number, shown] of [
+      [null, false],
+      ['123456789', true],
+    ] as const) {
+      await testDb.db.delete(emailOutbox);
+      await testDb.db.update(shopSettings).set({ businessRegNumber: number });
+      const { row } = await refundedRow({});
+      for (const body of [row.html, row.textBody]) {
+        expect(body.includes('מספר עוסק: 123456789')).toBe(shown);
+        expect(body).not.toContain('000000000');
+      }
+    }
+  });
+
+  it('English: the business number line reads "Business no.: 123456789"', async () => {
+    await testDb.db.update(shopSettings).set({ businessRegNumber: '123456789' });
+    const { row } = await refundedRow({ locale: 'en' });
+    for (const body of [row.html, row.textBody]) {
+      expect(body).toContain('Business no.: 123456789');
+      expect(body).not.toContain('000000000');
+    }
   });
 
   it('uses the order currency (USD) for the refunded amount', async () => {
@@ -385,6 +411,21 @@ describe('order-cancelled (customer)', () => {
       expect(body).not.toContain(settings?.businessNameHe ?? 'missing');
     }
     expect(row.subject).toContain('was cancelled');
+  });
+
+  it('shows the business number only when there is a real one (008 FR-007)', async () => {
+    for (const [number, shown] of [
+      [null, false],
+      ['123456789', true],
+    ] as const) {
+      await testDb.db.delete(emailOutbox);
+      await testDb.db.update(shopSettings).set({ businessRegNumber: number });
+      const { row } = await cancelledRow({});
+      for (const body of [row.html, row.textBody]) {
+        expect(body.includes('מספר עוסק: 123456789')).toBe(shown);
+        expect(body).not.toContain('000000000');
+      }
+    }
   });
 
   it('paid offline: the same-way sentence', async () => {

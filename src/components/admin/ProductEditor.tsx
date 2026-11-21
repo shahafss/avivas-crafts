@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { useCallback, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { Checkbox } from '@/components/ui/Checkbox';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { FieldError, hintId } from '@/components/ui/Field';
@@ -60,13 +60,49 @@ const FIELD_OF: Record<string, string> = {
   // The "missing category" key is `categoryId` (its text is unchanged); the unknown-id error is `categoryIds`.
   categoryId: 'categories',
   categoryIds: 'categories',
+  // Group-level publish checks: the photos and the options sections.
+  images: 'photos',
+  optionGroups: 'options',
 };
+
+/** Outline of a group (photos, categories, options) that has an error. */
+const GROUP_ERROR = 'rounded-card outline-[1.5px] outline-offset-4 outline-alert';
+
+/** Form field names used for `data-field` and error keys. */
+const FIELD = {
+  nameHe: 'nameHe',
+  nameEn: 'nameEn',
+  descriptionHe: 'descriptionHe',
+  descriptionEn: 'descriptionEn',
+  priceIls: 'priceIls',
+  priceUsd: 'priceUsd',
+  prepTimeHe: 'prepTimeHe',
+  prepTimeEn: 'prepTimeEn',
+  categories: 'categories',
+  photos: 'photos',
+  options: 'options',
+} as const;
+
+const SECTION_ID = {
+  photos: 'section-photos',
+  details: 'section-details',
+  options: 'section-options',
+  publish: 'section-publish',
+} as const;
 
 const SECTION = 'grid gap-4 rounded-card border border-line bg-paper p-4 sm:p-5';
 
-function Section({ title, children }: { title: string; children: ReactNode }) {
+function Section({
+  title,
+  testId,
+  children,
+}: {
+  title: string;
+  testId: string;
+  children: ReactNode;
+}) {
   return (
-    <section className={SECTION}>
+    <section className={SECTION} data-testid={testId}>
       <h2 className="text-xl font-extrabold">{title}</h2>
       {children}
     </section>
@@ -108,6 +144,8 @@ export function ProductEditor({
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [missing, setMissing] = useState<string[]>([]);
+  // Set after a failure that names missing fields; the effect below moves focus to the first one.
+  const [focusRequest, setFocusRequest] = useState<{ fields: string[] } | null>(null);
   const [busy, setBusy] = useState(false);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -122,15 +160,46 @@ export function ProductEditor({
     return common(result.formError ?? Object.values(result.fieldErrors ?? {})[0] ?? 'admin.failed');
   }
 
+  const clearError = useCallback((field: string) => {
+    setErrors((current) => {
+      if (!(field in current)) return current;
+      return Object.fromEntries(Object.entries(current).filter(([key]) => key !== field));
+    });
+  }, []);
+  const onPhotoCount = useCallback(
+    (count: number) => {
+      if (count >= 1) clearError(FIELD.photos);
+    },
+    [clearError],
+  );
+  const onOptionsChange = useCallback(() => {
+    clearError(FIELD.options);
+  }, [clearError]);
+
+  // After the errors are on screen: scroll to the first erroring control (document order) and focus it.
+  useEffect(() => {
+    if (focusRequest === null) return;
+    const target = Array.from(document.querySelectorAll<HTMLElement>('[data-field]')).find(
+      (element) => focusRequest.fields.includes(element.dataset.field ?? ''),
+    );
+    if (target === undefined) return;
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    target.scrollIntoView({ block: 'center', behavior: reduceMotion ? 'auto' : 'smooth' });
+    target.focus({ preventScroll: true });
+  }, [focusRequest]);
+
   /** Shows a failed result next to its fields; returns false so callers can stop. */
   function showFailure(result: Extract<ActionResult, { ok: false }>): false {
     if (result.missingFields !== undefined) setMissing(result.missingFields);
     const fieldErrors: Record<string, string> = {};
     for (const [field, key] of Object.entries(result.fieldErrors ?? {})) {
-      if (result.missingFields?.includes(field) === true) continue;
-      fieldErrors[FIELD_OF[field] ?? field] = common(key);
+      const isMissing = result.missingFields?.includes(field) === true;
+      fieldErrors[FIELD_OF[field] ?? field] = isMissing ? t(`required.${field}`) : common(key);
     }
     setErrors(fieldErrors);
+    if (result.missingFields !== undefined) {
+      setFocusRequest({ fields: Object.keys(fieldErrors) });
+    }
     if (result.missingFields === undefined) notify(failureMessage(result), 'error');
     return false;
   }
@@ -248,7 +317,18 @@ export function ProductEditor({
         </p>
       ) : (
         <>
-          <Section title={t('sections.details')}>
+          <Section title={t('sections.photos')} testId={SECTION_ID.photos}>
+            <PhotoManager
+              productId={product.id}
+              initial={images}
+              actions={actions}
+              onFeedback={notify}
+              error={errors.photos}
+              onCountChange={onPhotoCount}
+            />
+          </Section>
+
+          <Section title={t('sections.details')} testId={SECTION_ID.details}>
             <div className="grid gap-4 sm:grid-cols-2">
               <FormField
                 label={t('fields.nameHe')}
@@ -257,8 +337,10 @@ export function ProductEditor({
                 error={errors.nameHe}
                 onChange={(event) => {
                   setNameHe(event.target.value);
+                  clearError(FIELD.nameHe);
                 }}
                 data-testid="field-nameHe"
+                data-field="nameHe"
               />
               <FormField
                 label={t('fields.nameEn')}
@@ -269,6 +351,7 @@ export function ProductEditor({
                 error={errors.nameEn}
                 onChange={(event) => {
                   setNameEn(event.target.value);
+                  clearError(FIELD.nameEn);
                 }}
                 data-testid="field-nameEn"
               />
@@ -282,8 +365,10 @@ export function ProductEditor({
                 className="sm:col-span-2"
                 onChange={(event) => {
                   setDescriptionHe(event.target.value);
+                  clearError(FIELD.descriptionHe);
                 }}
                 data-testid="field-descriptionHe"
+                data-field="descriptionHe"
               />
               <FormField
                 as="textarea"
@@ -296,6 +381,7 @@ export function ProductEditor({
                 className="sm:col-span-2"
                 onChange={(event) => {
                   setDescriptionEn(event.target.value);
+                  clearError(FIELD.descriptionEn);
                 }}
                 data-testid="field-descriptionEn"
               />
@@ -308,8 +394,10 @@ export function ProductEditor({
                 error={errors.priceIls}
                 onChange={(event) => {
                   setPriceIls(event.target.value);
+                  clearError(FIELD.priceIls);
                 }}
                 data-testid="field-priceIls"
+                data-field="priceIls"
               />
               <FormField
                 label={t('fields.priceUsd')}
@@ -320,8 +408,10 @@ export function ProductEditor({
                 error={errors.priceUsd}
                 onChange={(event) => {
                   setPriceUsd(event.target.value);
+                  clearError(FIELD.priceUsd);
                 }}
                 data-testid="field-priceUsd"
+                data-field="priceUsd"
               />
               <fieldset
                 data-testid="field-categories"
@@ -330,7 +420,10 @@ export function ProductEditor({
                     ? hintId('field-categories')
                     : `${hintId('field-categories')} field-categories-error`
                 }
-                className="min-w-0"
+                aria-invalid={errors.categories === undefined ? undefined : true}
+                data-field={categories.length === 0 ? FIELD.categories : undefined}
+                tabIndex={categories.length === 0 ? -1 : undefined}
+                className={cn('min-w-0', errors.categories !== undefined && GROUP_ERROR)}
               >
                 <legend className="text-sm leading-snug font-bold">{t('categoriesLabel')}</legend>
                 <p id={hintId('field-categories')} className="text-[13px] leading-snug text-ink-2">
@@ -339,7 +432,7 @@ export function ProductEditor({
                     : t('categoriesHint', { home: homeCategoryName })}
                 </p>
                 <div className="mt-1.5 grid">
-                  {categories.map((item) => (
+                  {categories.map((item, index) => (
                     <Checkbox
                       key={item.id}
                       label={item.nameHe}
@@ -349,7 +442,9 @@ export function ProductEditor({
                         setCategoryIds((current) =>
                           on ? [...current, item.id] : current.filter((value) => value !== item.id),
                         );
+                        clearError(FIELD.categories);
                       }}
+                      data-field={index === 0 ? FIELD.categories : undefined}
                     />
                   ))}
                 </div>
@@ -365,8 +460,10 @@ export function ProductEditor({
                 error={errors.prepTimeHe}
                 onChange={(event) => {
                   setPrepTimeHe(event.target.value);
+                  clearError(FIELD.prepTimeHe);
                 }}
                 data-testid="field-prepTimeHe"
+                data-field="prepTimeHe"
               />
               <FormField
                 label={t('fields.prepTimeEn')}
@@ -376,22 +473,14 @@ export function ProductEditor({
                 error={errors.prepTimeEn}
                 onChange={(event) => {
                   setPrepTimeEn(event.target.value);
+                  clearError(FIELD.prepTimeEn);
                 }}
                 data-testid="field-prepTimeEn"
               />
             </div>
           </Section>
 
-          <Section title={t('sections.photos')}>
-            <PhotoManager
-              productId={product.id}
-              initial={images}
-              actions={actions}
-              onFeedback={notify}
-            />
-          </Section>
-
-          <Section title={t('sections.options')}>
+          <Section title={t('sections.options')} testId={SECTION_ID.options}>
             <OptionGroupsEditor
               productId={product.id}
               initial={groups}
@@ -399,10 +488,12 @@ export function ProductEditor({
               published={product.state === 'published'}
               actions={actions}
               onFeedback={notify}
+              error={errors.options}
+              onChange={onOptionsChange}
             />
           </Section>
 
-          <Section title={t('sections.publish')}>
+          <Section title={t('sections.publish')} testId={SECTION_ID.publish}>
             <PublishBar
               state={product.state}
               notOrderable={notOrderable}

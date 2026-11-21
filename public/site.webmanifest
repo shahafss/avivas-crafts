@@ -1,0 +1,24 @@
+{
+  "background_color": "#ffffff",
+  "dir": "rtl",
+  "display": "browser",
+  "icons": [
+    {
+      "purpose": "any",
+      "sizes": "192x192",
+      "src": "/brand/icon-192.caa4da34.png",
+      "type": "image/png"
+    },
+    {
+      "purpose": "any",
+      "sizes": "512x512",
+      "src": "/brand/icon-512.70a1fb1a.png",
+      "type": "image/png"
+    }
+  ],
+  "lang": "he",
+  "name": "היצירות של אביבה",
+  "short_name": "אביבה",
+  "start_url": "/he",
+  "theme_color": "#ffffff"
+}

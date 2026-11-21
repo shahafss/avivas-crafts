@@ -410,6 +410,12 @@ for (const locale of LOCALES) {
     await expect(link.locator(`svg path[d="${ARROW_PATH}"]`)).toHaveCount(1);
     expect((await box(link)).height).toBeGreaterThanOrEqual(44);
     await expect(link).toHaveText(message(locale, 'shop.home.band.link'));
+    // 008 US7: the band sentence (the owner's new wording, "especially for you").
+    await expect(page.getByTestId('home-band').locator('p')).toHaveText(
+      locale === 'he'
+        ? 'אני סורגת כל יצירה בעצמי, בסבלנות ובאהבה, במיוחד בשבילכם.'
+        : 'I crochet every piece myself, with patience and love, especially for you.',
+    );
 
     const weight = (locator: Locator): Promise<string> =>
       locator.evaluate((el) => getComputedStyle(el).fontWeight);

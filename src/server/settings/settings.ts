@@ -19,7 +19,7 @@ import {
 import { db } from '@/server/db/client';
 import { getEnv } from '@/server/env';
 import { effectivePaymentMethods } from '@/server/payments/availability';
-import { SEED_PLACEHOLDERS } from '@/server/db/seed';
+import { SEED_PLACEHOLDERS } from '@/lib/seed-placeholders';
 import {
   category,
   optionGroup,

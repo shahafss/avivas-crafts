@@ -1,4 +1,5 @@
 import 'server-only';
+import { customerRegNumber } from '@/lib/business-number';
 import { formatMoney } from '@/lib/money';
 import type { orderLine, orders } from '@/server/db/schema';
 import type { Settings } from '@/server/settings/settings';
@@ -161,16 +162,17 @@ export function totalsParts(
 export function sellerParts(settings: Settings, locale: Locale): RenderedParts {
   const businessName = pickText(locale, settings.businessNameHe, settings.businessNameEn);
   const businessAddress = pickText(locale, settings.businessAddressHe, settings.businessAddressEn);
-  const regLine = emailT(locale, 'emails.order.regNumber', { number: settings.businessRegNumber });
+  const number = customerRegNumber(settings);
+  const regLine = number === null ? null : emailT(locale, 'emails.order.regNumber', { number });
   const title = emailT(locale, 'emails.order.seller');
   return {
     html:
       heading(title) +
-      `<p><bdi>${escapeHtml(businessName)}</bdi><br>${escapeHtml(regLine)}<br><bdi>${escapeHtml(businessAddress)}</bdi><br><bdi>${escapeHtml(settings.businessPhone)}</bdi><br><bdi>${escapeHtml(settings.businessEmail)}</bdi></p>`,
+      `<p><bdi>${escapeHtml(businessName)}</bdi>${regLine === null ? '' : `<br>${escapeHtml(regLine)}`}<br><bdi>${escapeHtml(businessAddress)}</bdi><br><bdi>${escapeHtml(settings.businessPhone)}</bdi><br><bdi>${escapeHtml(settings.businessEmail)}</bdi></p>`,
     text: [
       title,
       businessName,
-      regLine,
+      ...(regLine === null ? [] : [regLine]),
       businessAddress,
       settings.businessPhone,
       settings.businessEmail,

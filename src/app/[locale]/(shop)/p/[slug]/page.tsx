@@ -24,8 +24,9 @@ import {
 } from '@/server/catalog/public-queries';
 import { getEnv } from '@/server/env';
 import { effectivePaymentMethods } from '@/server/payments/availability';
-import { alternates } from '@/server/seo';
+import { alternates, ogLocale } from '@/server/seo';
 import { getSettings, getZoneForCountry } from '@/server/settings/settings';
+import { shopNameFor } from '@/server/settings/shop-name';
 
 type Params = Promise<{ locale: string; slug: string }>;
 
@@ -45,7 +46,11 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   if (!hasLocale(routing.locales, locale)) return {};
   const product = await getPublishedProductBySlug(slug);
   if (product === null) return {};
-  const t = await getTranslations({ locale, namespace: 'shop.product' });
+  const [t, settings] = await Promise.all([
+    getTranslations({ locale, namespace: 'shop.product' }),
+    getSettings(),
+  ]);
+  const siteName = shopNameFor(settings, locale).text;
   const name = pick(locale, product.nameHe, product.nameEn).text;
   const description = pick(locale, product.descriptionHe, product.descriptionEn)
     .text.replace(/\s+/g, ' ')
@@ -63,6 +68,8 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
       title: name,
       description: text,
       type: 'website',
+      siteName,
+      locale: ogLocale(locale),
       url: `${origin}/${locale}/p/${product.slug}`,
       ...(image === undefined
         ? {}
@@ -210,7 +217,7 @@ export default async function ProductPage({ params }: { params: Params }) {
         <NextIntlClientProvider locale={locale} messages={clientMessages}>
           <div className="grid gap-5 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] lg:items-start lg:gap-10">
             <Gallery name={name.text} images={images} />
-            <div className="grid content-start gap-4 lg:sticky lg:top-[calc(var(--header-h)+16px)]">
+            <div className="grid content-start gap-4 lg:sticky lg:top-[calc(var(--header-h)+var(--logo-overhang)+16px)]">
               <h1
                 {...fallbackAttrs(name)}
                 className="text-[30px] leading-[1.15] font-bold tracking-[-0.01em] text-balance lg:text-[36px]"

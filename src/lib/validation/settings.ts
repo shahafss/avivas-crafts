@@ -90,7 +90,7 @@ export const settingsInputSchema = z
     pickupInstructionsEn: optionalText('instructions', 5000),
     businessNameHe: required('businessNameHe', 120),
     businessNameEn: optionalText('businessNameEn', 120),
-    businessRegNumber: required('businessRegNumber', 40),
+    businessRegNumber: optionalText('businessRegNumber', 40),
     businessEmail: email,
     businessPhone: required('businessPhone', 40),
     businessAddressHe: required('businessAddressHe', 300),

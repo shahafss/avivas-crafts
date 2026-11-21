@@ -1,0 +1,56 @@
+{
+  "appleTouchIcon": {
+    "file": "apple-touch-icon.d6a9733f.png",
+    "width": 180,
+    "height": 180
+  },
+  "disc": {
+    "cx": 1000,
+    "cy": 994.5,
+    "r": 823.8
+  },
+  "icon32": {
+    "file": "icon-32.481326c0.png",
+    "width": 32,
+    "height": 32
+  },
+  "icons": [
+    {
+      "file": "icon-192.caa4da34.png",
+      "width": 192,
+      "height": 192
+    },
+    {
+      "file": "icon-512.70a1fb1a.png",
+      "width": 512,
+      "height": 512
+    }
+  ],
+  "logo": [
+    {
+      "file": "logo-176.06fad6ba.webp",
+      "width": 176,
+      "height": 176
+    },
+    {
+      "file": "logo-224.31292a89.webp",
+      "width": 224,
+      "height": 224
+    },
+    {
+      "file": "logo-264.4696a4ab.webp",
+      "width": 264,
+      "height": 264
+    },
+    {
+      "file": "logo-336.c4a8fc77.webp",
+      "width": 336,
+      "height": 336
+    }
+  ],
+  "og": {
+    "file": "og.cd591d81.jpg",
+    "width": 1200,
+    "height": 630
+  }
+}
