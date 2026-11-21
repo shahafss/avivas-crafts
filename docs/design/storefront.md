@@ -304,7 +304,7 @@ other rule keeps the other breakpoints. Design at 375 px first.
 
 ### 3.6 Layering
 
-`z-header` 20 (sticky header), `z-banner` 40 (consent); `z-popover` 30 is no longer used by the menu (the two drawers are native popovers, so no z-index applies); dialogs and the two drawers use
+`z-header` 20 (sticky header; the hanging logo is a child of the header and lives in this context, so it sits above the page content, below the drawers (top layer) and below the consent banner), `z-banner` 40 (consent); `z-popover` 30 is no longer used by the menu (the two drawers are native popovers, so no z-index applies); dialogs and the two drawers use
 the top layer.
 
 ---
@@ -334,10 +334,10 @@ the top layer.
 ```
 ┌ free-shipping strip (forest, not sticky): text centred · language switch at reading end ┐
 ├ sticky header bar (id + data-testid "site-header"), 64 / 72 px ──────────────────────────┤
-│  < 1024 px:  menu button       shop name (centred)        cart                           │
+│  < 1024 px:  menu button       logo (centred, hangs below)   cart                        │
 │  ≥ 1024 px:  All pieces · cat 1 · cat 2 · home cat · About · Shipping & Returns ·        │
-│              shop name · [search field] · cart            (one row, reading order)       │
-├ <main id="main"> ────────────────────────────────────────────────────────────────────────┤
+│              logo · [search field] · cart                 (one row, reading order)       │
+├ <main id="main"> (top padding = the logo's overhang + 8 px) ──────────────────────────────┤
 ├ footer (mint) ───────────────────────────────────────────────────────────────────────────┤
 └ consent banner (only when consentRequired()) ────────────────────────────────────────────┘
 ```
@@ -368,6 +368,14 @@ the top layer.
   (`has-[>[data-full-bleed]]:max-w-none has-[>[data-full-bleed]]:px-0 has-[>[data-full-bleed]]:pb-0`, so no gap is left above the footer); only the home page does.
   Its non-photo sections (the row, the band) put their content back in the 1240 px container.
   Never use `100vw` break-outs (they scroll sideways where scrollbars take space).
+- **The logo** (008, `specs/008-post-launch-fixes/contracts/ui.md`): the brand link holds the round
+  logo image, 88 px (`--logo-size`; 112 px from 900 px). Its centre is on the header's bottom edge:
+  half of it (`--logo-overhang`, half of `--logo-size`) is inside the bar and half hangs over the
+  page. So `<main>` has a top padding of `--logo-overhang` plus 8 px on every page but the home page
+  (where the hero is under the header), and `html` `scroll-padding-top` is `--header-h` plus
+  `--logo-overhang`, so an anchor jump does not hide a heading under the logo. The logo never covers
+  the menu button, cart button or search field. Details: [§7.18](#718-shopheader-server-shell--two-islands),
+  [§6](#6-images).
 - **Breadcrumbs** sit right under the header on category, product, search and content pages.
 
 #### Header states
@@ -422,8 +430,8 @@ set; `viewBox="0 0 24 24"`, 22 px default, `stroke="currentColor"`, `fill="none"
 accessible name). Set: `search`, `cart`, `menu`, `close`, `zoom`, `chevron` (directional),
 `arrow` (directional), `plus`, `minus`, `check`, `truck`, `pin`, `card`, `yarn` (the made-to-order
 ball, as drawn in the sample), `alert`, `info`, `mail`, `phone`, and, added 2026-11-16 (007 D9),
-`instagram`, `facebook` and `tiktok` (authored simple outlines in the set's own style and stroke;
-social links in the footer, [§7.31](#731-shopsociallinks-server); never the platforms' logo files). No Unicode glyphs or emoji as
+`instagram`, `facebook` and `tiktok`, and, added 2026-11-20 (008), `whatsapp` (authored simple outlines in the set's own style and stroke;
+social links in the footer, [§7.31](#731-shopsociallinks-server); never the platforms' logo files; `whatsapp` is a speech bubble with a handset, 24 px, used by the contact page's WhatsApp button, [§8.10](#810-contact-localecontact)). No Unicode glyphs or emoji as
 icons (the sample's `−`, `+` and `✓` become SVG).
 
 ---
@@ -459,6 +467,22 @@ icons (the sample's `−`, `+` and `✓` become SVG).
   translated `shop.home.<id>.alt` text, never empty.
 - A product without any public image cannot be published, so no "no image" art is needed;
   a broken image shows the empty `photo` box.
+
+### Brand assets (008, contracts/brand-assets.md)
+
+The logo is a round badge supplied by the owner (2026-11-20): original `assets/logo/logo-original.jpg`
+(2000 x 2000, not served). `pnpm brand:assets` (`scripts/build-brand-assets.ts`, settings in
+`src/lib/brand/config.ts`) finds the disc by colour, cuts it with an anti-aliased circular alpha mask
+and writes, deterministically, `<name>.<8 hex of sha-256>.<ext>` files to `public/brand/`: the header
+logo as WebP with alpha at 176, 224, 264 and 336 px (each at most 40 KB), `icon-32`, `apple-touch-icon`
+(180), `icon-192` and `icon-512` (PNG), and the link-preview image `og` (1200 x 630 JPEG: the home hero
+photo with the logo centred). It also writes `public/favicon.ico` (16, 32 and 48 px PNG entries: the
+yarn crop of the logo on cream, since the whole badge is unreadable at 16 px) and
+`public/site.webmanifest`. `src/lib/brand/manifest.json` lists every file with its size and the
+detected disc; `src/lib/brand/index.ts` gives the URLs. The files are committed, like the home photos;
+run the script again (and commit the result) only when the logo changes. The preview image is cached
+for a year (`immutable`; the hash is in the name). The page metadata that uses them:
+`specs/008-post-launch-fixes/contracts/metadata.md`.
 
 ### Home photos (007 D3, contracts/home-photos.md)
 
@@ -558,7 +582,7 @@ icon, 1.5 px `alert` border). Alerts that appear in response to an action are in
 
 `<bdi class="tnum">{formatMoney(minor, currency, locale)}</bdi>`. Props: `from` (prefix
 "החל מ־" / "From") and `size` (`lg` 24/700 for product, `md` 15/500 for cart and summary lines; on cards the same component is 14/400 `ink-2`).
-Product price is followed by "כולל מע״מ" / "incl. VAT" in `ink-2` 13 px (ILS only).
+No VAT label follows the price (008: the owner will be an exempt dealer and charges no VAT, so the old "כולל מע״מ" / "incl. VAT" line is gone from every price).
 
 ### 7.6 `ui/Disclosure` (server)
 
@@ -796,10 +820,28 @@ centred header.
     12-character name (about 80–88 px) shows in full; a name of only wide letters (capitals like W
     or M) can be wider and ends with "…" (owner answer: rare, acceptable). Hence the 12-character
     limit on category names ([§12.12](#1212-categories-admincategories), FR-040).
-- Brand (`data-testid="header-brand"`, home link): text wordmark of the shop name from settings
-  (`shop_name_he/en`, English falling back to Hebrew through `pick()`, so a Hebrew fallback gets
-  `lang="he"`; not the legal `business_name_*`) set in Assistant 700, `clamp(19px, 4.6vw, 22px)`,
-  capped at 160 px from 1024 px; no logo exists (PRODUCT.md): never draw one.
+- Brand (`data-testid="header-brand"`, home link; 008 replaced the text wordmark with the owner's
+  logo): the link is `relative block`, `--logo-size` wide (88 px; 112 px from 900 px) and as tall as
+  the bar (`self-stretch`), so the bar height is unchanged. It holds one `<img
+  data-testid="header-logo">` (the logo files in `srcset`, `width` and `height` 112,
+  `sizes="(min-width: 900px) 112px, 88px"`, `decoding="async"`, `rounded-full`), placed `absolute` with
+  its centre on the bar's bottom edge (`inset-block-start: calc(var(--header-h) -
+  var(--logo-overhang))`): half inside the bar, half hanging below it over the page; centred below
+  1024 px (centre column) and between the links and the search field from 1024 px (`nav:mx-auto`).
+  The image is round (`rounded-full`), so only the badge takes clicks, not the corners of its box. It
+  is a child of the header, so it shares the header's stacking context (`z-header`): above the page,
+  below the drawers and the consent banner.
+  - **Name**: the link has no `aria-label`; its accessible name is the image's `alt` (the shop name
+    from settings, `shop_name_he/en`, English falling back to Hebrew through `pick()`; the img, not
+    the link, carries `lang="he"` when the Hebrew fallback is used, so it is read correctly) plus a
+    visually hidden `<span class="sr-only">` with `common.homeLinkSuffix` (", דף הבית" / ", home
+    page"): "{name}, דף הבית". No visible text. Not the legal `business_name_*`.
+  - **Focus**: the ring is drawn on the round image, not on the link's rectangle (the link has no
+    outline; `group-focus-visible:outline-3 outline-offset-3 outline-current` on the image): 3 px
+    wide, 3 px out. On the home page at scroll 0 the ring is white (`currentColor`) and the lower
+    half of the logo is over the bare photo, so a soft dark halo (`box-shadow: 0 0 0 7px rgb(6 20 6 /
+    0.55)`) sits under the ring there; without JavaScript the bar is white and the halo is off.
+  - The logo is the owner's: never edit it, redraw it or make another mark (PRODUCT.md).
 - **Menu drawer** (below 1024 px; replaces the menu sheet, 007 D21, FR-044, FR-045): the header's
   menu button is `<button popovertarget="site-menu">` (name "תפריט" / "Menu", native
   `aria-expanded`; test locator `#site-header [popovertarget="site-menu"]`, because the drawer's
@@ -880,7 +922,7 @@ query>` on every navigation (001 FR-042).
 
 1. Business: shop name (`shop_name_*`) as h2, then the legal business name
    (`business_name_*`), address (each owner-written value through `pick()`, `lang="he"` when it
-   falls back to Hebrew on `/en`), "עוסק מורשה {number}", email (`mailto:`), phone (`tel:`,
+   falls back to Hebrew on `/en`), email (`mailto:`), phone (`tel:`,
    `<bdi dir="ltr">`) — FR-047, from `shop_settings` — then the social links
    ([§7.31](#731-shopsociallinks-server)): nothing at all when no address is saved.
 2. "מידע" / "Info": About, Shipping & returns, Contact.
@@ -893,8 +935,9 @@ query>` on every navigation (001 FR-042).
    `LanguageSwitch` island, §7.19) and "© {year} {shop name}" (`shop_name_*`), 14 px, `ink-2`, wrapping. The two link
    lists are `nav` landmarks labelled "מידע על החנות" / "Information about the shop" and "מסמכים
    משפטיים" / "Legal documents". Existing test ids stay: `footer-business-name`,
-   `footer-business-address`, `footer-business-vat`, `footer-email`, `footer-phone`,
-   `footer-cookie-settings`.
+   `footer-business-address`, `footer-email`, `footer-phone`,
+   `footer-cookie-settings`. No business number is shown (008, owner decision 2:
+   `footer-business-vat` is removed); the number appears only in order emails.
 
 ### 7.21 Consent: `ConsentRoot`, `ConsentLoader`, `ConsentBanner`, `ConsentGate`, `CookieSettingsButton` (dormant at launch)
 
@@ -1251,7 +1294,7 @@ The banner buttons, the band link and the row's "view all" link all lead to the 
 | `bannerShelf.heading`                           | לכל אחת אופי משלה                                                           | Each one has its own character                                                                                         |
 | `bannerShelf.line`                              | דובים, ארנבים, קופים ועוד. בחרו, ואני אסרוג בשבילכם.                        | Bears, bunnies, monkeys and more. You choose, and I'll crochet it for you.                                             |
 | `bannerShelf.button`                            | לכל היצירות                                                                 | See all pieces                                                                                                         |
-| `band.sentence`                                 | אני סורגת כל יצירה בעצמי, לאט ובאהבה, רק אחרי שאתם מזמינים.                 | I crochet every piece myself, slowly and with love, only after you order.                                              |
+| `band.sentence`                                 | אני סורגת כל יצירה בעצמי, בסבלנות ובאהבה, במיוחד בשבילכם.                   | I crochet every piece myself, with patience and love, especially for you.                                              |
 | `band.link`                                     | לקנייה                                                                      | Shop now                                                                                                               |
 | `hero.alt`                                      | בובות וחיות סרוגות, כדורי צמר ומסרגות על שולחן עבודה, ואישה סורגת ליד החלון | Crocheted dolls and animals, balls of wool and needles on a work table, and a woman knitting by the window             |
 | `bannerChild.alt`                               | פעוט משחק בכבשה סרוגה צהובה, ועוד חיות סרוגות על השטיח                      | A toddler playing with a yellow crocheted sheep, with more crocheted animals on the rug                                |
@@ -1299,7 +1342,7 @@ sit directly on the white page, as in the Shopify shop. The gallery is square ([
 Details, in order (unchanged items, new look):
 
 1. h1 product name (30 → 36 px, 700).
-2. `Price lg` + "כולל מע״מ" (updates with the selection; "החל מ־" until all groups chosen).
+2. `Price lg` (updates with the selection; "החל מ־" until all groups chosen). No VAT label (008).
 3. `Notice made` (`peach`): **"נסרג במיוחד בשבילכם."** bold, then "זמן הכנה לפני משלוח או איסוף:
    {prepTime}" / "**Made just for you.** Time to make before shipping or pickup: {prepTime}".
    `prepTime` is the owner's text (admin hint suggests "כשבועיים"). It is the page's one highlight
@@ -1543,13 +1586,23 @@ New look (007): the white page, text in `ink`, `Prose` links underlined; nothing
 
 ### 8.10 Contact `/{locale}/contact`
 
-h1 "יצירת קשר" / "Contact" + intro from the `contact` content page. From 900 px: form panel
-(white) + business details panel (white) at inline-end; stacked below 900 px with the form first.
+h1 "יצירת קשר" / "Contact" + intro from the `contact` content page, then (008) the WhatsApp block,
+then the form and the details. From 900 px: form panel (white) + business details panel (white) at
+inline-end; stacked below 900 px with the form first.
+
+- **WhatsApp block** (`data-testid="contact-whatsapp"`, a `paper` panel with a 1 px `line` outline, before
+  the form in DOM and visual order): h2 "הכי מהיר: וואטסאפ" / "Fastest: WhatsApp", one line of text, and
+  a `primary` link button (`contact-whatsapp-link`, at least 56 px tall, full width on a phone, the
+  `whatsapp` icon at 24 px, name "לשליחת הודעה בוואטסאפ (נפתח בלשונית חדשה)"; `https://wa.me/<digits>`,
+  `target="_blank"`, `rel="noopener noreferrer"`, no pre-filled text). The link is made from the
+  business phone in Settings (`src/lib/whatsapp.ts`). The block is absent while the phone is the
+  sample number or is not a valid number; the form is then the first thing, with its old heading. With
+  the block, the form's heading is "או כתבו לי כאן" / "Or write to me here" (`formHeadingAlt`).
 
 - Form: name, email (`dir="ltr"`), message (`TextArea`, 6 rows, 10–5,000 chars with a counter
   only near the limit), honeypot, primary "שליחה" / "Send".
 - Details panel (heading "פרטי העסק"; the form panel's heading is "שליחת הודעה"): legal business
-  name, address, "עוסק מורשה {n}", email (`mailto:`), phone (`tel:`) (FR-047).
+  name, address, email (`mailto:`), phone (`tel:`) (FR-047). No business number (008).
 - Success: the form is replaced by a `status` panel with `check` icon "ההודעה נשלחה. אענה לכם
   במייל בהקדם." and focus moves to it. Errors as in checkout; rate limit → `alert` Notice "שלחתם
   כמה הודעות ברצף. נסו שוב בעוד {minutes, plural, one {דקה אחת} other {# דקות}}." / "You've sent several
@@ -2002,6 +2055,13 @@ platform's own site with a page name; otherwise the field shows one plain Hebrew
 how to fix it, listed in the `ErrorSummary` when there is more than one, and nothing is saved. After
 saving, the field shows the stored (normalised) address. Empty = the link is removed.
 
+**Business number** (008, owner decision 2): the field "מספר עוסק (לא חובה)" / "Business number
+(optional)" may be left empty; under it the hint "לא חובה. מופיע רק במיילים של ההזמנות, לא באתר."
+(`admin.settings.business.regNumberHint`). A filled value may be up to 40 characters; the sample
+value counts as not filled in. The business phone is the number the contact page's WhatsApp button
+uses, so the sample phone keeps that button hidden. No setting blocks ordering any more; the admin home
+still lists the details that need attention.
+
 **Home page section** (007, FR-034): a section "דף הבית" with one select, "השורה בדף הבית מציגה את
 הקטגוריה:", options "ללא (השורה לא תוצג)" plus every category; saved with the rest of the settings.
 Phase D gate (007 D20, FR-039): the same section also holds two selects next to the home-row
@@ -2025,6 +2085,19 @@ each found by its label (the category's Hebrew name), with the hint "אפשר ל
 second sentence is left out when none is chosen). Publishing still needs at least one category:
 the existing "missing category" message is attached to the fieldset. Nothing else on the screen
 changes.
+
+**Order of sections, errors and focus** (008, Stories 3 and 4; `contracts/ui.md`): the sections are
+now photos first (`data-testid="section-photos"`), then details, options and publish
+(`section-<name>`), because the photos are what Aviva has in hand first. Every control that can be
+missing has `data-field="<field>"` (`nameHe`, `descriptionHe`, `priceIls`, `priceUsd`, `categories` on
+the first checkbox, `prepTimeHe`, `photos`, `options`). After a failed "Publish" each missing control
+(or group: photos, categories, options) shows its own message under it
+(the `admin.products.required.*` keys `nameHe`, `descriptionHe`, `priceIlsMinor`, `priceUsdMinor`, `categoryId`, `prepTimeHe`, `images`, `optionGroups`), is marked `aria-invalid="true"` with `aria-describedby` pointing at
+that message, and a group gets a 1.5 px `alert` outline with 4 px offset. The page scrolls to the first
+missing control in document order (centred; instantly under reduced motion) and focuses it
+(`preventScroll`, so the scroll does not jump twice). The summary at the top (`publish-errors`) still
+lists every missing item. Filling a field, adding a photo or changing an option removes that field's
+mark and message at once, without another "Publish".
 
 ### 12.12 Categories `/admin/categories`
 
@@ -2153,3 +2226,11 @@ the create form); only the name rule changes.
 13. **Icons for client components** (2026-11-17, T096/T098 size trims): new paragraph in section 5
     (`ClientIcon` and `icon-core.tsx`, a 10-glyph set for client components); section 7.34 body
     loading and failure states.
+14. **Post-launch fixes** (2026-11-20, feature 008, owner decisions 1 to 7): the owner's round logo
+    replaces the shop name in the header and hangs half below the bar (`--logo-size`,
+    `--logo-overhang`, round click area, focus ring on the image); the business number is optional
+    and never shown on the website (footer, contact page, checkout seller line); no "includes VAT"
+    label on prices; the contact page leads with a WhatsApp block; the piece editor shows photos
+    first with per-field errors and focus; new home band sentence; brand assets, favicon and link
+    previews (`pnpm brand:assets`). Change log: sections 3.6, 4, 5, 6 (new "Brand assets"), 7.5, 7.18,
+    7.20, 8.1, 8.4, 8.10, 12.10, 12.11 amended.

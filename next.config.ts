@@ -53,6 +53,11 @@ const nextConfig: NextConfig = {
         source: '/site-photos/:path*',
         headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
       },
+      // The brand files' names carry a content hash (contracts/brand-assets.md).
+      {
+        source: '/brand/:path*',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
+      },
       ...[
         '/admin/:path*',
         '/api/admin/:path*',

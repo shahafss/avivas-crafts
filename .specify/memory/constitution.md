@@ -1,5 +1,17 @@
 <!--
 Sync Impact Report
+- Version change: 2.0.1 → 2.1.0 (MINOR: scoped exception added to principle VII; owner decision
+  2026-11-20, feature 008)
+- Modified principles: VII. Privacy and Legal Compliance by Default: new "Exception (business
+  number)" bullet. The seller's business number may be given only in the order emails sent to the
+  buyer, not on the website, until a qualified lawyer has reviewed the decision. Reason: the
+  owner is a sole trader whose business number is her personal ID number.
+- Added/removed sections: none
+- Templates: no template edits required
+- Follow-up: lawyer review (docs/launch-checklist.md); remove or confirm the exception afterwards
+- Deferred TODOs: none
+
+Previous report (2.0.1):
 - Version change: 2.0.0 → 2.0.1 (PATCH: wording; owner decision 2026-11-12)
 - Modified principles: VI. Tested Critical Paths: "admin authentication (including two-factor),
   access control on every admin route" → "admin authentication and access control on every admin
@@ -148,6 +160,12 @@ afterthoughts.
   Sale, Cookie Policy, Shipping & Returns / Cancellation Policy, Accessibility Statement, and the
   seller's identifying business details. Visitors MUST accept the Terms of Sale before placing an
   order.
+- **Exception (business number)**, owner decision 2026-11-20 (feature 008), valid until a
+  qualified lawyer reviews it: the seller's business number (for a sole trader, her personal ID
+  number) is not shown on the website and is given to the buyer only in the order emails
+  (confirmation, cancellation, refund). All other identifying details (business name, address,
+  email, phone) stay published as above. This is a known deviation from the distance-selling
+  disclosure "before the purchase" and is accepted by the owner pending that review.
 - **Individual rights**: the owner MUST be able to find, export, correct, and delete (or
   anonymize, where records must be kept) a customer's personal data on request.
 - **Third parties**: every third-party service that receives personal data (payments, email,
@@ -201,4 +219,4 @@ compliance is far cheaper to build in than to retrofit.
 - Versioning follows semantic versioning: MAJOR for removing or redefining a principle, MINOR for
   adding a principle or materially expanding guidance, PATCH for wording fixes.
 
-**Version**: 2.0.1 | **Ratified**: 2026-10-31 | **Last Amended**: 2026-11-12
+**Version**: 2.1.0 | **Ratified**: 2026-10-31 | **Last Amended**: 2026-11-20

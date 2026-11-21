@@ -50,6 +50,20 @@
       "when": 1794865796278,
       "tag": "0006_header_categories",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1795200894274,
+      "tag": "0007_optional_business_number",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1795201010922,
+      "tag": "0008_refresh_terms_privacy",
+      "breakpoints": true
     }
   ]
 }

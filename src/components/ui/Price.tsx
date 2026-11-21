@@ -8,8 +8,6 @@ export interface PriceProps {
   size?: 'lg' | 'md' | 'sm';
   /** Translated prefix such as "From"; the price then reads "From ₪120". */
   from?: string;
-  /** Translated "incl. VAT", shown after the price (ILS only; the caller decides). */
-  vatLabel?: string;
   className?: string;
 }
 
@@ -19,7 +17,6 @@ export function Price({
   locale,
   size = 'md',
   from,
-  vatLabel,
   className,
 }: PriceProps) {
   return (
@@ -44,7 +41,6 @@ export function Price({
       >
         {formatMoney(minor, currency, locale)}
       </bdi>
-      {vatLabel === undefined ? null : <span className="text-[13px] text-ink-2">{vatLabel}</span>}
     </span>
   );
 }

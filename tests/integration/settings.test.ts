@@ -222,13 +222,28 @@ describe('notification emails and names', () => {
   it('requires the business details', async () => {
     for (const field of [
       'businessNameHe',
-      'businessRegNumber',
       'businessPhone',
       'businessAddressHe',
     ]) {
       expect(await updateSettings(actor, { [field]: '  ' })).toMatchObject({ ok: false });
     }
     expect(await updateSettings(actor, { businessEmail: 'nope' })).toMatchObject({ ok: false });
+  });
+
+  it('treats the business number as optional (008 FR-004, FR-008)', async () => {
+    expect(await settingsNeedingAttention()).toContain('businessRegNumber');
+    for (const value of ['', '   ']) {
+      expect(await updateSettings(actor, { businessRegNumber: value })).toMatchObject({ ok: true });
+      expect((await settings())?.businessRegNumber).toBeNull();
+      expect(await settingsNeedingAttention()).not.toContain('businessRegNumber');
+    }
+    expect(await updateSettings(actor, { businessRegNumber: ' 123456789 ' })).toMatchObject({
+      ok: true,
+    });
+    expect((await settings())?.businessRegNumber).toBe('123456789');
+    expect(await updateSettings(actor, { businessRegNumber: 'x'.repeat(41) })).toMatchObject({
+      ok: false,
+    });
   });
 });
 

@@ -11,7 +11,9 @@ import { TextField } from '@/components/ui/TextField';
 import { routing } from '@/i18n/routing';
 import { listCategoriesWithProducts } from '@/server/catalog/public-queries';
 import { MAX_QUERY_LENGTH, parseSearchQuery, searchProducts } from '@/server/catalog/search';
-import { alternates } from '@/server/seo';
+import { pageMetadata } from '@/server/seo';
+import { getSettings } from '@/server/settings/settings';
+import { shopNameFor } from '@/server/settings/shop-name';
 
 export async function generateMetadata({
   params,
@@ -21,10 +23,17 @@ export async function generateMetadata({
   const { locale } = await params;
   if (!hasLocale(routing.locales, locale)) return {};
   const t = await getTranslations({ locale, namespace: 'shop.search' });
+  const [settings, common] = await Promise.all([
+    getSettings(),
+    getTranslations({ locale, namespace: 'common' }),
+  ]);
+  const siteName = shopNameFor(settings, locale).text;
+  const description = common('meta.description');
+  const title = t('title');
   return {
-    title: t('title'),
+    title,
     robots: { index: false, follow: true },
-    alternates: alternates('/search', locale),
+    ...pageMetadata({ locale, path: '/search', title, description, siteName }),
   };
 }
 

@@ -143,7 +143,8 @@ for (const locale of ['he', 'en'] as const) {
     await expect(footer.getByTestId('footer-business-address')).toContainText(
       locale === 'he' ? 'כתובת העסק (להשלמה)' : 'Business address (to be completed)',
     );
-    await expect(footer.getByTestId('footer-business-vat')).toContainText('000000000');
+    await expect(footer.getByTestId('footer-business-vat')).toHaveCount(0);
+    await expect(footer).not.toContainText('000000000');
     await expect(footer.getByTestId('footer-email')).toHaveAttribute(
       'href',
       'mailto:shop@example.invalid',

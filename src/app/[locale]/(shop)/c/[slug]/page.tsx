@@ -16,7 +16,9 @@ import {
   listPublishedProducts,
   type ProductSort,
 } from '@/server/catalog/public-queries';
-import { alternates } from '@/server/seo';
+import { pageMetadata } from '@/server/seo';
+import { getSettings } from '@/server/settings/settings';
+import { shopNameFor } from '@/server/settings/shop-name';
 
 type Params = Promise<{ locale: string; slug: string }>;
 
@@ -27,9 +29,16 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   if (!hasLocale(routing.locales, locale)) return {};
   const category = await getCategoryBySlug(slug);
   if (category === null) return {};
+  const [settings, common] = await Promise.all([
+    getSettings(),
+    getTranslations({ locale, namespace: 'common' }),
+  ]);
+  const siteName = shopNameFor(settings, locale).text;
+  const description = common('meta.description');
+  const title = pick(locale, category.nameHe, category.nameEn).text;
   return {
-    title: pick(locale, category.nameHe, category.nameEn).text,
-    alternates: alternates(`/c/${category.slug}`, locale),
+    title,
+    ...pageMetadata({ locale, path: `/c/${category.slug}`, title, description, siteName }),
   };
 }
 

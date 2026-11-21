@@ -4,16 +4,21 @@ import { hasLocale, NextIntlClientProvider } from 'next-intl';
 import { getMessages, getTranslations } from 'next-intl/server';
 import { ContactForm } from '@/components/shop/ContactForm';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
+import { buttonClasses } from '@/components/ui/button-styles';
+import { Icon } from '@/components/ui/Icon';
 import { Markdown } from '@/components/ui/Markdown';
 import { Prose } from '@/components/ui/Prose';
 import type MessageFile from '@/i18n/messages/he.json';
 import { routing } from '@/i18n/routing';
 import { fallbackAttrs, pick } from '@/lib/i18n-fallback';
+import { SEED_PLACEHOLDERS } from '@/lib/seed-placeholders';
+import { whatsAppLink } from '@/lib/whatsapp';
 import { issueFormToken } from '@/server/checkout/form-token';
 import { renderMarkdown } from '@/server/content/markdown';
 import { getPage } from '@/server/content/pages';
-import { alternates } from '@/server/seo';
+import { pageMetadata } from '@/server/seo';
 import { getSettings } from '@/server/settings/settings';
+import { shopNameFor } from '@/server/settings/shop-name';
 
 type Params = Promise<{ locale: string }>;
 
@@ -23,9 +28,18 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   const { locale } = await params;
   if (!hasLocale(routing.locales, locale)) return {};
   const page = await getPage('contact', locale);
-  return page === null
-    ? {}
-    : { title: page.title.text, alternates: alternates('/contact', locale) };
+  if (page === null) return {};
+  const [settings, common] = await Promise.all([
+    getSettings(),
+    getTranslations({ locale, namespace: 'common' }),
+  ]);
+  const siteName = shopNameFor(settings, locale).text;
+  const description = common('meta.description');
+  const title = page.title.text;
+  return {
+    title,
+    ...pageMetadata({ locale, path: '/contact', title, description, siteName }),
+  };
 }
 
 // The contact page (storefront.md §8.10): the owner-written intro, the business details and the
@@ -36,9 +50,8 @@ export default async function ContactPage({ params }: { params: Params }) {
   const page = await getPage('contact', locale);
   if (page === null) notFound();
 
-  const [t, footer, common, settings, rawMessages] = await Promise.all([
+  const [t, common, settings, rawMessages] = await Promise.all([
     getTranslations({ locale, namespace: 'contact' }),
-    getTranslations({ locale, namespace: 'common.footer' }),
     getTranslations({ locale, namespace: 'common' }),
     getSettings(),
     getMessages(),
@@ -46,6 +59,10 @@ export default async function ContactPage({ params }: { params: Params }) {
   const messages = rawMessages as unknown as typeof MessageFile;
   const businessName = pick(locale, settings.businessNameHe, settings.businessNameEn);
   const address = pick(locale, settings.businessAddressHe, settings.businessAddressEn);
+  const whatsApp =
+    settings.businessPhone === SEED_PLACEHOLDERS.businessPhone
+      ? null
+      : whatsAppLink(settings.businessPhone);
 
   return (
     <div className="mx-auto grid max-w-[1000px] gap-5 py-6 lg:py-10">
@@ -67,9 +84,36 @@ export default async function ContactPage({ params }: { params: Params }) {
           <Markdown html={renderMarkdown(page.body.text)} {...fallbackAttrs(page.body)} />
         </Prose>
       </div>
+      {whatsApp !== null && (
+        <section
+          data-testid="contact-whatsapp"
+          aria-labelledby="contact-whatsapp-heading"
+          className="grid gap-3 rounded-card border border-line bg-paper p-[18px]"
+        >
+          <h2 id="contact-whatsapp-heading" className="text-lg font-extrabold">
+            {t('whatsapp.heading')}
+          </h2>
+          <p>{t('whatsapp.text')}</p>
+          <a
+            data-testid="contact-whatsapp-link"
+            href={whatsApp}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={buttonClasses('primary', false, 'h-auto min-h-14 w-full min-[900px]:w-fit')}
+          >
+            <Icon name="whatsapp" size={24} />
+            <span>
+              {t('whatsapp.button')}
+              <span className="sr-only">{t('whatsapp.newTab')}</span>
+            </span>
+          </a>
+        </section>
+      )}
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start lg:gap-8">
         <section className="rounded-card border border-line bg-paper p-[18px]">
-          <h2 className="mb-3 text-lg font-extrabold">{t('formHeading')}</h2>
+          <h2 className="mb-3 text-lg font-extrabold">
+            {whatsApp === null ? t('formHeading') : t('formHeadingAlt')}
+          </h2>
           <NextIntlClientProvider locale={locale} messages={{ contact: messages.contact }}>
             <ContactForm formToken={issueFormToken()} locale={locale} />
           </NextIntlClientProvider>
@@ -86,12 +130,6 @@ export default async function ContactPage({ params }: { params: Params }) {
             {businessName.text}
           </p>
           <p {...fallbackAttrs(address)}>{address.text}</p>
-          <p>
-            {footer.rich('vat', {
-              number: settings.businessRegNumber,
-              num: (chunks) => <bdi className="tnum">{chunks}</bdi>,
-            })}
-          </p>
           <p>
             <a href={`mailto:${settings.businessEmail}`} className={LINK}>
               <bdi dir="ltr">{settings.businessEmail}</bdi>

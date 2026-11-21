@@ -3,7 +3,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import exifr from 'exifr';
 import sharp from 'sharp';
-import type { Page } from '@playwright/test';
+import type { Locator, Page } from '@playwright/test';
 import { expect, resetDb, signInAsAdmin, sql, test } from './fixtures';
 
 // US1 acceptance scenarios 1-9 on the mobile project (tasks.md T047). The admin and storefront
@@ -112,6 +112,16 @@ test('1. create a product with three photos, category and prep time, publish it,
   await page.waitForURL(/\/admin\/products\/[0-9a-f-]{36}/);
   productId = /\/admin\/products\/([0-9a-f-]{36})/.exec(page.url())?.[1] ?? '';
   expect(productId).not.toBe('');
+
+  // 008 US4: the photos section comes first in the editor.
+  expect(
+    await page.evaluate(() => {
+      const photos = document.querySelector('[data-testid="section-photos"]');
+      const details = document.querySelector('[data-testid="section-details"]');
+      if (!photos || !details) return false;
+      return Boolean(photos.compareDocumentPosition(details) & Node.DOCUMENT_POSITION_FOLLOWING);
+    }),
+  ).toBe(true);
 
   await page.getByTestId('field-nameHe').fill(NAME);
   await page.getByTestId('field-descriptionHe').fill('בובה סרוגה בעבודת יד, עם שיער מצמר.');
@@ -371,6 +381,82 @@ test('English name gives the slug on a new product (no Hebrew transliteration)',
         (await sql<{ slug: string }[]>`SELECT slug FROM product WHERE id = ${id}`)[0]?.slug,
     )
     .toBe('red-doll');
+});
+
+/** The control's `aria-describedby` must list an element that holds the visible error message. */
+async function expectDescribedByError(control: Locator, message: string): Promise<void> {
+  await expect
+    .poll(() =>
+      control.evaluate((element, text) => {
+        const ids = (element.getAttribute('aria-describedby') ?? '').split(/\s+/).filter(Boolean);
+        return ids.some((id) => document.getElementById(id)?.textContent.includes(text) === true);
+      }, message),
+    )
+    .toBe(true);
+}
+
+test('008. publishing an incomplete piece marks every missing field, focuses the first and clears on input', async ({
+  page,
+}) => {
+  await signInAsAdmin(page);
+  await page.goto('/admin/products');
+  await page.getByTestId('product-new').click();
+  await page.waitForURL(/\/admin\/products\/[0-9a-f-]{36}/);
+  await expect(page.getByTestId('field-nameHe')).toBeVisible();
+  const invalid = page.locator('[aria-invalid="true"]');
+
+  // Save on an incomplete draft shows no errors.
+  await page.getByTestId('field-nameHe').fill('קופסת בדיקה');
+  await page.getByTestId('save-product').click();
+  await expect(page.getByTestId('save-product')).toBeEnabled();
+  await expect(invalid).toHaveCount(0);
+  await expect(page.getByTestId('publish-errors')).toHaveCount(0);
+
+  // Publish: the first missing control in document order (the photos) gets focus.
+  await page.getByTestId('publish').click();
+  await expect(page.getByTestId('publish-errors')).toBeVisible();
+  await expect
+    .poll(() => page.evaluate(() => document.activeElement?.getAttribute('data-field')))
+    .toBe('photos');
+  await expect(page.getByTestId('photo-input')).toHaveAttribute('aria-invalid', 'true');
+  await expect(page.getByText('צריך להוסיף לפחות תמונה אחת')).toBeVisible();
+  await expectDescribedByError(page.getByTestId('photo-input'), 'צריך להוסיף לפחות תמונה אחת');
+  for (const [id, message] of [
+    ['field-descriptionHe', 'צריך למלא תיאור בעברית'],
+    ['field-priceIls', 'צריך להזין מחיר בשקלים'],
+    ['field-prepTimeHe', 'צריך למלא זמן הכנה'],
+    ['field-categories', 'צריך לבחור לפחות קטגוריה אחת'],
+  ] as const) {
+    await expect(page.getByTestId(id)).toHaveAttribute('aria-invalid', 'true');
+    await expect(page.getByText(message)).toBeVisible();
+    await expectDescribedByError(page.getByTestId(id), message);
+  }
+  await expect(page.getByTestId('field-nameHe')).not.toHaveAttribute('aria-invalid', 'true');
+  // The bottom list still names every missing item.
+  const list = page.getByTestId('publish-errors');
+  for (const label of ['תיאור בעברית', 'מחיר בשקלים', 'קטגוריה', 'זמן הכנה', 'תמונה']) {
+    await expect(list).toContainText(label);
+  }
+
+  // Typing clears that field's error without another Publish.
+  await page.getByTestId('field-descriptionHe').fill('תיאור קצר');
+  await expect(page.getByTestId('field-descriptionHe')).not.toHaveAttribute('aria-invalid', 'true');
+  await expect(page.getByTestId('field-priceIls')).toHaveAttribute('aria-invalid', 'true');
+
+  // With everything filled, Publish succeeds and no error mark remains.
+  await page.getByTestId('field-priceIls').fill('50');
+  await page.getByTestId('field-priceUsd').fill('15');
+  await page.getByTestId('field-prepTimeHe').fill('כשבוע');
+  await page.getByTestId('field-categories').getByLabel('נרות', { exact: true }).check();
+  await page
+    .getByTestId('photo-input')
+    .setInputFiles([{ name: 'ok.png', mimeType: 'image/png', buffer: await plainPng(80) }]);
+  await expect(page.getByTestId('photo-item')).toHaveCount(1, { timeout: 30_000 });
+  await expect(page.getByTestId('photo-input')).not.toHaveAttribute('aria-invalid', 'true');
+  await page.getByTestId('publish').click();
+  await expect(page.getByTestId('product-state')).toHaveText('פורסם', { timeout: 15_000 });
+  await expect(invalid).toHaveCount(0);
+  await expect(page.getByTestId('publish-errors')).toHaveCount(0);
 });
 
 test('5. delete asks for confirmation, then the product is gone from the catalog', async ({

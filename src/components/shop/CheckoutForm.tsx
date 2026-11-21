@@ -45,7 +45,7 @@ export interface CheckoutConfig {
   pickupInstructionsLang?: 'he' | undefined;
   /** Countries of the enabled zones, Israel first. */
   countries: { code: string; label: string }[];
-  seller: { name: string; nameLang?: 'he' | undefined; regNumber: string };
+  seller: { name: string; nameLang?: 'he' | undefined };
 }
 
 const DELIVERY_METHODS = ['shipping', 'pickup'] as const;
@@ -647,7 +647,7 @@ function CheckoutBody({
             })}
           </p>
           <p className="text-[13px] text-ink-2">
-            {t('seller', { name: config.seller.name, regNumber: config.seller.regNumber })}
+            {t('seller', { name: config.seller.name })}
           </p>
           <div className="lg:hidden" aria-live="polite">
             {quote === null ? null : (
@@ -669,7 +669,7 @@ function CheckoutBody({
       </form>
       <aside
         aria-label={t('summary.label')}
-        className="order-first rounded-card border border-line bg-paper p-[18px] lg:sticky lg:top-[calc(var(--header-h)+16px)] lg:order-none"
+        className="order-first rounded-card border border-line bg-paper p-[18px] lg:sticky lg:top-[calc(var(--header-h)+var(--logo-overhang)+16px)] lg:order-none"
       >
         <details ref={summaryRef} className="group">
           <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 font-bold lg:hidden [&::-webkit-details-marker]:hidden">

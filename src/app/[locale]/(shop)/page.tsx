@@ -9,8 +9,9 @@ import { StatementBand } from '@/components/shop/StatementBand';
 import { routing } from '@/i18n/routing';
 import { pick } from '@/lib/i18n-fallback';
 import { getHomeRow } from '@/server/catalog/public-queries';
-import { alternates } from '@/server/seo';
+import { pageMetadata } from '@/server/seo';
 import { getSettings } from '@/server/settings/settings';
+import { shopNameFor } from '@/server/settings/shop-name';
 
 /**
  * The sections under the row, in the order of the Shopify shop the owner chose (FR-010 as
@@ -28,7 +29,13 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
   if (!hasLocale(routing.locales, locale)) return {};
-  return { alternates: alternates('', locale) };
+  const [settings, common] = await Promise.all([
+    getSettings(),
+    getTranslations({ locale, namespace: 'common' }),
+  ]);
+  const siteName = shopNameFor(settings, locale).text;
+  const description = common('meta.description');
+  return pageMetadata({ locale, path: '', title: siteName, description, siteName });
 }
 
 export default async function HomePage({ params }: { params: Promise<{ locale: string }> }) {

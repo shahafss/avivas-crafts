@@ -1,5 +1,6 @@
 import { eq, sql } from 'drizzle-orm';
 import type { PgDatabase } from 'drizzle-orm/pg-core';
+import { SEED_PLACEHOLDERS } from '@/lib/seed-placeholders';
 import { loadDrafts } from '@/server/content/drafts';
 import { CONTENT_SLUGS, isVersionedSlug } from '@/server/content/slugs';
 import { recordVersion } from '@/server/content/versions';
@@ -14,20 +15,8 @@ export const SEED_DEFAULTS = {
   shopNameEn: "Aviva's Crafts",
 } as const;
 
-/**
- * Placeholder texts the seed puts into shop_settings (keys are shop_settings field names).
- * `placeholderFields()` compares the live row with these values.
- */
-export const SEED_PLACEHOLDERS = {
-  businessNameHe: 'שם העסק (להשלמה)',
-  businessNameEn: 'Business name (to be completed)',
-  businessRegNumber: '000000000',
-  businessEmail: 'shop@example.invalid',
-  businessPhone: '+972500000000',
-  businessAddressHe: 'כתובת העסק (להשלמה)',
-  businessAddressEn: 'Business address (to be completed)',
-  notificationEmails: ['notify@example.invalid'],
-} as const;
+// Moved to a pure module (008), so the contact page and helpers can import it; re-exported here.
+export { SEED_PLACEHOLDERS };
 
 // Moved to a dependency-free module (003); re-exported for existing imports.
 export { CONTENT_SLUGS };

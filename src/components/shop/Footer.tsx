@@ -64,12 +64,6 @@ export async function Footer({
           <p data-testid="footer-business-address" {...fallbackAttrs(address)}>
             {address.text}
           </p>
-          <p data-testid="footer-business-vat">
-            {t.rich('vat', {
-              number: settings.businessRegNumber,
-              num: (chunks) => <bdi className="tnum">{chunks}</bdi>,
-            })}
-          </p>
           <p>
             <a
               href={`mailto:${settings.businessEmail}`}

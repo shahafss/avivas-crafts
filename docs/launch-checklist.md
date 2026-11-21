@@ -233,7 +233,7 @@ Source: `ops/backup/README.md` > One-time setup, 1.
 
 1. **Where**: `https://<shop domain>/admin/settings` (the admin menu: "הגדרות").
    **Do**: in the "פרטי העסק" section fill in "שם העסק (חוקי) בעברית", "שם העסק באנגלית (לא חובה)",
-   "מספר עוסק (ע.מ.)", "טלפון", "אימייל", "כתובת בעברית" and "כתובת באנגלית (לא חובה)". Under
+   "מספר עוסק (לא חובה)" (the site starts with the sample 000000000: enter the real number, or clear the field if there is none yet; until then the dashboard keeps listing it), "טלפון" (must be her WhatsApp number: the contact page's WhatsApp button uses it), "אימייל", "כתובת בעברית" and "כתובת באנגלית (לא חובה)". Under
    "אימיילים להתראות" fill in 1 to 3 addresses ("כתובת 1" and so on), and under "איסוף עצמי" fill
    in "הוראות איסוף בעברית". The two English fields show "(לא חובה)" (optional) but still count in
    the dashboard notice until the starting text ("Business name (to be completed)", "Business
@@ -249,7 +249,7 @@ Source: `ops/backup/README.md` > One-time setup, 1.
    **Check**: place a test order on the live site choosing offline payment; the details appear on
    the order page and in the order email (the email reaches the address you used). Keep this order
    for step 18. Then reload the admin dashboard: the "needs attention" notice ("כדאי להשלים
-   בהגדרות:") is gone and its list is empty (this is step 13's check, which can only pass here).
+   בהגדרות:") is gone and its list is empty (this is step 13's check, which can only pass here; it also needs the business number to be real or cleared).
 
 ## 15. Post-deploy checks (before announcing)
 
@@ -336,6 +336,11 @@ Tell them also that two pieces of wording were kept on purpose although the shop
 provider at launch**: the retention text for unfinished payments in the privacy documents, and
 the "payment page" wording on the cookies page. They decide whether to keep or remove them. (This
 note is for the lawyer only; it is not customer text.)
+Tell them also: **the business number is not shown anywhere on the website** (footer, contact page,
+payment page), only in the order emails sent to the buyer; this is the constitution 2.1.0 exception
+(008 owner decision 2), because the owner's business number is normally her personal ID number.
+They decide whether Israeli distance-selling rules (Consumer Protection Law §14ג(א)(1)) require it
+on the site. Afterwards remove the exception from `.specify/memory/constitution.md` or confirm it.
 **Check**: you have the lawyer's written changes, applied in `/admin` > "תוכן", and the lawyer
 agrees the pages match how the shop really works.
 

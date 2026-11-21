@@ -1,5 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import type { Page } from '@playwright/test';
+import { SEED_PLACEHOLDERS } from '@/lib/seed-placeholders';
 import { expect, readOutbox, resetDb, sql, test, waitForFormAge } from './fixtures';
 
 // 003 US2 (tasks.md T020; storefront.md §8.10): the contact page and form, and the contact links
@@ -79,7 +80,7 @@ for (const locale of ['he', 'en'] as const) {
       await expect(details).toContainText(
         locale === 'he' ? 'כתובת העסק (להשלמה)' : 'Business address (to be completed)',
       );
-      await expect(details).toContainText('000000000');
+      await expect(details).not.toContainText('000000000');
       await expect(details.locator('a[href="mailto:shop@example.invalid"]')).toBeVisible();
       await expect(details.locator('a[href="tel:+972500000000"]')).toBeVisible();
 
@@ -148,6 +149,81 @@ for (const locale of ['he', 'en'] as const) {
     });
   });
 }
+
+// 008 US5 (tasks.md T022): the WhatsApp block shows only for a real, valid business phone.
+test.describe('WhatsApp block', () => {
+  const SEED_PHONE = SEED_PLACEHOLDERS.businessPhone;
+  const HEADINGS = {
+    he: { form: 'שליחת הודעה', formAlt: 'או כתבו לי כאן', newTab: '(נפתח בלשונית חדשה)' },
+    en: { form: 'Send a message', formAlt: 'Or write to me here', newTab: '(opens in a new tab)' },
+  } as const;
+
+  test.afterAll(async () => {
+    await sql`UPDATE shop_settings SET business_phone = ${SEED_PHONE}`;
+  });
+
+  for (const locale of ['he', 'en'] as const) {
+    test(`is absent with the seed phone in ${locale}`, async ({ page }) => {
+      await sql`UPDATE shop_settings SET business_phone = ${SEED_PHONE}`;
+      await page.goto(`/${locale}/contact`);
+      await expect(page.getByTestId('contact-form')).toBeVisible();
+      await expect(page.getByTestId('contact-whatsapp')).toHaveCount(0);
+      await expect(
+        page.getByRole('heading', { level: 2, name: HEADINGS[locale].form, exact: true }),
+      ).toBeVisible();
+      await expect(page.getByText(HEADINGS[locale].formAlt)).toHaveCount(0);
+    });
+
+    test(`shows before the form with a safe new-tab link in ${locale}`, async ({ page }) => {
+      await sql`UPDATE shop_settings SET business_phone = '050-1234567'`;
+      await page.goto(`/${locale}/contact`);
+      const block = page.getByTestId('contact-whatsapp');
+      await expect(block).toBeVisible();
+      const before = await page.evaluate(() => {
+        const whatsapp = document.querySelector('[data-testid="contact-whatsapp"]');
+        const form = document.querySelector('[data-testid="contact-form"]');
+        return (
+          whatsapp !== null &&
+          form !== null &&
+          Boolean(whatsapp.compareDocumentPosition(form) & Node.DOCUMENT_POSITION_FOLLOWING)
+        );
+      });
+      expect(before).toBe(true);
+
+      const link = page.getByTestId('contact-whatsapp-link');
+      await expect(link).toHaveAttribute('href', 'https://wa.me/972501234567');
+      await expect(link).toHaveAttribute('target', '_blank');
+      await expect(link).toHaveAttribute('rel', /noopener/);
+      await expect(link).toHaveAccessibleName(
+        new RegExp(HEADINGS[locale].newTab.replace(/[()]/g, '\\$&')),
+      );
+      const box = await link.boundingBox();
+      expect(box?.height ?? 0).toBeGreaterThanOrEqual(56);
+      // Full width of the panel's content on the phone projects, narrower from 900 px.
+      const widths = await page.evaluate(() => {
+        const panel = document.querySelector('[data-testid="contact-whatsapp"]');
+        const anchor = document.querySelector('[data-testid="contact-whatsapp-link"]');
+        if (!panel || !anchor) throw new Error('missing element');
+        const style = getComputedStyle(panel);
+        const content =
+          panel.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+        return { content, link: anchor.getBoundingClientRect().width, viewport: innerWidth };
+      });
+      if (widths.viewport >= 900) {
+        expect(widths.link, 'narrower than the panel on desktop').toBeLessThan(widths.content - 1);
+      } else {
+        expect(
+          Math.abs(widths.link - widths.content),
+          'full panel width on phones',
+        ).toBeLessThanOrEqual(1);
+      }
+      await expect(
+        page.getByRole('heading', { level: 2, name: HEADINGS[locale].formAlt }),
+      ).toBeVisible();
+      await expectNoViolations(page);
+    });
+  }
+});
 
 test('a form posted without scripts never puts the visitor data in the address', async ({
   browser,

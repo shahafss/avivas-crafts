@@ -4,6 +4,10 @@
     "busy": "One moment…",
     "loading": "Loading…",
     "menu": "Menu",
+    "homeLinkSuffix": ", home page",
+    "meta": {
+      "description": "Handmade crochet pieces, made with patience and love. Shipping across Israel."
+    },
     "menuNav": "Site menu",
     "search": "Search",
     "headerSearch": "Search the shop",
@@ -26,7 +30,6 @@
       "copyright": "© {year} {shopName}",
       "info": "Info",
       "legal": "Legal",
-      "vat": "VAT registration no. <num>{number}</num>",
       "about": "About",
       "shippingReturns": "Shipping & returns",
       "contact": "Contact",
@@ -84,7 +87,6 @@
     },
     "product": {
       "breadcrumbs": "Breadcrumbs",
-      "vat": "incl. VAT",
       "from": "From",
       "madeLead": "Made just for you.",
       "madeTime": "Time to make before shipping or pickup: <prep>{prepTime}</prep>",
@@ -165,7 +167,7 @@
         "alt": "A honeycomb shelf full of crocheted dolls and animals: bears, a bunny, monkeys, an elephant, a fox, a lion and a sheep"
       },
       "band": {
-        "sentence": "I crochet every piece myself, slowly and with love, only after you order.",
+        "sentence": "I crochet every piece myself, with patience and love, especially for you.",
         "link": "Shop now"
       }
     },
@@ -257,7 +259,6 @@
     "honeypot": "Leave this field empty",
     "rate_limited": "Too many requests. Please try again in a few minutes.",
     "form_expired": "I couldn't send the form. Reload the page and try again.",
-    "shop_not_ready": "The shop isn't open for orders yet. Please try again later.",
     "payment_unavailable_method": "The payment method you chose isn't available right now. Please choose another one.",
     "delivery_unavailable": "The delivery option you chose isn't available right now. Please choose another one.",
     "lines_unavailable": "Some items in your order can't be ordered right now.",
@@ -311,7 +312,7 @@
       "hint": "Consent to receive updates and promotional emails. You can withdraw it at any time."
     },
     "collection": "I need these details to handle your order and contact you about it. You aren't legally required to provide them, but without them I can't take your order. Who receives them and how they are kept is described in the <privacy>Privacy Policy</privacy>.",
-    "seller": "{name} · Reg. no. {regNumber}",
+    "seller": "{name}",
     "summary": {
       "label": "Order summary",
       "toggle": "Order summary",
@@ -442,7 +443,7 @@
       "settingsFields": {
         "businessNameHe": "Business name (Hebrew)",
         "businessNameEn": "Business name (English)",
-        "businessRegNumber": "Business registration number",
+        "businessRegNumber": "Business number (optional)",
         "businessEmail": "Business email",
         "businessPhone": "Business phone",
         "businessAddressHe": "Business address (Hebrew)",
@@ -743,6 +744,16 @@
         "images": "Photo (at least one)",
         "optionGroups": "Every option group needs at least two values"
       },
+      "required": {
+        "nameHe": "Enter the Hebrew name",
+        "descriptionHe": "Enter the Hebrew description",
+        "priceIlsMinor": "Enter the price in shekels",
+        "priceUsdMinor": "Enter the price in dollars",
+        "categoryId": "Choose at least one category",
+        "prepTimeHe": "Enter the preparation time",
+        "images": "Add at least one photo",
+        "optionGroups": "Each option group needs at least two values"
+      },
       "title": "Products",
       "new": "New product",
       "newDefaultName": "New product",
@@ -782,7 +793,7 @@
         "nameEnHint": "Without an English name, the English site shows the Hebrew name.",
         "descriptionHe": "Description (Hebrew)",
         "descriptionEn": "Description (English, optional)",
-        "priceIls": "Price in shekels, including VAT",
+        "priceIls": "Price in shekels",
         "priceIlsHint": "Required to publish. For example: 180",
         "priceUsd": "Price in dollars (optional)",
         "priceUsdHint": "Used only for orders shipped abroad.",
@@ -942,10 +953,11 @@
       },
       "business": {
         "title": "Business details",
-        "hint": "Shown at the bottom of the site, in the terms and in the emails, as the law requires.",
+        "hint": "The business name, address and contact details are shown at the bottom of every page. The business number is shown only in order emails.",
         "nameHe": "Business (legal) name in Hebrew",
         "nameEn": "Business name in English (optional)",
-        "regNumber": "Business number (ע.מ.)",
+        "regNumber": "Business number (optional)",
+        "regNumberHint": "Optional. Shown only in order emails, not on the website.",
         "phone": "Phone",
         "email": "Email",
         "addressHe": "Address in Hebrew",
@@ -985,7 +997,7 @@
         "instructions": "The instructions are too long (up to 5,000 characters).",
         "businessNameHe": "The Hebrew business name is required.",
         "businessNameEn": "The English business name is too long.",
-        "businessRegNumber": "The business number is required.",
+        "businessRegNumber": "The business number can be up to 40 characters.",
         "businessPhone": "The phone is required.",
         "businessAddressHe": "The Hebrew address is required.",
         "businessAddressEn": "The English address is too long.",
@@ -1204,7 +1216,7 @@
       "cancellation": "Cancelling an order",
       "cancellationText": "You can cancel a purchase as the law and my cancellation policy allow. Pieces made specially for you are covered by an exception in the law. The full details are on the shipping, returns and cancellation page:",
       "seller": "Seller details",
-      "regNumber": "Reg. no. {number}",
+      "regNumber": "Business no.: {number}",
       "followIntro": "This link shows where your order stands at any time.",
       "viewOrder": "Follow your order"
     },
@@ -1399,6 +1411,13 @@
   "contact": {
     "detailsHeading": "Business details",
     "formHeading": "Send a message",
+    "formHeadingAlt": "Or write to me here",
+    "whatsapp": {
+      "heading": "Fastest: WhatsApp",
+      "text": "Message me directly on WhatsApp, I answer quickly.",
+      "button": "Message me on WhatsApp",
+      "newTab": " (opens in a new tab)"
+    },
     "fields": {
       "name": "Name",
       "email": "Email",

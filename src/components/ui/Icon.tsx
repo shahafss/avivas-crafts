@@ -27,7 +27,8 @@ export type IconName =
   | 'phone'
   | 'instagram'
   | 'facebook'
-  | 'tiktok';
+  | 'tiktok'
+  | 'whatsapp';
 
 function glyph(name: IconName, direction: IconDirection): ReactNode {
   const flip = direction === 'start';
@@ -93,6 +94,13 @@ function glyph(name: IconName, direction: IconDirection): ReactNode {
         <>
           <path d="M13.5 4v10.2a3.4 3.4 0 1 1-3.4-3.4" />
           <path d="M13.5 4c.3 2.4 2 4 4.5 4.2" />
+        </>
+      );
+    case 'whatsapp':
+      return (
+        <>
+          <path d="M4.5 19.5l1.2-3.9A8 8 0 1 1 8.5 18.4z" />
+          <path d="M9.2 8.3c.3-.5.8-.5 1.1-.2l.9 1.3c.2.3.1.6-.1.9l-.5.6a5.6 5.6 0 0 0 2.5 2.5l.6-.6c.3-.3.6-.3.9-.1l1.3.8c.4.3.3.8-.1 1.2-.9.9-2 1-3.5.3a8 8 0 0 1-3.6-3.4c-.6-1.2-.4-2.1.5-3.3z" />
         </>
       );
     default:
