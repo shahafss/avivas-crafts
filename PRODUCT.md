@@ -51,7 +51,7 @@ Success means:
 
 ## Brand Commitments
 
-- **Name:** "Aviva's Crafts" is a working name, not final. The logo exists now: a round badge supplied by the owner on 2026-11-20 (original in `assets/logo/`); the header shows it in place of the shop name. Never redraw or edit it.
+- **Name:** "Aviva's Crafts" is a working name, not final. The logo exists now: the owner's wordmark ("Aviva's Crafts" with yarn balls), supplied 2026-11-21 (original in `assets/logo/`); the header shows it, inside the bar, in place of the shop name. The round badge of 2026-11-20 is retired (its original stays in `assets/logo/`). Never redraw or edit the logo.
 - **Voice (decided 2026-11-07):** the shop speaks as Aviva in the first person (Hebrew feminine singular: "סרגתי", "אני שולחת"); customers are addressed in the plural ("בחרו", "הוסיפו"). English mirrors it ("I crocheted…").
 - **Storefront look (approved 2026-11-16):** the Shopify-like direction of the owner's own Shopify shop: a white page, near-black green text, soft sage and dark green buttons, a peach band, a mint footer, Assistant for all text, full-width photos on the home page and square product photos. It must not feel like a childish toy store or a cold luxury boutique. The binding reference is `docs/design/storefront.md`. (This replaces the warm cream and marigold look approved 2026-11-08.)
 - **Admin wording:** plain Hebrew with no jargon, and clear feedback on success and on errors. This is binding (constitution principle II).
@@ -59,7 +59,7 @@ Success means:
 ## Evidence on Hand
 
 - **Exists:** Aviva's own photos of finished pieces, taken on her phone. They are uploaded through the admin area, where they are re-encoded and stripped of metadata. Also three lifestyle images supplied by the owner for the home page (AI-generated from Aviva's real pieces and her real look; approved 2026-11-16).
-- **Does not exist, so never fabricate:** a wordmark or any other brand mark (the owner's logo is the only one), any other photos of Aviva or her workspace, customer testimonials or reviews, press mentions, sales figures, or an "about" story beyond what Aviva writes herself on the editable About page.
+- **Does not exist, so never fabricate:** any other brand mark (the owner's wordmark logo is the only one), any other photos of Aviva or her workspace, customer testimonials or reviews, press mentions, sales figures, or an "about" story beyond what Aviva writes herself on the editable About page.
 - **Copy:** product names and descriptions are written by Aviva in Hebrew, with optional English. Legal page texts are drafts and must be reviewed by a qualified legal professional before launch.
 
 ## Product Principles

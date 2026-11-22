@@ -1,7 +1,7 @@
 # Render Blueprint for Aviva's Crafts (production only: there is no staging).
 #
 # Creates, all in Frankfurt:
-#   - avivas-crafts          web service (Node), deployed from `main` after CI passes
+#   - avivas-crafts          web service (Node), deployed from `main` on every commit (does not wait for CI; owner decision 2026-11-21)
 #   - avivas-crafts-backup   cron job (Docker, ops/backup/), nightly encrypted backup at 00:30 UTC
 #   - avivas-crafts-db       PostgreSQL 17, reachable on Render's private network only
 #
@@ -21,7 +21,7 @@ services:
     region: frankfurt
     plan: starter
     branch: main
-    autoDeployTrigger: checksPass
+    autoDeployTrigger: commit
     healthCheckPath: /api/health
     buildCommand: corepack enable pnpm && pnpm install --frozen-lockfile --prod=false && pnpm build
     preDeployCommand: pnpm db:migrate && pnpm db:seed
@@ -76,7 +76,7 @@ services:
     region: frankfurt
     plan: starter
     branch: main
-    autoDeployTrigger: checksPass
+    autoDeployTrigger: commit
     dockerfilePath: ./ops/backup/Dockerfile
     dockerContext: ./ops/backup
     schedule: "30 0 * * *"

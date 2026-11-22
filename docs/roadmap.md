@@ -34,6 +34,7 @@ The vision (who the shop is for, what success means, principles, what is out of 
 | 006 | Hosting and launch readiness | yes | Done (dev) | [specs/006-launch-readiness](../specs/006-launch-readiness/) |
 | 007 | Storefront redesign (Shopify-like look) | yes | Done (awaiting owner test) | [specs/007-storefront-redesign](../specs/007-storefront-redesign/) |
 | 008 | Post-launch fixes (orders, logo, WhatsApp, business number, link previews) | yes | Done (awaiting owner test) | [specs/008-post-launch-fixes](../specs/008-post-launch-fixes/) |
+| 009 | New header logo (wordmark) | yes | Done (awaiting owner test) | [specs/009-header-logo-wordmark](../specs/009-header-logo-wordmark/) |
 
 Numbers are a suggested order. Spec Kit gives each feature the next free number when it is
 created, so if the order changes, the numbers follow the order of creation, not this table.
@@ -148,12 +149,20 @@ a new home band sentence; favicon and link previews.
 
 **Source**: owner decisions 2026-11-20 (recorded in the spec).
 
+### 009 — New header logo
+
+**Goal**: the owner's new wordmark logo ("Aviva's Crafts" with yarn balls) sits inside the header bar
+on every page, readable over the home photo (soft white backing); new tab and app icons and link
+preview built from it. Replaces 008's round badge.
+
+**Source**: owner decisions 2026-11-21 (recorded in the spec).
+
 ## Later (after launch)
 
 Not planned yet; each needs its own decision first. From PRODUCT.md › out of scope and plans for
 later:
 
 - International shipping zones and USD prices (the data model already supports inactive zones).
-- Final shop name, logo and wordmark.
+- Final shop name.
 - Customer accounts, reviews, wish lists, discount codes, gift cards, marketing campaigns,
   WhatsApp/SMS notifications, custom-order requests through checkout.

@@ -115,7 +115,7 @@ export default async function LocaleLayout({
           <CartDrawer locale={locale} />
           <main
             id="main"
-            className="mx-auto w-full max-w-[1240px] flex-1 px-4 pt-[calc(var(--logo-overhang)+8px)] pb-10 lg:px-6 has-[>[data-full-bleed]]:max-w-none has-[>[data-full-bleed]]:px-0 has-[>[data-full-bleed]]:pt-0 has-[>[data-full-bleed]]:pb-0"
+            className="mx-auto w-full max-w-[1240px] flex-1 px-4 pb-10 lg:px-6 has-[>[data-full-bleed]]:max-w-none has-[>[data-full-bleed]]:px-0 has-[>[data-full-bleed]]:pb-0"
           >
             {children}
           </main>
