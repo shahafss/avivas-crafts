@@ -29,8 +29,8 @@ test.beforeEach(({}, testInfo) => {
 const PUBLIC_ROUTES = [
   '',
   '/shop',
-  '/c/sample-ceramics',
-  '/p/sample-ceramic-bowl',
+  '/category/sample-ceramics',
+  '/product/sample-ceramic-bowl',
   '/search?q=bowl',
   '/pages/about',
   '/pages/shipping-returns',
@@ -133,25 +133,25 @@ test('the switch keeps the page, the sort and the search across a client navigat
     (window as unknown as { __clientNav: boolean }).__clientNav = true;
   });
   await page.getByRole('link', { name: 'קרמיקה' }).first().click();
-  await expect(page).toHaveURL(/\/he\/c\/sample-ceramics$/);
+  await expect(page).toHaveURL(/\/he\/category\/sample-ceramics$/);
   await expect(headerSwitch(page)).toHaveAttribute(
     'href',
-    `/api/locale?to=en&path=${encodeURIComponent('/en/c/sample-ceramics')}`,
+    `/api/locale?to=en&path=${encodeURIComponent('/en/category/sample-ceramics')}`,
   );
 
-  await page.locator('a[href="/he/c/sample-ceramics?sort=price-asc"]').click();
-  await expect(page).toHaveURL(/\/he\/c\/sample-ceramics\?sort=price-asc$/);
+  await page.locator('a[href="/he/category/sample-ceramics?sort=price-asc"]').click();
+  await expect(page).toHaveURL(/\/he\/category\/sample-ceramics\?sort=price-asc$/);
   await expect(headerSwitch(page)).toHaveAttribute(
     'href',
-    `/api/locale?to=en&path=${encodeURIComponent('/en/c/sample-ceramics?sort=price-asc')}`,
+    `/api/locale?to=en&path=${encodeURIComponent('/en/category/sample-ceramics?sort=price-asc')}`,
   );
   expect(
     await page.evaluate(() => (window as unknown as { __clientNav?: boolean }).__clientNav),
   ).toBe(true);
 
   await headerSwitch(page).click();
-  await expect(page).toHaveURL(/\/en\/c\/sample-ceramics\?sort=price-asc$/);
-  expect(pathOf(page)).toBe('/en/c/sample-ceramics?sort=price-asc');
+  await expect(page).toHaveURL(/\/en\/category\/sample-ceramics\?sort=price-asc$/);
+  expect(pathOf(page)).toBe('/en/category/sample-ceramics?sort=price-asc');
   await expectLocale(page, 'en');
 
   await page.goto('/he/search?q=%D7%A7%D7%A2%D7%A8%D7%94');
@@ -162,10 +162,10 @@ test('the switch keeps the page, the sort and the search across a client navigat
 
 test('the cart survives the switch (phones)', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name === 'chromium-desktop', 'cart flows run on the phone projects');
-  await page.goto('/he/c/sample-ceramics?sort=price-asc');
+  await page.goto('/he/category/sample-ceramics?sort=price-asc');
   await hydrated(page, 'product-card');
   await page.getByTestId('product-card').filter({ hasText: 'ספל חרס' }).click();
-  await expect(page).toHaveURL(/\/he\/p\/sample-clay-mug$/);
+  await expect(page).toHaveURL(/\/he\/product\/sample-clay-mug$/);
   await hydrated(page, 'add-to-cart');
   await page.getByTestId('add-to-cart').click();
   // The add opened the cart drawer (FR-047); the page behind it is inert until it is closed.
@@ -175,11 +175,11 @@ test('the cart survives the switch (phones)', async ({ page }, testInfo) => {
   await expect(page.getByTestId('cart-badge')).toHaveText('1');
 
   await headerSwitch(page).click();
-  await expect(page).toHaveURL(/\/en\/p\/sample-clay-mug$/);
+  await expect(page).toHaveURL(/\/en\/product\/sample-clay-mug$/);
   await expectLocale(page, 'en');
   await expect(page.getByTestId('cart-badge')).toHaveText('1');
   await headerSwitch(page).click();
-  await expect(page).toHaveURL(/\/he\/p\/sample-clay-mug$/);
+  await expect(page).toHaveURL(/\/he\/product\/sample-clay-mug$/);
   await expect(page.getByTestId('cart-badge')).toHaveText('1');
 });
 
@@ -231,7 +231,12 @@ test('the admin has no language switch (phones)', async ({ page }, testInfo) => 
 test('no horizontal overflow at 320 and 375 px and the switch stays visible', async ({ page }) => {
   for (const width of [375, 320]) {
     await page.setViewportSize({ width, height: 800 });
-    for (const path of ['/he', '/en', '/he/p/sample-ceramic-bowl', '/en/p/sample-ceramic-bowl']) {
+    for (const path of [
+      '/he',
+      '/en',
+      '/he/product/sample-ceramic-bowl',
+      '/en/product/sample-ceramic-bowl',
+    ]) {
       await page.goto(path);
       await expect(headerSwitch(page)).toBeVisible();
       const overflow = await page.evaluate(
@@ -248,10 +253,10 @@ test('without JavaScript the switch still carries the page and the query', async
 }) => {
   const context = await browser.newContext({ javaScriptEnabled: false, baseURL: baseURL ?? '' });
   const page = await context.newPage();
-  await page.goto('/he/c/sample-ceramics?sort=price-asc');
+  await page.goto('/he/category/sample-ceramics?sort=price-asc');
   const href = (await headerSwitch(page).getAttribute('href')) ?? '';
   // If the build had to fall back to a Suspense boundary the query would be missing here.
-  expect(decodeURIComponent(href)).toContain('path=/en/c/sample-ceramics?sort=price-asc');
+  expect(decodeURIComponent(href)).toContain('path=/en/category/sample-ceramics?sort=price-asc');
   await context.close();
 });
 
@@ -291,7 +296,7 @@ test('browsing and hovering the switch never set the cookie; pressing it does, f
   page,
 }) => {
   await page.goto('/he');
-  await page.goto('/he/p/sample-ceramic-bowl');
+  await page.goto('/he/product/sample-ceramic-bowl');
   await page.goto('/he/contact');
   await headerSwitch(page).hover();
   await headerSwitch(page).focus();
@@ -311,13 +316,13 @@ test('browsing and hovering the switch never set the cookie; pressing it does, f
   await expectLocale(page, 'en');
 
   // An address with a language wins over the cookie, and does not change it.
-  await page.goto('/he/p/sample-ceramic-bowl');
+  await page.goto('/he/product/sample-ceramic-bowl');
   await expectLocale(page, 'he');
   expect((await localeCookie(page))?.value).toBe('en');
 });
 
 test('a shared /en link opens in English and stores nothing', async ({ page }) => {
-  await page.goto('/en/p/sample-ceramic-bowl');
+  await page.goto('/en/product/sample-ceramic-bowl');
   await expectLocale(page, 'en');
   expect(await localeCookie(page)).toBeUndefined();
 });
@@ -368,7 +373,7 @@ test('an English order: every step in English, the order and the email stay Engl
   await page.goto('/en');
   await expectLocale(page, 'en');
   await expect(headerSwitch(page)).toBeVisible();
-  await page.goto('/en/p/sample-soy-candle');
+  await page.goto('/en/product/sample-soy-candle');
   await hydrated(page, 'add-to-cart');
   await expectLocale(page, 'en');
   await expect(headerSwitch(page)).toBeVisible();
@@ -444,7 +449,7 @@ test('an English order: every step in English, the order and the email stay Engl
 test('an English page shows Hebrew owner text marked as Hebrew, with no "not translated" note', async ({
   page,
 }) => {
-  await page.goto('/en/p/sample-clay-mug');
+  await page.goto('/en/product/sample-clay-mug');
   await expectLocale(page, 'en');
   const name = page.locator('h1[lang="he"][dir="auto"]');
   await expect(name).toHaveText('ספל חרס');
@@ -487,13 +492,19 @@ test('every public page names its canonical and both language versions (desktop)
   }
 });
 
-test('the sitemap, robots file and noindex pages (desktop)', async ({ request }, testInfo) => {
+test('the sitemap, robots file and noindex pages (desktop)', async ({
+  page,
+  request,
+}, testInfo) => {
   test.skip(testInfo.project.name !== 'chromium-desktop', 'head checks run once, on desktop');
   const sitemap = await request.get('/sitemap.xml');
   expect(sitemap.status()).toBe(200);
   const xml = await sitemap.text();
-  expect(xml).toContain('/en/p/sample-ceramic-bowl');
-  expect(xml).toContain('/he/p/sample-ceramic-bowl');
+  // 010 US3: no language-alternate lines, so Chrome shows the file as a tree.
+  expect(xml).not.toContain('xhtml:link');
+  expect(xml).not.toContain('xmlns:xhtml');
+  expect(xml).toContain('/en/product/sample-ceramic-bowl');
+  expect(xml).toContain('/he/product/sample-ceramic-bowl');
   // 007: the "All pieces" page is listed in both languages.
   expect(xml).toContain('/he/shop');
   expect(xml).toContain('/en/shop');
@@ -514,8 +525,15 @@ test('the sitemap, robots file and noindex pages (desktop)', async ({ request },
   }
 
   // The middleware sends no hreflang `Link` header (research R4): the HTML tags are the only ones.
-  const product = await request.get('/he/p/sample-ceramic-bowl');
+  const product = await request.get('/he/product/sample-ceramic-bowl');
   expect(product.headers()['link'] ?? '').not.toContain('hreflang');
+
+  // 010 US3: the page heads still carry the three language links.
+  for (const path of ['/en/pages/about', '/en/product/sample-ceramic-bowl']) {
+    await page.goto(path);
+    await expect(page.locator('link[rel="alternate"][hreflang]')).toHaveCount(3);
+    await expectAlternates(page, 'en', path.replace(/^\/en/, ''));
+  }
 });
 
 // ---------------------------------------------------------------- US6: the English reads naturally
@@ -526,15 +544,15 @@ test('no Hebrew shows on English pages outside elements marked lang="he"', async
     await expectLocale(page, 'en');
     expect(await strayHebrew(page), `/en${route}`).toEqual([]);
   }
-  await page.goto('/en/c/sample-ceramics');
+  await page.goto('/en/category/sample-ceramics');
   expect(await strayHebrew(page), 'category with the Hebrew clay mug').toEqual([]);
-  await page.goto('/en/p/sample-clay-mug');
+  await page.goto('/en/product/sample-clay-mug');
   expect(await strayHebrew(page), 'the Hebrew-only product').toEqual([]);
 });
 
 test('no stray Hebrew on the English cart and checkout (phones)', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name === 'chromium-desktop', 'cart flows run on the phone projects');
-  await page.goto('/en/p/sample-soy-candle');
+  await page.goto('/en/product/sample-soy-candle');
   await hydrated(page, 'add-to-cart');
   await page.getByTestId('option-chip').filter({ hasText: 'Cream' }).click();
   await page.getByTestId('add-to-cart').click();
@@ -560,13 +578,18 @@ async function expectNoAxeViolations(page: Page, label: string): Promise<void> {
 test('axe finds no violations on the home and product pages in both languages', async ({
   page,
 }) => {
-  for (const path of ['/he', '/en', '/he/p/sample-ceramic-bowl', '/en/p/sample-ceramic-bowl']) {
+  for (const path of [
+    '/he',
+    '/en',
+    '/he/product/sample-ceramic-bowl',
+    '/en/product/sample-ceramic-bowl',
+  ]) {
     await page.goto(path);
     await expect(headerSwitch(page)).toBeVisible();
     await expectNoAxeViolations(page, path);
   }
   // The photo strip is a keyboard stop with a visible 3 px ring (WCAG 2.4.7).
-  await page.goto('/en/p/sample-ceramic-bowl');
+  await page.goto('/en/product/sample-ceramic-bowl');
   await hydrated(page, 'gallery-zoom');
   const track = page.getByTestId('gallery-track');
   for (let i = 0; i < 30; i += 1) {
@@ -629,7 +652,7 @@ test('owner text missing in English falls back to Hebrew, marked lang="he"', asy
   try {
     await sql`UPDATE shop_settings SET shop_name_en = NULL`;
     await sql`UPDATE category SET name_en = NULL WHERE slug = 'sample-ceramics'`;
-    for (const path of ['/en', '/en/c/sample-ceramics']) {
+    for (const path of ['/en', '/en/category/sample-ceramics']) {
       await page.goto(path);
       await expectLocale(page, 'en');
       expect(await strayHebrew(page), path).toEqual([]);

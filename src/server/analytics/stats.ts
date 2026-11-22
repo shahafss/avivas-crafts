@@ -15,7 +15,7 @@ export interface Stats {
 }
 
 const TOP = 10;
-const PRODUCT_PATH = /^\/(?:he|en)\/p\/(.+)$/;
+const PRODUCT_PATH = /^\/(?:he|en)\/product\/(.+)$/;
 
 /** The `?days=` value as a period: 7, 30 or 90; anything else means 30. */
 export function parsePeriod(value: unknown): StatsPeriod {
@@ -52,7 +52,7 @@ export async function getStats(days: StatsPeriod, now: Date = new Date()): Promi
       and(
         gte(analyticsDailyPage.day, first),
         lte(analyticsDailyPage.day, today),
-        like(analyticsDailyPage.path, '/%/p/%'),
+        like(analyticsDailyPage.path, '/%/product/%'),
       ),
     )
     .groupBy(analyticsDailyPage.path);

@@ -171,7 +171,7 @@ test('Accept all sets the optional cookie; the footer button opens the settings 
   expect((await records()).at(-1)?.choices).toEqual({ analytics: true });
 
   // The footer button is on every page, in both languages, and opens the dialog.
-  for (const path of ['/he', '/en', '/he/contact', '/he/pages/cookies', '/he/p/sample-clay-mug']) {
+  for (const path of ['/he', '/en', '/he/contact', '/he/pages/cookies', '/he/product/sample-clay-mug']) {
     await page.goto(path);
     await expect(page.getByTestId('footer-cookie-settings'), path).toBeVisible();
     await expect(page.getByTestId('consent-banner'), path).toHaveCount(0);

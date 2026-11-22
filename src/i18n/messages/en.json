@@ -27,6 +27,8 @@
       "freePickup": "Free self-pickup"
     },
     "footer": {
+      "credit": "Designed & built by <name>Shahaf Shmuel</name>",
+      "newTab": " (opens in a new tab)",
       "copyright": "© {year} {shopName}",
       "info": "Info",
       "legal": "Legal",
@@ -715,7 +717,7 @@
         "invalid": "The value is not valid. Check the text length and the price.",
         "not_found": "Product not found.",
         "slug_taken": "This address is already used by another product.",
-        "slug_frozen": "The product address cannot be changed after the first publish.",
+        "slug_frozen": "To change the address, move the product back to draft first.",
         "category_not_found": "Category not found.",
         "publish_incomplete": "It cannot be published yet. Missing:",
         "invalid_transition": "This action is not possible in the product's current state.",
@@ -729,7 +731,8 @@
         "image_not_found": "Photo not found on this product.",
         "last_photo": "The last photo of a published product cannot be removed. Add another photo first, or move the product to draft.",
         "invalid_price": "The price must be a positive number with up to two decimals.",
-        "invalid_delta": "The extra must be a number, for example 20 or -10."
+        "invalid_delta": "The extra must be a number, for example 20 or -10.",
+        "slug_invalid": "The address can only have lowercase English letters, digits and single dashes (up to 60 characters)."
       },
       "categoriesLabel": "Categories",
       "categoriesHint": "You can tick more than one. Pieces in ''{home}'' are shown on the home page.",
@@ -742,7 +745,8 @@
         "categoryId": "Category",
         "prepTimeHe": "Preparation time",
         "images": "Photo (at least one)",
-        "optionGroups": "Every option group needs at least two values"
+        "optionGroups": "Every option group needs at least two values",
+        "slug": "Product address"
       },
       "required": {
         "nameHe": "Enter the Hebrew name",
@@ -752,7 +756,8 @@
         "categoryId": "Choose at least one category",
         "prepTimeHe": "Enter the preparation time",
         "images": "Add at least one photo",
-        "optionGroups": "Each option group needs at least two values"
+        "optionGroups": "Each option group needs at least two values",
+        "slug": "Type an address for the product."
       },
       "title": "Products",
       "new": "New product",
@@ -777,7 +782,6 @@
       "listLabel": "Product list",
       "editor": {
         "back": "Back to the product list",
-        "address": "Product address: {slug}",
         "loading": "Loading the editor…",
         "stateLabel": "State"
       },
@@ -799,7 +803,10 @@
         "priceUsdHint": "Used only for orders shipped abroad.",
         "prepTimeHe": "Preparation time (Hebrew)",
         "prepTimeHeHint": "For example: about two weeks",
-        "prepTimeEn": "Preparation time (English, optional)"
+        "prepTimeEn": "Preparation time (English, optional)",
+        "slug": "Product address",
+        "slugHint": "Lowercase English letters, digits and dashes only. The address will be: {url}. It can't be changed while the product is in the shop.",
+        "slugLocked": "To change the address, move the product back to draft first."
       },
       "photos": {
         "hint": "Up to 12 photos, straight from the phone gallery. The first photo is the main photo.",

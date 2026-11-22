@@ -28,7 +28,7 @@ export interface ProductEditorActions extends PhotoActions, OptionActions {
 
 export interface EditorProductData {
   id: string;
-  slug: string;
+  slug: string | null;
   nameHe: string;
   nameEn: string | null;
   descriptionHe: string | null;
@@ -51,6 +51,7 @@ interface Feedback {
 const FIELD_OF: Record<string, string> = {
   nameHe: 'nameHe',
   nameEn: 'nameEn',
+  slug: 'slug',
   descriptionHe: 'descriptionHe',
   descriptionEn: 'descriptionEn',
   priceIlsMinor: 'priceIls',
@@ -72,6 +73,7 @@ const GROUP_ERROR = 'rounded-card outline-[1.5px] outline-offset-4 outline-alert
 const FIELD = {
   nameHe: 'nameHe',
   nameEn: 'nameEn',
+  slug: 'slug',
   descriptionHe: 'descriptionHe',
   descriptionEn: 'descriptionEn',
   priceIls: 'priceIls',
@@ -111,6 +113,7 @@ function Section({
 
 export function ProductEditor({
   product,
+  origin,
   categories,
   homeCategoryName,
   images,
@@ -118,6 +121,8 @@ export function ProductEditor({
   actions,
 }: {
   product: EditorProductData;
+  /** The shop's origin, for the address preview. */
+  origin: string;
   /** In the shop's category order. */
   categories: { id: string; nameHe: string }[];
   /** Name of the home-row category, or null when none is chosen (for the hint). */
@@ -133,6 +138,15 @@ export function ProductEditor({
 
   const [nameHe, setNameHe] = useState(product.nameHe);
   const [nameEn, setNameEn] = useState(product.nameEn ?? '');
+  const [slug, setSlug] = useState(product.slug ?? '');
+  const [slugDirty, setSlugDirty] = useState(false);
+  const [slugSeen, setSlugSeen] = useState(product.slug);
+  // Follow the stored address after a refresh while the owner has not edited the box.
+  if (slugSeen !== product.slug) {
+    setSlugSeen(product.slug);
+    if (!slugDirty) setSlug(product.slug ?? '');
+  }
+  const slugLocked = product.state !== 'draft';
   const [descriptionHe, setDescriptionHe] = useState(product.descriptionHe ?? '');
   const [descriptionEn, setDescriptionEn] = useState(product.descriptionEn ?? '');
   const [priceIls, setPriceIls] = useState(minorToMajorText(product.priceIlsMinor));
@@ -226,8 +240,11 @@ export function ProductEditor({
       prepTimeHe,
       prepTimeEn,
       categoryIds,
+      // Untrimmed on purpose: spaces are refused by the server. Only a draft's address can change.
+      ...(!slugLocked && slugDirty && slug !== (product.slug ?? '') ? { slug } : {}),
     });
     if (!updated.ok) return showFailure(updated);
+    setSlugDirty(false);
     // Changed when the switch and the saved state agree (orderable = not notOrderable).
     if (notOrderable === product.orderable) {
       const orderable = await actions.setProductOrderable(product.id, !notOrderable);
@@ -308,7 +325,6 @@ export function ProductEditor({
             {t(`state.${product.state}`)}
           </span>
         </div>
-        <p className="text-[13px] text-ink-2">{t('editor.address', { slug: product.slug })}</p>
       </div>
 
       {!hydrated ? (
@@ -354,6 +370,31 @@ export function ProductEditor({
                   clearError(FIELD.nameEn);
                 }}
                 data-testid="field-nameEn"
+              />
+              <FormField
+                label={t('fields.slug')}
+                hint={
+                  slugLocked
+                    ? t('fields.slugLocked')
+                    : t('fields.slugHint', {
+                        url: `${origin}/he/product/${slug === '' ? '…' : slug}`,
+                      })
+                }
+                value={slug}
+                maxLength={60}
+                dir="ltr"
+                autoComplete="off"
+                spellCheck={false}
+                readOnly={slugLocked}
+                error={errors.slug}
+                className="sm:col-span-2"
+                onChange={(event) => {
+                  setSlug(event.target.value);
+                  setSlugDirty(true);
+                  clearError(FIELD.slug);
+                }}
+                data-testid="field-slug"
+                data-field="slug"
               />
               <FormField
                 as="textarea"

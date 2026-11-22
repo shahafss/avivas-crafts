@@ -89,7 +89,7 @@ export function CartLine({
             </p>
           ) : (
             <Link
-              href={`/${locale}/p/${line.slug}`}
+              href={`/${locale}/product/${line.slug}`}
               data-testid="cart-line-name"
               lang={line.nameLang}
               dir={line.nameLang === undefined ? undefined : 'auto'}
@@ -155,7 +155,7 @@ export function CartLine({
             </p>
             {line.flag === 'choose_options_again' && line.slug !== null ? (
               <Link
-                href={`/${locale}/p/${line.slug}`}
+                href={`/${locale}/product/${line.slug}`}
                 className="inline-flex min-h-11 items-center font-bold underline underline-offset-[3px]"
               >
                 {t('chooseAgainLink')}

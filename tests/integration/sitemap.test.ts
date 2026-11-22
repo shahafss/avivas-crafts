@@ -41,23 +41,31 @@ afterAll(async () => {
   await files.cleanup();
 });
 
+let productCounter = 0;
+
 async function make(nameHe: string, categoryId: string, state: 'published' | 'draft' | 'hidden') {
   const created = await createProduct(actor, { nameHe, nameEn: null });
   if (!created.ok) throw new Error('create');
-  await updateProduct(actor, created.data.id, {
+  const slug = `piece-${String((productCounter += 1))}`;
+  const updated = await updateProduct(actor, created.data.id, {
+    slug,
     descriptionHe: 'תיאור',
     priceIlsMinor: 5000,
     categoryIds: [categoryId],
     prepTimeHe: 'שבוע',
   });
+  if (!updated.ok) throw new Error('update');
   await addImage(actor, created.data.id, await photo(640, 480, 100));
-  if (state !== 'draft') await setProductState(actor, created.data.id, 'publish');
+  if (state !== 'draft') {
+    const published = await setProductState(actor, created.data.id, 'publish');
+    if (!published.ok) throw new Error('publish');
+  }
   if (state === 'hidden') await setProductState(actor, created.data.id, 'hide');
-  return created.data;
+  return { id: created.data.id, slug };
 }
 
 describe('sitemap()', () => {
-  it('lists each public page once per locale with both language alternates', async () => {
+  it('lists each public page once per locale, without language alternates (page heads carry them)', async () => {
     const full = await createCategory(actor, { nameHe: 'נרות' });
     const empty = await createCategory(actor, { nameHe: 'ריקה' });
     if (!full.ok || !empty.ok) throw new Error('cat');
@@ -74,8 +82,8 @@ describe('sitemap()', () => {
     const paths = [
       '',
       '/shop',
-      `/c/${full.data.slug}`,
-      `/p/${live.slug}`,
+      `/category/${full.data.slug}`,
+      `/product/${live.slug}`,
       '/pages/about',
       '/pages/privacy',
       '/pages/terms',
@@ -90,17 +98,17 @@ describe('sitemap()', () => {
     expect(urls).toHaveLength(paths.length * 2);
 
     // An empty category, a draft and a hidden product are left out.
-    expect(urls.join('\n')).not.toContain(`/c/${empty.data.slug}`);
-    expect(urls.join('\n')).not.toContain(`/c/${onlyHidden.data.slug}`);
-    expect(urls.join('\n')).not.toContain(`/p/${draft.slug}`);
-    expect(urls.join('\n')).not.toContain(`/p/${hidden.slug}`);
+    expect(urls.join('\n')).not.toContain(`/category/${empty.data.slug}`);
+    expect(urls.join('\n')).not.toContain(`/category/${onlyHidden.data.slug}`);
+    expect(urls.join('\n')).not.toContain(`/product/${draft.slug}`);
+    expect(urls.join('\n')).not.toContain(`/product/${hidden.slug}`);
     // Nothing private or dynamic.
     expect(urls.join('\n')).not.toMatch(/search|cart|checkout|order|admin|api/);
 
     for (const entry of entries) {
       const path = entry.url.replace(/^https:\/\/shop\.example\/(he|en)/, '');
-      expect(entry.alternates?.languages).toEqual({ he: `${O}/he${path}`, en: `${O}/en${path}` });
-      const isProduct = path.startsWith('/p/');
+      expect(entry.alternates).toBeUndefined();
+      const isProduct = path.startsWith('/product/');
       expect(entry.lastModified !== undefined).toBe(isProduct);
     }
   });

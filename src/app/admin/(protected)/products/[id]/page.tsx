@@ -4,6 +4,7 @@ import { ProductEditor } from '@/components/admin/ProductEditor';
 import { requireAdmin } from '@/server/auth/require-admin';
 import { getEditorData } from '@/server/catalog/admin-queries';
 import { listCategories } from '@/server/catalog/categories';
+import { getEnv } from '@/server/env';
 import { getSettings } from '@/server/settings/settings';
 import {
   deleteOptionGroup,
@@ -40,6 +41,7 @@ export default async function ProductEditorPage({ params }: { params: Promise<{ 
   return (
     <ProductEditor
       product={data.product}
+      origin={getEnv().APP_ORIGIN}
       categories={categories.map((item) => ({ id: item.id, nameHe: item.nameHe }))}
       homeCategoryName={
         categories.find((item) => item.id === settings.homeCategoryId)?.nameHe ?? null

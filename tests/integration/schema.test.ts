@@ -245,6 +245,18 @@ describe('check constraints', () => {
     await testDb.db.insert(category).values({ slug: 'ok-slug-1', nameHe: 'ק', sortOrder: 50 });
     await testDb.db.insert(product).values({ slug: 'ok-slug-1', nameHe: 'מ' });
   });
+
+  it('allows a draft product without an address but refuses a published or hidden one (010)', async () => {
+    await testDb.db.insert(product).values({ slug: null, nameHe: 'מ' });
+    await testDb.db.insert(product).values({ slug: null, nameHe: 'ב' });
+    await expect(
+      testDb.db.insert(product).values({ slug: null, nameHe: 'מ', state: 'published' }),
+    ).rejects.toThrow();
+    await expect(
+      testDb.db.insert(product).values({ slug: null, nameHe: 'מ', state: 'hidden' }),
+    ).rejects.toThrow();
+    await testDb.db.insert(product).values({ slug: 'live-one', nameHe: 'מ', state: 'published' });
+  });
 });
 
 describe('shop_settings social link checks (007 US3)', () => {

@@ -9,7 +9,7 @@ export type ProductState = (typeof product.$inferSelect)['state'];
 
 export interface AdminProductListRow {
   id: string;
-  slug: string;
+  slug: string | null;
   nameHe: string;
   priceIlsMinor: number | null;
   state: ProductState;
@@ -98,7 +98,7 @@ export async function listAdminProducts(
 
 export interface EditorProduct {
   id: string;
-  slug: string;
+  slug: string | null;
   nameHe: string;
   nameEn: string | null;
   descriptionHe: string | null;

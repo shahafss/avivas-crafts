@@ -81,7 +81,7 @@ test('a launch-day visit stores only registry items and loads nothing from anoth
   await expect(page.getByTestId('consent-banner')).toHaveCount(0);
   await expect(page.getByTestId('footer-cookie-settings')).toHaveCount(0);
 
-  await page.locator('a[href="/he/p/sample-clay-mug"]').first().click();
+  await page.locator('a[href="/he/product/sample-clay-mug"]').first().click();
   await hydrated(page, 'add-to-cart');
   await page.getByTestId('add-to-cart').click();
   await expect(page.getByTestId('added-to-cart-row')).toBeVisible();
@@ -283,15 +283,15 @@ test('visitors are counted by page view and arrival, with no cookie and nothing 
     (window as unknown as { __kept: boolean }).__kept = true;
   });
   await page.waitForFunction(() => {
-    const link = document.querySelector('a[href="/he/p/sample-clay-mug"]');
+    const link = document.querySelector('a[href="/he/product/sample-clay-mug"]');
     return link !== null && Object.keys(link).some((key) => key.startsWith('__reactProps'));
   });
-  await page.locator(`a[href="/he/p/${slug}"]`).first().click();
-  await page.waitForURL(`**/he/p/${slug}`);
+  await page.locator(`a[href="/he/product/${slug}"]`).first().click();
+  await page.waitForURL(`**/he/product/${slug}`);
   // A client-side navigation: the page was not reloaded.
   expect(await page.evaluate(() => (window as unknown as { __kept?: boolean }).__kept)).toBe(true);
-  await expectDelta(before, { views: { [`/he/p/${slug}`]: 1 }, visits: 0, direct: 0 });
-  expect(beacons.at(-1)).toBe(JSON.stringify({ p: `/he/p/${slug}` }));
+  await expectDelta(before, { views: { [`/he/product/${slug}`]: 1 }, visits: 0, direct: 0 });
+  expect(beacons.at(-1)).toBe(JSON.stringify({ p: `/he/product/${slug}` }));
 
   before = await readCounters();
   await page.evaluate(() => {

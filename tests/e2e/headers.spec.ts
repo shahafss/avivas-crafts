@@ -35,7 +35,7 @@ const targets: Target[] = [
   { name: 'home', path: '/he', formAction: "form-action 'self'", page: true },
   {
     name: 'product',
-    path: '/he/p/sample-clay-mug',
+    path: '/he/product/sample-clay-mug',
     formAction: "form-action 'self'",
     page: true,
   },
@@ -56,7 +56,10 @@ const targets: Target[] = [
 ];
 
 function directive(csp: string, name: string): string | undefined {
-  return csp.split(';').map((part) => part.trim()).find((part) => part === name || part.startsWith(`${name} `));
+  return csp
+    .split(';')
+    .map((part) => part.trim())
+    .find((part) => part === name || part.startsWith(`${name} `));
 }
 
 function nonceOf(csp: string): string {

@@ -38,7 +38,8 @@ export const product = pgTable(
   'product',
   {
     id: id(),
-    slug: text('slug').notNull().unique(),
+    // NULL = no address yet (drafts only; product_slug_when_public).
+    slug: text('slug').unique(),
     nameHe: text('name_he').notNull(),
     nameEn: text('name_en'),
     descriptionHe: text('description_he'),
@@ -57,7 +58,8 @@ export const product = pgTable(
     updatedAt: updatedAt(),
   },
   (t) => [
-    check('product_slug_format', sql`${t.slug} ~ '^[a-z0-9-]{1,60}$'`),
+    check('product_slug_format', sql`${t.slug} IS NULL OR ${t.slug} ~ '^[a-z0-9-]{1,60}$'`),
+    check('product_slug_when_public', sql`${t.state} = 'draft' OR ${t.slug} IS NOT NULL`),
     check('product_name_he_len', sql`char_length(${t.nameHe}) BETWEEN 1 AND 120`),
     check('product_name_en_len', sql`${t.nameEn} IS NULL OR char_length(${t.nameEn}) <= 120`),
     check(

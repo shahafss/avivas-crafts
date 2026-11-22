@@ -65,7 +65,7 @@ test('after a storefront visit the page shows a visit today, the product, and th
 
   const visitor = await browser.newContext({ baseURL: String(baseURL) });
   const shop = await visitor.newPage();
-  await shop.goto(`/he/p/${SLUG}`);
+  await shop.goto(`/he/product/${SLUG}`);
   await expect
     .poll(
       async () => {

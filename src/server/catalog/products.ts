@@ -31,7 +31,6 @@ import {
   type Actor,
   type Failure,
 } from './result';
-import { isRandomSlug, randomSlug, slugify, uniqueSlug } from './slug';
 
 type ProductRow = typeof product.$inferSelect;
 
@@ -117,6 +116,7 @@ async function publishFacts(
   tx: DbLike,
   row: ProductRow,
   categoryIds?: string[],
+  fromDraft = false,
 ): Promise<PublishFacts> {
   const [images] = await tx
     .select({ n: count() })
@@ -130,6 +130,8 @@ async function publishFacts(
     categoryIds: categoryIds ?? (await categoryIdsOf(tx, row.id)),
     prepTimeHe: row.prepTimeHe,
     imageCount: images?.n ?? 0,
+    slug: row.slug,
+    fromDraft,
     groups: await optionDeltas(tx, row.id),
     usdZoneEnabled: await usdZoneEnabled(tx),
   };
@@ -149,19 +151,19 @@ function publishFailure(missing: string[]): Failure {
 export async function createProduct(
   actor: Actor,
   input: { nameHe: string; nameEn?: string | null },
-): Promise<ActionResult<{ id: string; slug: string }>> {
+): Promise<ActionResult<{ id: string }>> {
   const parsed = createProductSchema.safeParse(input);
   if (!parsed.success) return zodFailure(parsed.error, 'admin.products.errors.invalid');
   const { nameHe, nameEn } = parsed.data;
   return db.transaction(async (tx) => {
-    const slug = await uniqueSlug(slugify(nameEn) ?? randomSlug('p'), (s) => slugTaken(tx, s));
+    // No address yet: the owner types one before publishing (010 FR-006).
     const [row] = await tx
       .insert(product)
-      .values({ slug, nameHe, nameEn: nameEn ?? null })
+      .values({ slug: null, nameHe, nameEn: nameEn ?? null })
       .returning({ id: product.id });
     if (!row) throw new Error('Product was not created');
-    await logActivity(tx, activity(actor, 'product.created', row.id, { slug }));
-    return ok({ id: row.id, slug });
+    await logActivity(tx, activity(actor, 'product.created', row.id));
+    return ok({ id: row.id });
   });
 }
 
@@ -172,31 +174,35 @@ export async function updateProduct(
   input: ProductUpdate,
 ): Promise<ActionResult> {
   const parsed = updateProductSchema.safeParse(input);
-  if (!parsed.success) return zodFailure(parsed.error, 'admin.products.errors.invalid');
+  if (!parsed.success) {
+    if (parsed.error.issues.some((issue) => issue.path[0] === 'slug')) {
+      return fieldFailure('slug', 'admin.products.errors.slug_invalid');
+    }
+    return zodFailure(parsed.error, 'admin.products.errors.invalid');
+  }
   // `categoryIds` is not a column: it replaces the piece's category links (below).
   const { categoryIds: requestedCategoryIds, ...columns } = parsed.data;
   const changes = Object.fromEntries(
     Object.entries(columns as Record<string, unknown>).filter(([, value]) => value !== undefined),
   ) as Partial<Omit<ProductRow, 'id'>>;
+  // An empty address clears it (a draft only; checked below).
+  if (changes.slug === '') changes.slug = null;
 
   return db.transaction(async (tx): Promise<ActionResult> => {
     const [current] = await tx.select().from(product).where(eq(product.id, id)).for('update');
     if (!current) return formFailure('admin.products.errors.not_found');
 
-    // Slug: editable while draft, frozen after the first publish. An English name replaces a random slug.
+    // Address: editable while the product is a draft, locked while it is in the shop (010 FR-007).
     if (changes.slug !== undefined) {
       if (changes.slug === current.slug) {
         delete changes.slug;
       } else {
-        if (current.publishedAt !== null)
+        if (current.state !== 'draft') {
           return fieldFailure('slug', 'admin.products.errors.slug_frozen');
-        if (await slugTaken(tx, changes.slug, id))
+        }
+        if (changes.slug !== null && (await slugTaken(tx, changes.slug, id))) {
           return fieldFailure('slug', 'admin.products.errors.slug_taken');
-      }
-    } else {
-      const fromName = slugify(changes.nameEn);
-      if (current.publishedAt === null && isRandomSlug(current.slug, 'p') && fromName !== null) {
-        changes.slug = await uniqueSlug(fromName, (s) => slugTaken(tx, s, id));
+        }
       }
     }
 
@@ -318,14 +324,10 @@ export async function setProductState(
 
     const values: Partial<ProductRow> = { state: transition.to };
     if (transition.to === 'published') {
-      const missing = missingForPublish(await publishFacts(tx, current));
+      const fromDraft = action === 'publish';
+      const missing = missingForPublish(await publishFacts(tx, current, undefined, fromDraft));
       if (missing.length > 0) return publishFailure(missing);
       values.publishedAt = current.publishedAt ?? new Date();
-      // A random slug becomes the English one at the first publish, before it is frozen.
-      const fromName = slugify(current.nameEn);
-      if (current.publishedAt === null && isRandomSlug(current.slug, 'p') && fromName !== null) {
-        values.slug = await uniqueSlug(fromName, (s) => slugTaken(tx, s, id));
-      }
     }
     await tx.update(product).set(values).where(eq(product.id, id));
     await logActivity(

@@ -31,8 +31,8 @@ test.beforeEach(({}, testInfo) => {
   test.skip(testInfo.project.name === 'chromium-desktop', 'Cart flows run on the mobile projects');
 });
 
-const CANDLE = '/he/p/sample-soy-candle';
-const MUG = '/he/p/sample-clay-mug';
+const CANDLE = '/he/product/sample-soy-candle';
+const MUG = '/he/product/sample-clay-mug';
 
 async function openProduct(page: Page, path: string): Promise<void> {
   await page.goto(path);
@@ -322,11 +322,11 @@ test('a removed option value flags the line "choose again"', async ({ page }) =>
   await expect(candle.getByTestId('cart-flag')).toContainText('האפשרות שבחרתם כבר לא קיימת.');
   await expect(candle.getByRole('link', { name: 'בחירה מחדש' })).toHaveAttribute(
     'href',
-    '/he/p/sample-soy-candle',
+    '/he/product/sample-soy-candle',
   );
   // Following the link closes the drawer and leaves no lock behind.
   await candle.getByRole('link', { name: 'בחירה מחדש' }).click();
-  await expect(page).toHaveURL(/\/he\/p\/sample-soy-candle$/);
+  await expect(page).toHaveURL(/\/he\/product\/sample-soy-candle$/);
   await expect(drawerOf(page)).toBeHidden();
   await nothingLeftOpen(page);
   await openCart(page);
@@ -334,7 +334,7 @@ test('a removed option value flags the line "choose again"', async ({ page }) =>
   // Blocked "to checkout": the drawer stays open and the summary takes focus.
   await page.getByTestId('cart-continue').click();
   await expect(drawerOf(page)).toBeVisible();
-  await expect(page).toHaveURL(/\/he\/p\/sample-soy-candle$/);
+  await expect(page).toHaveURL(/\/he\/product\/sample-soy-candle$/);
   await expect(page.locator('#cart-errors')).toBeFocused();
   await candle.getByTestId('cart-remove').click();
   await expect(page.getByTestId('cart-empty')).toBeVisible();
@@ -395,7 +395,7 @@ test('the cart drawer: reading-end side from the header top, modal, named by its
     await setCart(page, [{ slug: 'sample-clay-mug', quantity: 1 }], locale);
     for (const scroll of [0, 300]) {
       const label = `${locale} at scroll ${String(scroll)}`;
-      await page.goto(`/${locale}/p/sample-ceramic-bowl`);
+      await page.goto(`/${locale}/product/sample-ceramic-bowl`);
       await hydrated(page, 'cart-link');
       await page.evaluate((y) => {
         window.scrollTo({ top: y, left: 0, behavior: 'instant' });
@@ -465,7 +465,7 @@ test('Esc, the X and a tap outside close the cart drawer and focus returns to th
 }) => {
   await setCart(page, [{ slug: 'sample-clay-mug', quantity: 1 }]);
   for (const how of ['escape', 'close button', 'tap outside'] as const) {
-    await page.goto('/he/p/sample-ceramic-bowl');
+    await page.goto('/he/product/sample-ceramic-bowl');
     const drawer = await openCartDrawer(page);
     await expect(page.getByTestId('cart-close')).toBeFocused();
     if (how === 'escape') await page.keyboard.press('Escape');
@@ -622,7 +622,7 @@ test('the checkout "back to cart" is a button that opens the cart drawer on the 
 test('reduced motion: the drawer opens and closes with the same end states', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await setCart(page, [{ slug: 'sample-clay-mug', quantity: 1 }]);
-  await page.goto('/he/p/sample-ceramic-bowl');
+  await page.goto('/he/product/sample-ceramic-bowl');
   const drawer = await openCartDrawer(page);
   // No slide: it is in place at once, nothing is running.
   expect(

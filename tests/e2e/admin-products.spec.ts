@@ -30,7 +30,7 @@ import { expect, resetDb, signInAsAdmin, sql, test } from './fixtures';
 //                              publish-errors                   the list of missing fields (Hebrew labels)
 //                              option-group-add, option-group-name, option-value-add, option-value-label,
 //                              option-value-delta, option-swatch-<name>, option-group-save
-//   /he/shop, /he/p/[slug]    product-card (link; contains an <img>, the name, the price, the
+//   /he/shop, /he/product/[slug]    product-card (link; contains an <img>, the name, the price, the
 //                              "לא זמין להזמנה כרגע" label), option-chip (radio chips; .swatch-<name> dot),
 //                              buy-price (live price), unavailable-notice
 //                              (007: a new piece is on "All pieces" at /he/shop; the home page's row only
@@ -45,11 +45,12 @@ test.beforeEach(({}, testInfo) => {
 });
 
 const NAME = 'בובת בד אדומה';
-const NAME_EN_SLUG_SOURCE = 'Red Doll';
+const NAME_EN = 'Red Doll';
+const SLUG_INVALID = 'הכתובת יכולה להכיל רק אותיות באנגלית קטנות, מספרים ומקפים בודדים';
 const NOT_AVAILABLE = 'המוצר הזה כבר לא זמין';
 
 let productId = '';
-let slug = '';
+const slug = 'red-fabric-doll';
 
 async function jpegWithGps(red: number): Promise<Buffer> {
   return sharp({
@@ -128,6 +129,8 @@ test('1. create a product with three photos, category and prep time, publish it,
   await page.getByTestId('field-priceIls').fill('180');
   await page.getByTestId('field-categories').getByLabel('נרות', { exact: true }).check();
   await page.getByTestId('field-prepTimeHe').fill('כשבועיים');
+  // 010: the owner types the product address; there is no automatic one.
+  await page.getByTestId('field-slug').fill(slug);
   await page.getByTestId('save-product').click();
 
   // Scenario 9 input: a phone photo with GPS, plus the HEIC fixture (HEIC in the built app).
@@ -143,9 +146,9 @@ test('1. create a product with three photos, category and prep time, publish it,
   await expect
     .poll(async () => await scalar<string>(sql`SELECT state FROM product WHERE id = ${productId}`))
     .toBe('published');
-  slug =
-    (await sql<{ slug: string }[]>`SELECT slug FROM product WHERE id = ${productId}`)[0]?.slug ??
-    '';
+  expect(
+    (await sql<{ slug: string }[]>`SELECT slug FROM product WHERE id = ${productId}`)[0]?.slug,
+  ).toBe(slug);
 
   await page.goto('/he/shop');
   const card = page.getByTestId('product-card').filter({ hasText: NAME });
@@ -184,6 +187,7 @@ test('9. the public images carry no EXIF or GPS, and a draft image is not on the
   await page.waitForURL(/\/admin\/products\/[0-9a-f-]{36}/);
   const draftId = /\/admin\/products\/([0-9a-f-]{36})/.exec(page.url())?.[1] ?? '';
   await page.getByTestId('field-nameHe').fill('טיוטה בלי פרסום');
+  await page.getByTestId('field-slug').fill('unpublished-draft');
   await page.getByTestId('save-product').click();
   await page
     .getByTestId('photo-input')
@@ -193,10 +197,11 @@ test('9. the public images carry no EXIF or GPS, and a draft image is not on the
     SELECT storage_key FROM product_image WHERE product_id = ${draftId}`;
   const draftSlug =
     (await sql<{ slug: string }[]>`SELECT slug FROM product WHERE id = ${draftId}`)[0]?.slug ?? '';
+  expect(draftSlug).toBe('unpublished-draft');
   expect(
     (await page.request.get(`/dev-images/${draftImage?.storage_key ?? ''}-800.webp`)).status(),
   ).toBe(404);
-  expect(await storefrontStatus(page, `/he/p/${draftSlug}`)).toBe(404);
+  expect(await storefrontStatus(page, `/he/product/${draftSlug}`)).toBe(404);
 
   // Publishing without a photo names the photo field.
   await page.goto(`/admin/products/${draftId}`);
@@ -218,7 +223,7 @@ test('2. editing the price shows the new price on the product page', async ({ pa
         await scalar<string>(sql`SELECT price_ils_minor FROM product WHERE id = ${productId}`),
     )
     .toBe('19500');
-  await page.goto(`/he/p/${slug}`);
+  await page.goto(`/he/product/${slug}`);
   await expect(page.getByTestId('buy-price')).toContainText('195');
 });
 
@@ -234,7 +239,7 @@ test('3. hiding removes it from /he and its URL answers "not available" with sta
 
   await page.goto('/he/shop');
   await expect(page.getByTestId('product-card').filter({ hasText: NAME })).toHaveCount(0);
-  expect(await storefrontStatus(page, `/he/p/${slug}`)).toBe(404);
+  expect(await storefrontStatus(page, `/he/product/${slug}`)).toBe(404);
   await expect(page.getByText(NOT_AVAILABLE)).toBeVisible();
   const key = await mainKeyFromDb();
   expect((await page.request.get(`/dev-images/${key}-800.webp`)).status()).toBe(404);
@@ -269,7 +274,7 @@ test('6. an option group with a swatch: the selector shows and the price follows
     )
     .toBe(2);
 
-  await page.goto(`/he/p/${slug}`);
+  await page.goto(`/he/product/${slug}`);
   const chips = page.getByTestId('option-chip');
   await expect(chips).toHaveCount(2);
   await expect(chips.filter({ hasText: 'חום' }).locator('.swatch-brown')).toHaveCount(1);
@@ -333,7 +338,7 @@ test('4. not orderable: still visible with the label, options read-only, no add-
   const card = page.getByTestId('product-card').filter({ hasText: NAME });
   await expect(card).toContainText('לא זמין להזמנה כרגע');
 
-  await page.goto(`/he/p/${slug}`);
+  await page.goto(`/he/product/${slug}`);
   await expect(page.getByTestId('unavailable-notice')).toBeVisible();
   await expect(page.getByTestId('option-chip')).toHaveCount(0);
   await expect(page.getByText('צבע שיער')).toBeVisible();
@@ -355,7 +360,7 @@ test('8. the English view with empty English fields shows the Hebrew texts', asy
   await page.goto('/en/shop');
   const card = page.getByTestId('product-card').filter({ hasText: NAME });
   await expect(card).toBeVisible();
-  await page.goto(`/en/p/${slug}`);
+  await page.goto(`/en/product/${slug}`);
   const heading = page.getByRole('heading', { level: 1 });
   await expect(heading).toContainText(NAME);
   await expect(heading).toHaveAttribute('lang', 'he');
@@ -364,23 +369,27 @@ test('8. the English view with empty English fields shows the Hebrew texts', asy
   await expect(description).toHaveAttribute('lang', 'he');
 });
 
-test('English name gives the slug on a new product (no Hebrew transliteration)', async ({
-  page,
-}) => {
+test('an English name does not create a product address', async ({ page }) => {
   await signInAsAdmin(page);
   await page.goto('/admin/products');
   await page.getByTestId('product-new').click();
   await page.waitForURL(/\/admin\/products\/[0-9a-f-]{36}/);
   const id = /\/admin\/products\/([0-9a-f-]{36})/.exec(page.url())?.[1] ?? '';
   await page.getByTestId('field-nameHe').fill('בובה אדומה');
-  await page.getByTestId('field-nameEn').fill(NAME_EN_SLUG_SOURCE);
+  await page.getByTestId('field-nameEn').fill(NAME_EN);
   await page.getByTestId('save-product').click();
   await expect
     .poll(
       async () =>
-        (await sql<{ slug: string }[]>`SELECT slug FROM product WHERE id = ${id}`)[0]?.slug,
+        (
+          await sql<
+            { nameEn: string | null }[]
+          >`SELECT name_en AS "nameEn" FROM product WHERE id = ${id}`
+        )[0]?.nameEn,
     )
-    .toBe('red-doll');
+    .toBe(NAME_EN);
+  expect(await scalar<string | null>(sql`SELECT slug FROM product WHERE id = ${id}`)).toBeNull();
+  await expect(page.getByTestId('field-slug')).toHaveValue('');
 });
 
 /** The control's `aria-describedby` must list an element that holds the visible error message. */
@@ -426,6 +435,7 @@ test('008. publishing an incomplete piece marks every missing field, focuses the
     ['field-priceIls', 'צריך להזין מחיר בשקלים'],
     ['field-prepTimeHe', 'צריך למלא זמן הכנה'],
     ['field-categories', 'צריך לבחור לפחות קטגוריה אחת'],
+    ['field-slug', 'צריך להקליד כתובת למוצר.'],
   ] as const) {
     await expect(page.getByTestId(id)).toHaveAttribute('aria-invalid', 'true');
     await expect(page.getByText(message)).toBeVisible();
@@ -434,7 +444,14 @@ test('008. publishing an incomplete piece marks every missing field, focuses the
   await expect(page.getByTestId('field-nameHe')).not.toHaveAttribute('aria-invalid', 'true');
   // The bottom list still names every missing item.
   const list = page.getByTestId('publish-errors');
-  for (const label of ['תיאור בעברית', 'מחיר בשקלים', 'קטגוריה', 'זמן הכנה', 'תמונה']) {
+  for (const label of [
+    'תיאור בעברית',
+    'מחיר בשקלים',
+    'קטגוריה',
+    'זמן הכנה',
+    'תמונה',
+    'כתובת המוצר',
+  ]) {
     await expect(list).toContainText(label);
   }
 
@@ -447,6 +464,7 @@ test('008. publishing an incomplete piece marks every missing field, focuses the
   await page.getByTestId('field-priceIls').fill('50');
   await page.getByTestId('field-priceUsd').fill('15');
   await page.getByTestId('field-prepTimeHe').fill('כשבוע');
+  await page.getByTestId('field-slug').fill('incomplete-piece-box');
   await page.getByTestId('field-categories').getByLabel('נרות', { exact: true }).check();
   await page
     .getByTestId('photo-input')
@@ -457,6 +475,79 @@ test('008. publishing an incomplete piece marks every missing field, focuses the
   await expect(page.getByTestId('product-state')).toHaveText('פורסם', { timeout: 15_000 });
   await expect(invalid).toHaveCount(0);
   await expect(page.getByTestId('publish-errors')).toHaveCount(0);
+});
+
+test('010. the owner types the address: publish needs it, it locks, and it can change from draft', async ({
+  page,
+}) => {
+  await signInAsAdmin(page);
+  await page.goto('/admin/products');
+  await page.getByTestId('product-new').click();
+  await page.waitForURL(/\/admin\/products\/[0-9a-f-]{36}/);
+  const id = /\/admin\/products\/([0-9a-f-]{36})/.exec(page.url())?.[1] ?? '';
+  const field = page.getByTestId('field-slug');
+  const stateOf = async (): Promise<string | undefined> =>
+    await scalar<string>(sql`SELECT state FROM product WHERE id = ${id}`);
+  const slugOf = async (): Promise<string | null | undefined> =>
+    await scalar<string | null>(sql`SELECT slug FROM product WHERE id = ${id}`);
+
+  // 1. Everything except the address.
+  await page.getByTestId('field-nameHe').fill('ארנב כחול');
+  await page.getByTestId('field-descriptionHe').fill('ארנב סרוג בעבודת יד.');
+  await page.getByTestId('field-priceIls').fill('90');
+  await page.getByTestId('field-categories').getByLabel('נרות', { exact: true }).check();
+  await page.getByTestId('field-prepTimeHe').fill('כשבוע');
+  await page.getByTestId('save-product').click();
+  await page
+    .getByTestId('photo-input')
+    .setInputFiles([{ name: 'bunny.png', mimeType: 'image/png', buffer: await plainPng(150) }]);
+  await expect(page.getByTestId('photo-item')).toHaveCount(1, { timeout: 30_000 });
+
+  // 2. Publish is refused and the address field is marked.
+  await page.getByTestId('publish').click();
+  await expect(page.getByTestId('publish-errors')).toContainText('כתובת המוצר');
+  await expect(field).toHaveAttribute('aria-invalid', 'true');
+  expect(await stateOf()).toBe('draft');
+
+  // 3. Type an address, save, publish.
+  await field.fill('blue-bunny');
+  await page.getByTestId('save-product').click();
+  await expect.poll(slugOf).toBe('blue-bunny');
+  await page.getByTestId('publish').click();
+  await expect.poll(stateOf).toBe('published');
+
+  // 4. The field is read-only while the product is in the shop.
+  await expect(field).toHaveAttribute('readonly', '');
+  await expect(field).toHaveValue('blue-bunny');
+
+  // 5-6. The new address opens the product; the old /p/ form is a 404.
+  expect(await storefrontStatus(page, '/he/product/blue-bunny')).toBe(200);
+  expect(await storefrontStatus(page, '/he/p/blue-bunny')).toBe(404);
+  expect(await storefrontStatus(page, '/he/c/sample-ceramics')).toBe(404);
+
+  // 7. Back to draft: change the address and publish again. The old address answers 404.
+  await page.goto(`/admin/products/${id}`);
+  await expect(field).toHaveAttribute('readonly', '');
+  await page.getByTestId('set-draft').click();
+  await expect.poll(stateOf).toBe('draft');
+  await expect(field).not.toHaveAttribute('readonly', '');
+  await field.fill('little-blue-bunny');
+  await page.getByTestId('publish').click();
+  await expect.poll(stateOf).toBe('published');
+  expect(await slugOf()).toBe('little-blue-bunny');
+  expect(await storefrontStatus(page, '/he/product/little-blue-bunny')).toBe(200);
+  expect(await storefrontStatus(page, '/he/product/blue-bunny')).toBe(404);
+
+  // 8. A wrong address on a draft shows the format message and is not saved.
+  await page.goto(`/admin/products/${id}`);
+  await page.getByTestId('set-draft').click();
+  await expect.poll(stateOf).toBe('draft');
+  await expect(field).not.toHaveAttribute('readonly', '');
+  await field.fill('Blue Bunny');
+  await page.getByTestId('save-product').click();
+  await expect(field).toHaveAttribute('aria-invalid', 'true');
+  await expectDescribedByError(field, SLUG_INVALID);
+  expect(await slugOf()).toBe('little-blue-bunny');
 });
 
 test('5. delete asks for confirmation, then the product is gone from the catalog', async ({
@@ -477,7 +568,7 @@ test('5. delete asks for confirmation, then the product is gone from the catalog
 
   await page.goto('/he/shop');
   await expect(page.getByTestId('product-card').filter({ hasText: NAME })).toHaveCount(0);
-  expect(await storefrontStatus(page, `/he/p/${slug}`)).toBe(404);
+  expect(await storefrontStatus(page, `/he/product/${slug}`)).toBe(404);
   expect((await sql`SELECT id FROM product_image WHERE product_id = ${productId}`).length).toBe(0);
 });
 
@@ -531,7 +622,7 @@ test('categories: a piece can be in several, the home row follows "מומלצו�
     await page.goto('/he');
     await expect(page.getByTestId('home-row-track')).toBeVisible();
     await expect(page.getByTestId('home-row-track')).not.toContainText(PIECE);
-    await page.goto('/he/c/sample-ceramics');
+    await page.goto('/he/category/sample-ceramics');
     await expect(page.getByTestId('product-card').filter({ hasText: PIECE })).toHaveCount(1);
 
     // Tick a second category: it shows on both category pages.
@@ -539,7 +630,7 @@ test('categories: a piece can be in several, the home row follows "מומלצו�
     await boxes().getByLabel('נרות', { exact: true }).check();
     await save(2);
     for (const category of ['sample-ceramics', 'sample-candles']) {
-      await page.goto(`/he/c/${category}`);
+      await page.goto(`/he/category/${category}`);
       await expect(page.getByTestId('product-card').filter({ hasText: PIECE })).toHaveCount(1);
     }
 

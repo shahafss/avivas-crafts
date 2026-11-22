@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { isRandomSlug } from '@/lib/slug';
 
 export const SWATCHES = [
   'white',
@@ -33,8 +34,16 @@ const optionalText = (max: number) =>
       return trimmed === '' ? null : trimmed;
     });
 
-/** Descriptions keep their line breaks; only the ends are trimmed. */
-const slugSchema = z.string().regex(/^[a-z0-9-]{1,60}$/);
+/**
+ * The address the owner types (010 FR-004): lowercase letters, digits and single dashes, 1-60
+ * characters, not trimmed, and not a random-looking code. `''` means "clear it" (a draft only).
+ */
+const slugSchema = z
+  .string()
+  .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
+  .max(60)
+  .refine((value) => !isRandomSlug(value, 'p'))
+  .or(z.literal(''));
 
 export const nameHeSchema = z.string().trim().min(1).max(120);
 
@@ -105,6 +114,9 @@ export interface PublishFacts {
   categoryIds: string[];
   prepTimeHe: string | null;
   imageCount: number;
+  slug: string | null;
+  /** True only when publishing from draft: then a random-looking address is not accepted. */
+  fromDraft: boolean;
   /** One entry per option group: its values' deltas. */
   groups: { deltaIlsMinor: number; deltaUsdMinor: number | null }[][];
   usdZoneEnabled: boolean;
@@ -115,6 +127,9 @@ export function missingForPublish(facts: PublishFacts): string[] {
   const missing: string[] = [];
   const name = facts.nameHe.trim();
   if (name === '' || name === NEW_PRODUCT_NAME_HE) missing.push('nameHe');
+  if (facts.slug === null || (facts.fromDraft && isRandomSlug(facts.slug, 'p'))) {
+    missing.push('slug');
+  }
   if ((facts.descriptionHe ?? '').trim() === '') missing.push('descriptionHe');
   if (facts.priceIlsMinor === null || facts.priceIlsMinor <= 0) missing.push('priceIlsMinor');
   if (facts.usdZoneEnabled && (facts.priceUsdMinor === null || facts.priceUsdMinor <= 0)) {

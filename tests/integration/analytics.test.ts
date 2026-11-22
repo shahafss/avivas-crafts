@@ -141,8 +141,10 @@ describe('recordView: what is dropped', () => {
     '/api/v',
     '/fr',
     '/he/pages/unknown',
-    `/he/p/${'a'.repeat(81)}`,
-    '/he/p/Doll-1',
+    `/he/product/${'a'.repeat(81)}`,
+    '/he/product/Doll-1',
+    '/he/p/doll-1',
+    '/en/c/dolls',
     undefined,
     42,
   ])('the path %j changes nothing', async (p) => {
@@ -151,24 +153,24 @@ describe('recordView: what is dropped', () => {
   });
 
   it('a path of a missing or unpublished product, or a missing category, changes nothing', async () => {
-    await recordView({ p: '/he/p/no-such-product', r: '' }, ctx());
-    await recordView({ p: '/en/p/doll-draft', r: '' }, ctx());
-    await recordView({ p: '/he/c/no-such-category', r: '' }, ctx());
+    await recordView({ p: '/he/product/no-such-product', r: '' }, ctx());
+    await recordView({ p: '/en/product/doll-draft', r: '' }, ctx());
+    await recordView({ p: '/he/category/no-such-category', r: '' }, ctx());
     await nothingChanged();
   });
 
   it('a published product, an existing category and the served pages count', async () => {
-    await recordView({ p: '/he/p/doll-1?x=1' }, ctx());
-    await recordView({ p: '/en/p/doll-1' }, ctx());
-    await recordView({ p: '/he/c/dolls' }, ctx());
+    await recordView({ p: '/he/product/doll-1?x=1' }, ctx());
+    await recordView({ p: '/en/product/doll-1' }, ctx());
+    await recordView({ p: '/he/category/dolls' }, ctx());
     await recordView({ p: '/he/pages/terms' }, ctx());
     await recordView({ p: '/en/contact' }, ctx());
     expect((await pages()).map((row) => row.path).toSorted((a, b) => a.localeCompare(b))).toEqual([
       '/en/contact',
-      '/en/p/doll-1',
-      '/he/c/dolls',
-      '/he/p/doll-1',
+      '/en/product/doll-1',
+      '/he/category/dolls',
       '/he/pages/terms',
+      '/he/product/doll-1',
     ]);
   });
 
@@ -241,11 +243,13 @@ describe('POST /api/v', () => {
   }
 
   it('counts a text/plain JSON body and answers 204 without cookies', async () => {
-    const response = await POST(request(JSON.stringify({ p: '/he/p/doll-1', r: 'instagram.com' })));
+    const response = await POST(
+      request(JSON.stringify({ p: '/he/product/doll-1', r: 'instagram.com' })),
+    );
     expectEmpty204(response);
     expect(await response.text()).toBe('');
     expect(await pages()).toEqual([
-      { day: isoDateInIsrael(new Date()), path: '/he/p/doll-1', views: 1 },
+      { day: isoDateInIsrael(new Date()), path: '/he/product/doll-1', views: 1 },
     ]);
     expect((await referrers())[0]?.referrerHost).toBe('instagram.com');
   });
@@ -347,15 +351,15 @@ describe('getStats', () => {
       })),
     );
     await testDb.db.insert(analyticsDailyPage).values([
-      { day: '2026-03-10', path: '/he/p/doll-1', views: 5 },
-      { day: '2026-03-09', path: '/en/p/doll-1', views: 4 },
-      { day: '2026-03-10', path: '/he/p/gone-product', views: 6 },
+      { day: '2026-03-10', path: '/he/product/doll-1', views: 5 },
+      { day: '2026-03-09', path: '/en/product/doll-1', views: 4 },
+      { day: '2026-03-10', path: '/he/product/gone-product', views: 6 },
       { day: '2026-03-10', path: '/he/cart', views: 50 },
-      { day: '2026-03-10', path: '/he/c/dolls', views: 40 },
-      { day: '2025-01-01', path: '/he/p/doll-1', views: 1000 },
+      { day: '2026-03-10', path: '/he/category/dolls', views: 40 },
+      { day: '2025-01-01', path: '/he/product/doll-1', views: 1000 },
       ...Array.from({ length: 11 }, (_, i) => ({
         day: '2026-03-10',
-        path: `/he/p/item-${String(i)}`,
+        path: `/he/product/item-${String(i)}`,
         views: 1,
       })),
     ]);

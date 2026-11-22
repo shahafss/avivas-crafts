@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test';
+import type { Locator, Page } from '@playwright/test';
 import { expect, resetDb, sql, test, waitForFormAge } from './fixtures';
 import {
   burgerLines,
@@ -22,9 +22,10 @@ import {
 
 test.describe.configure({ mode: 'serial' });
 
-// 008 US6: the logo tests (title starts with "logo:") run on the phone project too.
+// 008 US6: the logo tests (title starts with "logo:") run on the phone project too; so do the
+// phone-menu tests of 010 US2 (title starts with "nav-menu:").
 test.beforeEach(({}, testInfo) => {
-  const isLogoTest = testInfo.title.startsWith('logo:');
+  const isLogoTest = testInfo.title.startsWith('logo:') || testInfo.title.startsWith('nav-menu:');
   test.skip(
     isLogoTest
       ? !['chromium-desktop', 'chromium-mobile'].includes(testInfo.project.name)
@@ -54,10 +55,10 @@ interface Screen {
 const SCREENS: Screen[] = [
   { name: 'home', path: () => '' },
   { name: 'all pieces', path: () => '/shop' },
-  { name: 'category', path: () => '/c/sample-ceramics' },
+  { name: 'category', path: () => '/category/sample-ceramics' },
   { name: 'search', path: () => '/search?q=bowl' },
   // The product page of a piece with other published pieces: it has the also-like section.
-  { name: 'product', path: () => '/p/sample-clay-mug' },
+  { name: 'product', path: () => '/product/sample-clay-mug' },
   { name: 'checkout', path: () => '/checkout', cart: true },
   { name: 'order page', path: () => orderPath },
   { name: 'about', path: () => '/pages/about' },
@@ -121,7 +122,7 @@ test('at 1280 px the gallery is at inline-start and the brand at the mirrored si
 }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
   for (const locale of LOCALES) {
-    await page.goto(`/${locale}/p/sample-clay-mug`);
+    await page.goto(`/${locale}/product/sample-clay-mug`);
     const gallery = await page.getByTestId('gallery-track').boundingBox();
     const buyPanel = await page.locator('main h1').boundingBox();
     const brand = await page.getByTestId('header-brand').boundingBox();
@@ -190,9 +191,9 @@ test('every product image has srcset, sizes, width and height', async ({ page })
     for (const path of [
       '',
       '/shop',
-      '/c/sample-ceramics',
+      '/category/sample-ceramics',
       '/search?q=bowl',
-      '/p/sample-soy-candle',
+      '/product/sample-soy-candle',
     ]) {
       await page.goto(`/${locale}${path}`);
       await expect(page.locator('main')).toBeVisible();
@@ -201,7 +202,7 @@ test('every product image has srcset, sizes, width and height', async ({ page })
     }
 
     // The zoom dialog's image, once the dialog is open.
-    await page.goto(`/${locale}/p/sample-soy-candle`);
+    await page.goto(`/${locale}/product/sample-soy-candle`);
     await hydrated(page, 'gallery-zoom');
     await page.getByTestId('gallery-zoom').click();
     await expect(page.locator('dialog img')).toHaveCount(1);
@@ -210,7 +211,7 @@ test('every product image has srcset, sizes, width and height', async ({ page })
 
     // Cart, checkout and order lines (they show a thumbnail when the product has a photo).
     await putCartItem(page, 'sample-clay-mug');
-    await page.goto(`/${locale}/p/sample-clay-mug`);
+    await page.goto(`/${locale}/product/sample-clay-mug`);
     const drawer = await openCartDrawer(page);
     await expect(drawer.locator('img').first()).toBeVisible({ timeout: 20_000 });
     expect(await incomplete(), `${locale} cart drawer`).toEqual([]);
@@ -265,7 +266,7 @@ test('header, buy-box, cart and checkout controls have a 44 by 44 px hit area', 
     for (const locale of LOCALES) {
       const label = (what: string): string => `${locale} ${what} at ${String(width)} px`;
 
-      await page.goto(`/${locale}/p/sample-clay-mug`);
+      await page.goto(`/${locale}/product/sample-clay-mug`);
       await expect(page.getByTestId('add-to-cart')).toBeVisible();
       expect(await smallTargets(page, HEADER_CONTROLS), label('header')).toEqual([]);
       expect(
@@ -274,7 +275,7 @@ test('header, buy-box, cart and checkout controls have a 44 by 44 px hit area', 
       ).toEqual([]);
 
       await putCartItem(page, 'sample-clay-mug');
-      await page.goto(`/${locale}/p/sample-clay-mug`);
+      await page.goto(`/${locale}/product/sample-clay-mug`);
       const drawer = await openCartDrawer(page);
       await expect(drawer.getByTestId('cart-line')).toHaveCount(1, { timeout: 20_000 });
       expect(
@@ -306,7 +307,7 @@ test('zoom dialog: the arrow that points the reading way shows the next photo', 
     ['he', 'ArrowLeft', 'ArrowRight'],
     ['en', 'ArrowRight', 'ArrowLeft'],
   ] as const) {
-    await page.goto(`/${locale}/p/sample-soy-candle`);
+    await page.goto(`/${locale}/product/sample-soy-candle`);
     await hydrated(page, 'gallery-zoom');
     await page.getByTestId('gallery-zoom').click();
     const dialog = page.getByRole('dialog');
@@ -331,7 +332,7 @@ test('add to cart: the badge pops normally and does not animate under reduced mo
   };
 
   // Control: with no preference the badge runs `badge-pop` (a transform animation, §3.5).
-  await page.goto('/he/p/sample-clay-mug');
+  await page.goto('/he/product/sample-clay-mug');
   await hydrated(page, 'add-to-cart');
   await page.getByTestId('add-to-cart').click();
   await expect(page.getByTestId('added-to-cart-row')).toBeVisible();
@@ -341,7 +342,7 @@ test('add to cart: the badge pops normally and does not animate under reduced mo
   await page.evaluate(() => {
     localStorage.clear();
   });
-  await page.goto('/he/p/sample-clay-mug');
+  await page.goto('/he/product/sample-clay-mug');
   await hydrated(page, 'add-to-cart');
   await page.getByTestId('add-to-cart').click();
   await expect(page.getByTestId('added-to-cart-row')).toBeVisible();
@@ -356,7 +357,7 @@ test('product-card photo boxes are square in the home row, All pieces, a categor
   const places = [
     { name: 'home row', path: '', scope: '[data-testid="home-row-track"]' },
     { name: 'all pieces', path: '/shop', scope: 'main' },
-    { name: 'category', path: '/c/sample-ceramics', scope: 'main' },
+    { name: 'category', path: '/category/sample-ceramics', scope: 'main' },
     { name: 'search', path: '/search?q=bowl', scope: 'main' },
   ];
   for (const locale of LOCALES) {
@@ -574,7 +575,7 @@ test('the gallery main photo box and the thumbnails are square', async ({ page }
     await page.setViewportSize({ width, height: 800 });
     for (const locale of LOCALES) {
       // The soy candle has two photos, so it has thumbnails.
-      await page.goto(`/${locale}/p/sample-soy-candle`);
+      await page.goto(`/${locale}/product/sample-soy-candle`);
       const label = `${locale} at ${String(width)} px`;
       await expectSquare(page.getByTestId('gallery-track'), `${label} main`);
       await expectSquare(
@@ -595,7 +596,7 @@ test('cart line and checkout summary thumbnails are square', async ({ page }) =>
   await page.setViewportSize({ width: 1280, height: 800 });
   for (const locale of LOCALES) {
     await putCartItem(page, 'sample-clay-mug');
-    await page.goto(`/${locale}/p/sample-clay-mug`);
+    await page.goto(`/${locale}/product/sample-clay-mug`);
     await openCartDrawer(page);
     await expect(page.getByTestId('cart-line')).toHaveCount(1, { timeout: 20_000 });
     const cartThumb = page.locator('[data-testid="cart-line"] > span:has(img)');
@@ -958,7 +959,7 @@ test('at 1024 px ordinary 12-character category names show in full, wide-letter 
         const spans = page
           .getByTestId('site-header')
           .getByRole('navigation', { name: FOUR_LABELS[locale].menuNav })
-          .locator('a[href*="/c/"] > span');
+          .locator('a[href*="/category/"] > span');
         await expect(spans, label).toHaveCount(3);
         const measured = await spans.evaluateAll((nodes) =>
           nodes.map((node) => {
@@ -1424,7 +1425,7 @@ test('the cart drawer at 1280 px: reading-end side, from the header top, 24rem a
     ['en', 'right'],
   ] as const) {
     await putCartItem(page, 'sample-clay-mug');
-    await page.goto(`/${locale}/p/sample-clay-mug`);
+    await page.goto(`/${locale}/product/sample-clay-mug`);
     const drawer = await openCartDrawer(page);
     await expect(drawer.getByTestId('cart-line')).toHaveCount(1, { timeout: 20_000 });
     await expectDrawerGeometry(page, 'cart-drawer', side, `${locale} at 1280 px`);
@@ -1446,7 +1447,7 @@ test('no sideways scroll at 320 and 375 px with the cart drawer or the menu draw
     await page.setViewportSize({ width, height: 800 });
     for (const locale of LOCALES) {
       await putCartItem(page, 'sample-clay-mug');
-      await page.goto(`/${locale}/p/sample-clay-mug`);
+      await page.goto(`/${locale}/product/sample-clay-mug`);
       const label = `${locale} at ${String(width)} px`;
       await openCartDrawer(page);
       await noSidewaysScroll(page, `${label} with the cart drawer open`);
@@ -1510,7 +1511,7 @@ test('logo: on a content page it is inside the bar and centred, at scroll 0 and 
     await page.setViewportSize({ width, height: 400 });
     let scrolledChecks = 0;
     for (const locale of LOCALES) {
-      for (const path of ['/pages/about', '/p/sample-clay-mug', '/contact']) {
+      for (const path of ['/pages/about', '/product/sample-clay-mug', '/contact']) {
         const label = `${locale}${path} at ${String(width)} px`;
         await page.goto(`/${locale}${path}`);
         await expect(page.getByTestId('header-logo')).toBeVisible();
@@ -1576,7 +1577,7 @@ test('logo: from 1024 px the buy panel and the checkout summary stick at header 
   test.skip(testInfo.project.name !== 'chromium-desktop', 'Desktop project only');
   for (const width of [1024, 1280]) {
     await page.setViewportSize({ width, height: 800 });
-    await page.goto('/he/p/sample-clay-mug');
+    await page.goto('/he/product/sample-clay-mug');
     const panelTop = await page.evaluate(() => {
       const h1 = document.querySelector('main h1');
       const panel = h1?.parentElement;
@@ -1738,4 +1739,191 @@ test('logo: the menu drawer and the cart drawer each cover it', async ({ page },
   await openCartDrawer(page);
   await transitionsDone(page);
   expect(await covered('cart-drawer'), 'cart drawer covers the logo').toBe(true);
+});
+
+// 010 US2 (contracts/navigation-links.md): the animated underline and `aria-current`.
+const NAV_LINE_FULL = '100% 1.5px';
+const NAV_LINE_EMPTY = '0% 1.5px';
+
+function navLineSize(link: Locator): Promise<string> {
+  return link.locator('.nav-line').evaluate((node) => getComputedStyle(node).backgroundSize);
+}
+
+test('nav: on About at 1280 px only the header About link is the current page and its line is full', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto('/en/pages/about');
+  const header = page.getByTestId('site-header');
+  await expect(header.locator('a[aria-current]')).toHaveCount(1);
+  const about = header.getByRole('link', { name: 'About', exact: true });
+  await expect(about).toHaveAttribute('aria-current', 'page');
+  await expect.poll(() => navLineSize(about)).toBe(NAV_LINE_FULL);
+  // A link that is not the current page has no line.
+  const all = header.getByRole('link', { name: 'All pieces', exact: true });
+  await expect(all).not.toHaveAttribute('aria-current', /.*/);
+  expect(await navLineSize(all)).toBe(NAV_LINE_EMPTY);
+  // The footer never marks a page.
+  await expect(page.locator('footer a[aria-current]')).toHaveCount(0);
+});
+
+test('nav: the home page and a product page mark no header link', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  for (const path of ['/en', '/en/product/sample-clay-mug', '/he']) {
+    await page.goto(path);
+    await expect(page.getByTestId('site-header').locator('a[aria-current]'), path).toHaveCount(0);
+    await expect(page.locator('footer a[aria-current]'), path).toHaveCount(0);
+  }
+});
+
+test('nav: hovering a header link draws the line and leaving it removes it', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto('/en');
+  const about = page.getByTestId('site-header').getByRole('link', { name: 'About', exact: true });
+  expect(await navLineSize(about)).toBe(NAV_LINE_EMPTY);
+  await about.hover();
+  await expect.poll(() => navLineSize(about)).toBe(NAV_LINE_FULL);
+  await page.mouse.move(640, 600);
+  await expect.poll(() => navLineSize(about)).toBe(NAV_LINE_EMPTY);
+});
+
+test('nav: footer links and the Cookie settings button have no underline on hover or focus', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto('/en');
+  const footer = page.locator('footer');
+  const items = footer.locator('nav a, nav button');
+  expect(await items.count()).toBeGreaterThan(0);
+  await expect(footer.locator('nav .nav-line')).toHaveCount(0);
+  await expect(footer.locator('nav a[aria-current]')).toHaveCount(0);
+  const decoration = (l: Locator) =>
+    l.evaluate((node) => getComputedStyle(node).textDecorationLine);
+  const about = footer.getByRole('link', { name: 'About', exact: true });
+  await about.hover();
+  expect(await decoration(about)).toBe('none');
+  await page.mouse.move(640, 300);
+  await about.focus();
+  expect(await decoration(about)).toBe('none');
+  const cookies = page.getByTestId('footer-cookie-settings');
+  if ((await cookies.count()) > 0) {
+    await expect(cookies.locator('.nav-line')).toHaveCount(0);
+    await cookies.hover();
+    expect(await decoration(cookies)).toBe('none');
+    await cookies.focus();
+    expect(await decoration(cookies)).toBe('none');
+  }
+});
+
+test('nav: under reduced motion the line has no transition', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto('/en/pages/about');
+  const about = page.getByTestId('site-header').getByRole('link', { name: 'About', exact: true });
+  const duration = await about
+    .locator('.nav-line')
+    .evaluate((node) => getComputedStyle(node).transitionDuration);
+  expect(duration).toBe('0s');
+});
+
+test('nav-menu: the phone menu marks the current category', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-mobile', 'Phone project only');
+  await page.goto('/he/category/sample-ceramics');
+  await page.locator('#site-header button[popovertarget="site-menu"]').click();
+  const sheet = page.locator('#site-menu');
+  await expect(sheet).toBeVisible();
+  await expect(sheet.locator('a[aria-current="page"]')).toHaveCount(1);
+  await expect(sheet.locator('a[href="/he/category/sample-ceramics"]')).toHaveAttribute(
+    'aria-current',
+    'page',
+  );
+});
+
+test('nav: a Hebrew header category with a cut-off label is marked as the current page, line full', async ({
+  page,
+}) => {
+  const original = await readCategoryNames();
+  await setHeaderCategories('sample-candles', 'sample-ceramics');
+  try {
+    await sql`UPDATE category SET name_he = ${'שששששששששששש'} WHERE slug = 'sample-ceramics'`;
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto('/he/category/sample-ceramics');
+    const link = page.getByTestId('site-header').locator('a[href="/he/category/sample-ceramics"]');
+    await expect(link).toHaveAttribute('aria-current', 'page');
+    const label = link.locator('.nav-line');
+    expect(await label.evaluate((node) => getComputedStyle(node).textOverflow)).toBe('ellipsis');
+    // The label is really cut off, not just styled to be.
+    expect(await label.evaluate((node) => node.scrollWidth > node.clientWidth)).toBe(true);
+    await expect.poll(() => navLineSize(link)).toBe(NAV_LINE_FULL);
+  } finally {
+    await restoreCategoryNames(original);
+    await clearHeaderCategories();
+  }
+});
+
+test('nav-menu: after tapping a footer link the next page shows no line on the footer link', async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-mobile', 'Phone project only');
+  await page.goto('/en');
+  await page.locator('footer').getByRole('link', { name: 'About', exact: true }).tap();
+  await expect(page).toHaveURL(/\/en\/pages\/about$/);
+  const footerAbout = page.locator('footer').getByRole('link', { name: 'About', exact: true });
+  await expect(footerAbout).toHaveCount(1);
+  await expect(footerAbout).not.toHaveAttribute('aria-current', /.*/);
+  await expect(footerAbout.locator('.nav-line')).toHaveCount(0);
+  expect(await footerAbout.evaluate((n) => getComputedStyle(n).textDecorationLine)).toBe('none');
+});
+
+// 010 US4 (contracts/sitemap-and-credit.md): the builder credit in the footer's bottom row.
+const CREDIT = {
+  he: { text: 'נבנה ועוצב על ידי שחף שמואל', newTab: '(נפתח בלשונית חדשה)' },
+  en: { text: 'Designed & built by Shahaf Shmuel', newTab: '(opens in a new tab)' },
+} as const;
+
+async function expectCreditUnderCopyright(page: Page, label: string): Promise<void> {
+  const credit = page.getByTestId('footer-credit');
+  const copyright = credit.locator('xpath=preceding-sibling::p[1]');
+  const c = await credit.boundingBox();
+  const p = await copyright.boundingBox();
+  if (!c || !p) throw new Error(`footer boxes missing: ${label}`);
+  expect(c.y, `${label}: credit below copyright`).toBeGreaterThanOrEqual(p.y + p.height - 1);
+  const rtl = (await page.locator('html').getAttribute('dir')) === 'rtl';
+  const edge = (b: { x: number; width: number }) => (rtl ? b.x + b.width : b.x);
+  expect(Math.abs(edge(c) - edge(p)), `${label}: same inline start edge`).toBeLessThanOrEqual(1);
+}
+
+test('footer credit at 1280 px: on its own line under the copyright', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  for (const locale of LOCALES) {
+    await page.goto(`/${locale}`);
+    await expectCreditUnderCopyright(page, `${locale} at 1280 px`);
+  }
+});
+
+test('footer credit: the text, the link to shahafs.com in a new tab and no sideways scroll at 320 px', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 800 });
+  for (const locale of LOCALES) {
+    await page.goto(`/${locale}`);
+    const credit = page.getByTestId('footer-credit');
+    await expect(credit).toBeVisible();
+    await expectCreditUnderCopyright(page, `${locale} at 320 px`);
+    const link = credit.getByRole('link');
+    await expect(link).toHaveAttribute('href', 'https://shahafs.com');
+    await expect(link).toHaveAttribute('target', '_blank');
+    await expect(link).toHaveAttribute('rel', /noopener/);
+    // The visible text is the message; the screen-reader part comes after the name.
+    const visible = await credit.evaluate((node) => {
+      const copy = node.cloneNode(true) as HTMLElement;
+      for (const part of copy.querySelectorAll('.sr-only')) part.remove();
+      return copy.textContent;
+    });
+    expect(visible, locale).toBe(CREDIT[locale].text);
+    await expect(link).toHaveAccessibleName(
+      new RegExp(`${CREDIT[locale].newTab.replace(/[()]/g, '\\$&')}$`),
+    );
+    await noSidewaysScroll(page, `${locale} footer credit at 320 px`);
+  }
 });

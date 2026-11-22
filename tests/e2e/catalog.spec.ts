@@ -75,7 +75,7 @@ test('a category page shows only its products, with the same sorts', async ({ pa
   const chips = page.getByRole('navigation', { name: 'קטגוריות' });
   await expect(chips.getByRole('link', { name: 'הכול' })).toHaveAttribute('aria-current', 'page');
   await chips.getByRole('link', { name: 'קרמיקה' }).click();
-  await expect(page).toHaveURL(/\/he\/c\/sample-ceramics$/);
+  await expect(page).toHaveURL(/\/he\/category\/sample-ceramics$/);
   await expect(page.getByRole('heading', { level: 1, name: 'קרמיקה' })).toBeVisible();
   await expect(
     page.getByRole('navigation', { name: 'קטגוריות' }).getByRole('link', { name: 'קרמיקה' }),
@@ -86,25 +86,25 @@ test('a category page shows only its products, with the same sorts', async ({ pa
   await expect(page.getByTestId('category-count')).toContainText('2');
 
   await page.getByRole('link', { name: 'מחיר: מהגבוה' }).click();
-  await expect(page).toHaveURL(/\/he\/c\/sample-ceramics\?sort=price-desc/);
+  await expect(page).toHaveURL(/\/he\/category\/sample-ceramics\?sort=price-desc/);
   expect(await cardNames(page)).toEqual([BOWL, MUG]);
   await page.getByRole('link', { name: 'מחיר: מהנמוך' }).click();
-  await expect(page).toHaveURL(/\/he\/c\/sample-ceramics\?sort=price-asc/);
+  await expect(page).toHaveURL(/\/he\/category\/sample-ceramics\?sort=price-asc/);
   expect(await cardNames(page)).toEqual([MUG, BOWL]);
   await expect(page.getByTestId('product-card').filter({ hasText: CANDLE })).toHaveCount(0);
 
   // The breadcrumb of a product page links to its category.
-  await page.goto('/he/p/sample-clay-mug');
+  await page.goto('/he/product/sample-clay-mug');
   await page
     .getByRole('navigation', { name: 'מיקום באתר' })
     .getByRole('link', { name: /.+/ })
     .nth(1)
     .click();
-  await expect(page).toHaveURL(/\/he\/c\/sample-ceramics$/);
+  await expect(page).toHaveURL(/\/he\/category\/sample-ceramics$/);
 });
 
 test('an unknown category is a 404', async ({ page }) => {
-  const response = await page.goto('/he/c/does-not-exist');
+  const response = await page.goto('/he/category/does-not-exist');
   expect(response?.status()).toBe(404);
   await expect(page.getByRole('heading', { name: 'העמוד לא נמצא' })).toBeVisible();
 });
@@ -164,7 +164,7 @@ test('search without a query shows the form and category chips; a long query sho
 });
 
 test('the product page head carries Open Graph and price tags', async ({ page, baseURL }) => {
-  await page.goto('/he/p/sample-clay-mug');
+  await page.goto('/he/product/sample-clay-mug');
   const meta = async (name: string): Promise<string | null> =>
     page.locator(`meta[property="${name}"], meta[name="${name}"]`).first().getAttribute('content');
   expect(await meta('og:title')).toBe(MUG);
@@ -182,7 +182,7 @@ test('the product page head carries Open Graph and price tags', async ({ page, b
   expect(await meta('product:price:currency')).toBe('ILS');
 
   // A product whose options change the price leads its description with "from".
-  await page.goto('/he/p/sample-soy-candle');
+  await page.goto('/he/product/sample-soy-candle');
   expect(await meta('og:description')).toMatch(/^החל מ־/);
   expect(await meta('product:price:amount')).toBe('45.00');
 });
@@ -192,7 +192,7 @@ test('a product page shows "You may also like" with other pieces and never itsel
 }) => {
   const heading: Record<'he' | 'en', string> = { he: 'אולי תאהבו גם', en: 'You may also like' };
   for (const locale of ['he', 'en'] as const) {
-    await page.goto(`/${locale}/p/sample-clay-mug`);
+    await page.goto(`/${locale}/product/sample-clay-mug`);
     const section = page.getByTestId('also-like');
     await expect(section).toBeVisible();
     await expect(section.getByRole('heading', { level: 2, name: heading[locale] })).toBeVisible();
@@ -203,7 +203,7 @@ test('a product page shows "You may also like" with other pieces and never itsel
       await section
         .getByTestId('product-card')
         .evaluateAll((cards) => cards.map((card) => card.getAttribute('href'))),
-    ).not.toContain(`/${locale}/p/sample-clay-mug`);
+    ).not.toContain(`/${locale}/product/sample-clay-mug`);
   }
 });
 
@@ -212,7 +212,7 @@ test('with a single published piece the "You may also like" section is absent', 
 }) => {
   await sql`UPDATE product SET state = 'draft' WHERE slug IN ('sample-ceramic-bowl', 'sample-soy-candle')`;
   try {
-    await page.goto('/he/p/sample-clay-mug');
+    await page.goto('/he/product/sample-clay-mug');
     await expect(page.getByRole('heading', { level: 1, name: MUG })).toBeVisible();
     await expect(page.getByTestId('also-like')).toHaveCount(0);
   } finally {
@@ -224,7 +224,7 @@ test('the photo strip scrolls only sideways, so a vertical swipe on it scrolls t
   page,
   browserName,
 }) => {
-  await page.goto('/he/p/sample-clay-mug');
+  await page.goto('/he/product/sample-clay-mug');
   const track = page.getByTestId('gallery-track');
   // overflow-x: auto alone computes overflow-y to auto, and iPhone Safari then gives vertical
   // swipes that start on the photo to the strip instead of the page.
@@ -260,7 +260,7 @@ test('an empty catalog and an empty category show friendly messages', async ({ p
   await expect(page.getByText('עוד אין כאן יצירות')).toBeVisible();
   await expect(page.getByTestId('product-card')).toHaveCount(0);
 
-  await page.goto('/he/c/empty-one');
+  await page.goto('/he/category/empty-one');
   await expect(page.getByText('בקטגוריה הזאת עוד אין יצירות')).toBeVisible();
   await expect(page.getByRole('link', { name: 'לכל היצירות' })).toBeVisible();
   await resetDb();
