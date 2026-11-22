@@ -102,7 +102,7 @@ test('the home page description is the new default message', async ({ page }) =>
 });
 
 test('a product page keeps its product image', async ({ page }) => {
-  await page.goto('/he/p/sample-clay-mug');
+  await page.goto('/he/product/sample-clay-mug');
   const [row] = await sql<{ storage_key: string }[]>`
     SELECT i.storage_key FROM product_image i JOIN product p ON p.id = i.product_id
     WHERE p.slug = 'sample-clay-mug' AND i.deleted_at IS NULL ORDER BY i.position LIMIT 1`;

@@ -46,18 +46,26 @@ afterAll(async () => {
   await files.cleanup();
 });
 
+let productCounter = 0;
+
 async function make(nameHe: string, price: number, categoryIds: string | string[], publish = true) {
   const created = await createProduct(actor, { nameHe, nameEn: nameHe === 'א' ? 'A' : null });
   if (!created.ok) throw new Error('create');
-  await updateProduct(actor, created.data.id, {
+  const slug = `piece-${String((productCounter += 1))}`;
+  const updated = await updateProduct(actor, created.data.id, {
+    slug,
     descriptionHe: 'תיאור',
     priceIlsMinor: price,
     categoryIds: Array.isArray(categoryIds) ? categoryIds : [categoryIds],
     prepTimeHe: 'שבוע',
   });
+  if (!updated.ok) throw new Error('update');
   await addImage(actor, created.data.id, await photo(640, 480, 100));
-  if (publish) await setProductState(actor, created.data.id, 'publish');
-  return created.data;
+  if (publish) {
+    const published = await setProductState(actor, created.data.id, 'publish');
+    if (!published.ok) throw new Error('publish');
+  }
+  return { id: created.data.id, slug };
 }
 
 describe('public catalog queries', () => {

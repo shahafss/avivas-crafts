@@ -307,6 +307,13 @@ other rule keeps the other breakpoints. Design at 375 px first.
   end states, FR-048). **The header's fade** (home page, [§4](#header-states)) is a 250 ms
   CSS `transition`, so `transition: none` makes it instant under reduced motion: the same end
   states for every visitor, no movement.
+- **Menu-link underline** (010 US2): header and phone-menu links draw a 1.5 px line under
+  their label that grows from the middle (`background-size` `0%` to `100%`) in 200 ms, `ease-out`,
+  on hover and keyboard focus; the class is `.nav-line` in `globals.css`. Hover applies only where
+  the device can hover (`@media (hover: hover)`), so a tap on a phone leaves no line behind. Under
+  reduced motion the same `transition: none` rule makes it appear instantly (same end state). In
+  forced-colours mode the current page gets a real `text-decoration: underline`. Footer links and the
+  "Cookie settings" button have no underline at all (010 FR-014, revised).
 
 ### 3.6 Layering
 
@@ -668,7 +675,7 @@ limit the button stays focusable and announces the limit instead of disabling. G
 
 ### 7.12 `shop/BuyBox` island (price, options, quantity, add to cart)
 
-`shop/BuyBox.tsx` is one client island that owns details items 2–6 of [§8.4](#84-product-localepslug):
+`shop/BuyBox.tsx` is one client island that owns details items 2–6 of [§8.4](#84-product-localeproductslug):
 the live price, the option selector, the quantity stepper and add to cart. The made-to-order
 note and Aviva's description (items 3–4) are server-rendered and passed in as `children`, so
 they stay in the order of §8.4 without shipping their text as JS props. It is created in US1
@@ -795,6 +802,10 @@ Phase D gate (007 D20, FR-007, FR-041).
 Rewritten at the Phase D gate (007 D20, FR-008, FR-039, FR-040, FR-043); replaces the three-column
 centred header.
 
+010 note: the header and the phone menu now also use the `NavLink` client island (`src/components/shop/NavLink.tsx`, the link
+that marks the current page; see below); the heading keeps its name so links to this
+section still work.
+
 - One sticky bar, `id="site-header"` and `data-testid="site-header"`, `top: 0`, `z-header`, height
   `--header-h` (64 px; 72 px from 900 px), full width, side gutter 16 px at every width (`px-4`,
   [§4](#page-frame-every-public-page)). Look: `paper` background, `ink` text, 1 px `line` bottom
@@ -827,8 +838,15 @@ centred header.
     home row is set to none. Each name is shown for the page language with the Hebrew fallback
     (`lang="he"` on `/en`).
   - **Spacing** (reduced by the owner): 12 px between links, 16 px between the groups (links,
-    brand, search, cart). Links are 15/400, hover underline offset 4 px, a 44 px hit area
-    (`min-w-11`, `min-h-11`).
+    brand, search, cart). Links are 15/400, the animated `.nav-line` underline ([§3.5](#35-motion)),
+    a 44 px hit area (`min-w-11`, `min-h-11`).
+  - **Current page** (010 US2, FR-010–FR-015): the header links, and the menu drawer's links
+    (All pieces, categories, About, Shipping & returns, Contact), are `NavLink` (a tiny client
+    island, `src/components/shop/NavLink.tsx`; it reads `usePathname()` and calls
+    `isCurrentPath`, `src/lib/nav/current-path.ts`). The link to the page you are on carries
+    `aria-current="page"` and keeps its line drawn. The home page and the product page mark no
+    header link. A category's `.nav-line` sits on the truncating label span, so a cut-off name
+    shows the line under the visible part only.
   - **Nothing overlaps, by construction**: every item is `shrink-0` except the brand, which is
     capped at 160 px with an ellipsis (a 60-character shop name truncates) and is the one item that
     absorbs a narrower viewport (a classic 17 px scrollbar leaves about 1007 px). Each category
@@ -954,9 +972,15 @@ query>` on every navigation (001 FR-042).
    statement; plus "הגדרות עוגיות" / "Cookie settings" only when `consentRequired()`. It is a
    `button` (not a link; `CookieSettingsButton`, §7.21, test id `footer-cookie-settings`) that
    opens the consent settings dialog, and is absent from the page when consent is not required.
-   Link rows are at least 44 px tall, hover underline (offset 3 px). Bottom row: a 1 px rule
+   Link rows are at least 44 px tall; the labels have no underline at all (010 FR-014, revised: no `.nav-line`, no `hover:underline`;
+   only the credit link is underlined), and the footer never marks a current page (plain `Link`, no
+   `aria-current`). Bottom row: a 1 px rule
    (`ink` at 25 %) above, then the language switch in full words ("English" / "עברית", the
-   `LanguageSwitch` island, §7.19) and "© {year} {shop name}" (`shop_name_*`), 14 px, `ink-2`, wrapping. The two link
+   `LanguageSwitch` island, §7.19) and "© {year} {shop name}" (`shop_name_*`), 14 px, `ink-2`, wrapping. The builder credit (010
+   US4, test id `footer-credit`, `common.footer.credit`) sits on its own line directly under the
+   copyright (a vertical stack, both aligned to the start; 010 decision 1, revised): "Designed & built by Shahaf Shmuel" / "נבנה ועוצב על ידי שחף שמואל". The name is a link to
+   `https://shahafs.com` (`target="_blank"`, `rel="noopener"`), always underlined (offset 3 px; not
+   colour alone), at least 24 px tall, with a screen-reader-only "(opens in a new tab)" after it. The two link
    lists are `nav` landmarks labelled "מידע על החנות" / "Information about the shop" and "מסמכים
    משפטיים" / "Legal documents". Existing test ids stay: `footer-business-name`,
    `footer-business-address`, `footer-email`, `footer-phone`,
@@ -1336,7 +1360,7 @@ axe reports no violations.
 States: no pieces in the home-row category → no row; empty shop → hero, banners and band. Error →
 `error.tsx` ([§8.12](#812-not-found-not-available-and-error)).
 
-### 8.2 Category `/{locale}/c/{slug}`
+### 8.2 Category `/{locale}/category/{slug}`
 
 Breadcrumbs (Home › Category) → h1 category name + count "{n} יצירות" in `ink-2` → category
 `ChipRow` with this category current → `SortLinks` → `ProductGrid`.
@@ -1356,7 +1380,7 @@ States: no `q` → form + category `ChipRow`; no results → `EmptyState` "לא 
 
 New look (007): same structure; the search button is `secondary`, results use the square-photo grid, the category chips link to category pages and "All" to `/{locale}/shop`.
 
-### 8.4 Product `/{locale}/p/{slug}`
+### 8.4 Product `/{locale}/product/{slug}`
 
 Layout: one column below 900 px (gallery, then details); from 900 px a grid
 `minmax(0,1.25fr) minmax(0,1fr)`, gap 40 px (`lg:gap-10`), gallery at **inline-start**, details at inline-end and
@@ -1649,9 +1673,11 @@ New look (007): see [§7.17](#717-shopannouncementbar-server)–[§7.20](#720-sh
 
 ### 8.12 Not found, not available and error
 
+- **Old addresses** (010 FR-003): `/{locale}/p/…` and `/{locale}/c/…` no longer exist and show this
+  404 page.
 - **404** (`not-found.tsx`): h1 "העמוד לא נמצא" / "Page not found", one sentence, search form,
   primary "לכל היצירות". HTTP 404.
-- **Product not available** (`p/[slug]/not-found.tsx`): h1 "המוצר הזה כבר לא זמין" / "This piece
+- **Product not available** (`product/[slug]/not-found.tsx`): h1 "המוצר הזה כבר לא זמין" / "This piece
   isn't available any more", "אולי תמצאו כאן משהו אחר שתאהבו:" and up to 4 newest products.
   HTTP 404.
 - **Error** (`error.tsx`): h1 "משהו השתבש" / "Something went wrong", "נסו שוב" (reset) and a link
@@ -1677,7 +1703,7 @@ current home page's catalog content moved here (route `src/app/[locale]/(shop)/s
 1. h1 `shop.allPieces.title` ("כל היצירות" / "All pieces", page title size).
 2. The intro line (`shop.catalog.intro`).
 3. Category `ChipRow` (`CategoryChips currentSlug={null}`): "All pieces" (current) + every category
-   with published products, linking to `/c/{slug}`.
+   with published products, linking to `/{locale}/category/{slug}`.
 4. `SortLinks` with `basePath="/{locale}/shop"`.
 5. `ProductGrid` of all published pieces (no pagination at this scale; first 4 cards `eager`).
 
@@ -1712,7 +1738,7 @@ and on no other page.
 
 ## 10. Performance budget
 
-- Server Components everywhere except these islands: `CartLink`, `LanguageSwitch`, `BuyBox`
+- Server Components everywhere except these islands: `CartLink`, `LanguageSwitch`, `NavLink` (010: marks the current page in the header and menu; a few hundred bytes), `BuyBox`
   (price + options + stepper + add to cart), `Gallery` (scroll sync + zoom dialog), cart drawer body (lazy, on first open), checkout form, payment
   return poller, `OrderCleanup` (order page, no markup), contact form, `StatsBeacon`, `RowArrows` (007: the home row's two
   arrow buttons, a few hundred bytes, the only new island), and the consent islands `ConsentLoader`, `ConsentGate` and
@@ -1754,6 +1780,8 @@ and on no other page.
 | Social links: every validation rule; save, clear and reject in the admin; the footer shows exactly the saved icons with their names                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | `tests/unit/social-links.test.ts`, `tests/integration/settings.test.ts`, `tests/e2e/admin-settings.spec.ts`                                       |
 | Header (Phase D gate, 007 D20): at exactly 1024 px in both languages, three ordinary 12-character category names ("סלסלות קטנות", "Small hearts") show in full and three names of wide letters ("WWWWWWWWWWWW", "שששששששששששש") keep the row inside the viewport with no overlap, their spans having computed `overflow: hidden` and `text-overflow: ellipsis`; no overlap and no sideways scroll from 320 px; below 1024 px the menu button shows and the sheet starts with the search field; the link order, the three search landmarks with distinct names, the search field's `forest` focus ring over the photo and on the white bar, the strip always present with the switch at its inline end and at least 44 px tall, the whole header inside the blended strip's first `--header-h`; axe at 1024 px; screenshots at 1024 and 1280 px in both languages                                                                                                                                                                                                                                | `tests/e2e/storefront-layout.spec.ts`, `tests/e2e/a11y.spec.ts`, `tests/e2e/design-review.spec.ts`, `tests/unit/header-categories.test.ts`        |
 | Drawers (007 D21, FR-044–FR-048), phone projects for the menu, all projects for the cart: the drawer's top edge equals the header's top edge on screen and reaches the viewport bottom, on the right side for its language; the strip is not covered; the close button sits within 1 px of the opener at scroll 0 and after scrolling, and has focus after opening; `role="dialog"` + `aria-modal` + name; header, `<main>` and footer `inert` while open; `Esc`, the X and a tap outside close it and return focus to the opener; the burger lines form an X; no page scroll while open; links close it; widening to 1024 px closes the menu; reduced motion gives the same end states; the cart drawer shows lines, flags, subtotal, empty state, add to cart opens it, `/he/cart` and `/en/cart` answer 404; bundle sizes measured with the drawer closed and the drawer chunk reported | `tests/e2e/home.spec.ts`, `tests/e2e/storefront-layout.spec.ts`, `tests/e2e/cart.spec.ts`, `tests/e2e/consent.spec.ts`, `tests/e2e/bundle-size.spec.ts` |
+| Menu links (010 US2, `storefront-layout.spec.ts`, `nav:` tests and `nav-menu:` on the phone project): on About at 1280 px exactly one header link has `aria-current="page"` and its `.nav-line` is `100% 1.5px`; the home page and a product page mark none; hover draws and removes the line; under reduced motion the transition is `0s`; the phone menu marks the current category; a cut-off Hebrew category name is marked; footer links and the Cookie settings button have no `.nav-line` and no underline on hover or focus |
+| Builder credit and sitemap (010 US3, US4; `storefront-layout.spec.ts`, `language.spec.ts`, `sitemap.test.ts`): the footer credit text, link target, `noopener`, accessible name and no sideways scroll at 320 px in both languages; `/sitemap.xml` has no `xhtml:link` while page heads keep `he`, `en` and `x-default` |
 | Visual review against this document and the home example at 375 / 768 / 1280 px, he and en                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | `tests/e2e/design-review.spec.ts` (T133, `DESIGN_REVIEW=1`) writing to `test-results/design-review/` (not committed), reviewed by the coordinator |
 
 ---
@@ -2113,15 +2141,25 @@ changes.
 **Order of sections, errors and focus** (008, Stories 3 and 4; `contracts/ui.md`): the sections are
 now photos first (`data-testid="section-photos"`), then details, options and publish
 (`section-<name>`), because the photos are what Aviva has in hand first. Every control that can be
-missing has `data-field="<field>"` (`nameHe`, `descriptionHe`, `priceIls`, `priceUsd`, `categories` on
+missing has `data-field="<field>"` (`nameHe`, `slug`, `descriptionHe`, `priceIls`, `priceUsd`, `categories` on
 the first checkbox, `prepTimeHe`, `photos`, `options`). After a failed "Publish" each missing control
 (or group: photos, categories, options) shows its own message under it
-(the `admin.products.required.*` keys `nameHe`, `descriptionHe`, `priceIlsMinor`, `priceUsdMinor`, `categoryId`, `prepTimeHe`, `images`, `optionGroups`), is marked `aria-invalid="true"` with `aria-describedby` pointing at
+(the `admin.products.required.*` keys `nameHe`, `slug`, `descriptionHe`, `priceIlsMinor`, `priceUsdMinor`, `categoryId`, `prepTimeHe`, `images`, `optionGroups`), is marked `aria-invalid="true"` with `aria-describedby` pointing at
 that message, and a group gets a 1.5 px `alert` outline with 4 px offset. The page scrolls to the first
 missing control in document order (centred; instantly under reduced motion) and focuses it
 (`preventScroll`, so the scroll does not jump twice). The summary at the top (`publish-errors`) still
 lists every missing item. Filling a field, adding a photo or changing an option removes that field's
 mark and message at once, without another "Publish".
+
+**Product address** (010 US1, FR-004–FR-007, `data-testid="field-slug"`, `data-field="slug"`): a
+required, left-to-right text field "כתובת המוצר" after the English name, full width. Lowercase
+English letters, digits and single dashes, up to 60 characters; the hint shows the full address
+(`{origin}/he/product/{address}`). It is editable while the piece is a draft and read-only while it
+is published or hidden (hint: move it back to draft to change it). A new piece has no address;
+"Publish" is refused until one is typed (and a random `p-xxxxxxxx` address does not count), and the
+missing item is listed as "כתובת המוצר" with its own message under the field. `slug` is part of the
+list of `data-field` controls and of the `admin.products.required.*` keys above (second in both, after
+`nameHe`; the English name has no `data-field`, as it is optional).
 
 ### 12.12 Categories `/admin/categories`
 

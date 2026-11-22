@@ -141,6 +141,36 @@
   background-color: #6a9bd1;
 }
 
+/*
+ * Link underline that grows from the middle (storefront.md 3.5, 010 research D6). The line is a
+ * background on the span around the link text, so it follows the text colour, stays inside a
+ * truncated span and moves nothing. Hover only where a pointer can hover, so a tap on a phone
+ * leaves no line behind. The current page keeps the full line. The reduced-motion block below
+ * removes the transition.
+ */
+.nav-line {
+  background-image: linear-gradient(currentColor, currentColor);
+  background-repeat: no-repeat;
+  background-position: 50% 100%;
+  background-size: 0% 1.5px;
+  padding-block-end: 3px;
+  transition: background-size 200ms ease-out;
+}
+a:focus-visible > .nav-line,
+a[aria-current='page'] > .nav-line {
+  background-size: 100% 1.5px;
+}
+@media (hover: hover) {
+  a:hover > .nav-line {
+    background-size: 100% 1.5px;
+  }
+}
+@media (forced-colors: active) {
+  a[aria-current='page'] > .nav-line {
+    text-decoration: underline;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;

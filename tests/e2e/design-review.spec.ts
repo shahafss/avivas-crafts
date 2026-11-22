@@ -225,19 +225,19 @@ for (const locale of LOCALES) {
         });
         captured += 1;
       });
-      await visit('category', '/c/sample-ceramics');
+      await visit('category', '/category/sample-ceramics');
       await visit('search', '/search?q=bowl');
       await visit('search-empty-query', '/search');
       await visit('search-no-results', '/search?q=zzzzzz');
       await visit('search-too-long', `/search?q=${'a'.repeat(81)}`);
-      await visit('category-empty', '/c/empty-category');
-      await visit('product-options', '/p/sample-soy-candle');
-      await visit('product-also-like', '/p/sample-soy-candle', () =>
+      await visit('category-empty', '/category/empty-category');
+      await visit('product-options', '/product/sample-soy-candle');
+      await visit('product-also-like', '/product/sample-soy-candle', () =>
         expect(page.getByTestId('also-like')).toBeVisible(),
       );
-      await visit('product-not-orderable', '/p/sample-ceramic-bowl');
-      await visit('product-no-english', '/p/sample-clay-mug');
-      await visit('product-not-available', '/p/no-such-product');
+      await visit('product-not-orderable', '/product/sample-ceramic-bowl');
+      await visit('product-no-english', '/product/sample-clay-mug');
+      await visit('product-not-available', '/product/no-such-product');
       await attempt(at('cart-empty'), async () => {
         // The cart is a drawer (007 D21): open it on the home page with an empty cart.
         await open(page, `/${locale}`);

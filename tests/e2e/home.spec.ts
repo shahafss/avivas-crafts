@@ -293,7 +293,7 @@ async function trackSlugs(page: Page): Promise<string[]> {
     .getByTestId('home-row-track')
     .getByTestId('product-card')
     .evaluateAll((cards) => cards.map((card) => card.getAttribute('href') ?? ''));
-  return hrefs.map((href) => href.replace(/^.*\/p\//, ''));
+  return hrefs.map((href) => href.replace(/^.*\/product\//, ''));
 }
 
 async function featuredSlugsNewestFirst(): Promise<string[]> {
@@ -427,7 +427,7 @@ for (const locale of LOCALES) {
 test('no "sold out" text and no account icon or link on the home page, a card and a product page', async ({
   page,
 }) => {
-  for (const path of ['/he', '/en', '/he/p/sample-clay-mug', '/en/p/sample-clay-mug']) {
+  for (const path of ['/he', '/en', '/he/product/sample-clay-mug', '/en/product/sample-clay-mug']) {
     await page.goto(path);
     const text = await page.locator('body').innerText();
     expect(/sold out|אזל/i.test(text), `${path}: sold out`).toBe(false);
@@ -1026,9 +1026,20 @@ async function settledBacking(page: Page, y: number, glowing: boolean): Promise<
   return logoBacking(page);
 }
 
+/** True when a computed colour has alpha 0, whatever its rgb (forced colours gives rgba(255, 255, 255, 0)). */
+function isTransparent(colour: string): boolean {
+  const value = colour.trim().toLowerCase();
+  if (value === 'transparent') return true;
+  const match = /^rgba?\(([^)]*)\)$/.exec(value);
+  if (!match) return false;
+  const parts = (match[1] ?? '').split(/[\s,/]+/).filter(Boolean);
+  if (parts.length < 4) return false;
+  return Number.parseFloat(parts[3] ?? '1') === 0;
+}
+
 /** The link never has a box of its own, in any state. */
 function expectNoBox(look: Backing, label: string): void {
-  expect(look.bg, `${label}: link background is transparent`).toBe(TRANSPARENT);
+  expect(isTransparent(look.bg), `${label}: link background is transparent`).toBe(true);
   expect(look.shadow, `${label}: link has no box-shadow`).toBe('none');
 }
 
@@ -1044,7 +1055,7 @@ test('logo backing: soft white glow at the top of the home page, gone once scrol
     expect(down.filter, `${label}: no glow when scrolled`).toBe('none');
     expectNoBox(down, `${label} scrolled`);
 
-    await page.goto('/he/c/sample-ceramics');
+    await page.goto('/he/category/sample-ceramics');
     await scrollToY(page, 0);
     const other = await logoBacking(page);
     expect(other.filter, `${label}: no glow on another page`).toBe('none');
@@ -1070,7 +1081,7 @@ test('logo focus ring: white at the top of the home page, ink elsewhere, 2 px, i
 }) => {
   const cases: [string, string][] = [
     ['/he', WHITE],
-    ['/he/c/sample-ceramics', INK],
+    ['/he/category/sample-ceramics', INK],
   ];
   for (const [path, wantColor] of cases) {
     await page.goto(path);
@@ -1108,7 +1119,7 @@ test('logo focus ring: white at the top of the home page, ink elsewhere, 2 px, i
 });
 
 test('header is the white bar on a category page at scroll 0', async ({ page }) => {
-  await page.goto('/he/c/sample-ceramics');
+  await page.goto('/he/category/sample-ceramics');
   await scrollToY(page, 0);
   const look = await headerLook(page);
   expect(look.color).toBe(INK);
@@ -1236,8 +1247,8 @@ for (const locale of LOCALES) {
         SELECT c.slug FROM product_category pc JOIN category c ON c.id = pc.category_id
         WHERE pc.product_id = ${piece.id} LIMIT 1`;
       if (!other) throw new Error('e2e-home-3 has no other category');
-      await page.goto(`/${locale}/c/${other.slug}`);
-      await expect(page.locator('a[href$="/p/e2e-home-3"]')).toHaveCount(1);
+      await page.goto(`/${locale}/category/${other.slug}`);
+      await expect(page.locator('a[href$="/product/e2e-home-3"]')).toHaveCount(1);
     } finally {
       await sql`INSERT INTO product_category (product_id, category_id) VALUES (${piece.id}, ${featuredId}) ON CONFLICT DO NOTHING`;
     }

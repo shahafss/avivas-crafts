@@ -29,7 +29,7 @@ export async function ProductCard({
   const { image } = product;
   return (
     <Link
-      href={`/${locale}/p/${product.slug}`}
+      href={`/${locale}/product/${product.slug}`}
       data-testid="product-card"
       className="group block min-w-0"
     >

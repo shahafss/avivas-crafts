@@ -7,7 +7,7 @@ import type { Settings } from '@/server/settings/settings';
 import { SocialLinks } from './SocialLinks';
 
 const NAME_MARK = '\u0001';
-const LINK = 'flex min-h-11 items-center hover:underline hover:underline-offset-[3px]';
+const LINK = 'flex min-h-11 items-center';
 
 /**
  * The footer on every public page (storefront.md §7.20, 003 FR-005): the business details from
@@ -124,17 +124,34 @@ export async function Footer({
       </div>
       <div className="mx-auto mt-8 flex max-w-[1240px] flex-wrap items-center justify-between gap-x-6 gap-y-1 border-t border-ink/25 pt-4">
         {languageSwitch}
-        <p className="text-sm text-ink-2">
-          {before}
-          {brand.lang === undefined ? (
-            brand.text
-          ) : (
-            <span lang={brand.lang} dir="auto">
-              {brand.text}
-            </span>
-          )}
-          {after}
-        </p>
+        <div className="flex flex-col items-start gap-y-1">
+          <p className="text-sm text-ink-2">
+            {before}
+            {brand.lang === undefined ? (
+              brand.text
+            ) : (
+              <span lang={brand.lang} dir="auto">
+                {brand.text}
+              </span>
+            )}
+            {after}
+          </p>
+          <p className="text-sm text-ink-2" data-testid="footer-credit">
+            {t.rich('credit', {
+              name: (chunks) => (
+                <a
+                  href="https://shahafs.com"
+                  target="_blank"
+                  rel="noopener"
+                  className="inline-flex min-h-6 items-center underline underline-offset-[3px]"
+                >
+                  {chunks}
+                  <span className="sr-only">{t('newTab')}</span>
+                </a>
+              ),
+            })}
+          </p>
+        </div>
       </div>
     </footer>
   );

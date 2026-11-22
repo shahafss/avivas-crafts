@@ -150,16 +150,16 @@ const routes: {
 }[] = [
   { name: 'home', path: () => '/he' },
   { name: 'all pieces', path: () => '/he/shop' },
-  { name: 'category', path: () => `/he/c/${categorySlug}` },
+  { name: 'category', path: () => `/he/category/${categorySlug}` },
   { name: 'search', path: () => '/he/search?q=%D7%A0%D7%A8' },
-  { name: 'product', path: () => `/he/p/${productSlug}`, limitKb: 152 },
+  { name: 'product', path: () => `/he/product/${productSlug}`, limitKb: 152 },
   // 007 D21: the cart page is gone; the cart is a drawer whose body loads on first open. Every
   // page is measured with the drawer closed (above); this one opens it and counts its chunk too,
   // on the product page (the plan's limit: first load plus the drawer chunk stays under 157 KB).
   // The product page itself is 152 KB.
   {
     name: 'product with the cart drawer opened',
-    path: () => `/he/p/${productSlug}`,
+    path: () => `/he/product/${productSlug}`,
     limitKb: 157,
     prepare: putCartItem,
     afterLoad: async (page) => {

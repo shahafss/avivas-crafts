@@ -63,14 +63,14 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   return {
     title: name,
     description: text,
-    alternates: alternates(`/p/${product.slug}`, locale),
+    alternates: alternates(`/product/${product.slug}`, locale),
     openGraph: {
       title: name,
       description: text,
       type: 'website',
       siteName,
       locale: ogLocale(locale),
-      url: `${origin}/${locale}/p/${product.slug}`,
+      url: `${origin}/${locale}/product/${product.slug}`,
       ...(image === undefined
         ? {}
         : { images: [{ url: absolute(image.url800), width: 800, height: 1000, alt: name }] }),
@@ -180,7 +180,7 @@ export default async function ProductPage({ params }: { params: Params }) {
       : [
           {
             label: category.text,
-            href: `${base}/c/${product.mainCategory?.slug ?? ''}`,
+            href: `${base}/category/${product.mainCategory?.slug ?? ''}`,
             ...(category.fallback ? { lang: 'he' as const } : {}),
           },
         ]),
@@ -193,7 +193,7 @@ export default async function ProductPage({ params }: { params: Params }) {
     name: name.text,
     description: description.text,
     image: product.images.map((image) => absolute(image.url800)),
-    url: `${getEnv().APP_ORIGIN}/${locale}/p/${product.slug}`,
+    url: `${getEnv().APP_ORIGIN}/${locale}/product/${product.slug}`,
     offers: {
       '@type': 'Offer',
       price: (product.fromPriceMinor / 100).toFixed(2),

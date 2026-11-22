@@ -36,7 +36,7 @@ export interface PricingOptionGroup {
 /** A product as pricing sees it. A product that no longer exists is simply absent from the map. */
 export interface PricingProduct {
   id: string;
-  slug: string;
+  slug: string | null;
   state: 'draft' | 'published' | 'hidden';
   orderable: boolean;
   nameHe: string;

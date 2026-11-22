@@ -35,6 +35,7 @@ The vision (who the shop is for, what success means, principles, what is out of 
 | 007 | Storefront redesign (Shopify-like look) | yes | Done (awaiting owner test) | [specs/007-storefront-redesign](../specs/007-storefront-redesign/) |
 | 008 | Post-launch fixes (orders, logo, WhatsApp, business number, link previews) | yes | Done (awaiting owner test) | [specs/008-post-launch-fixes](../specs/008-post-launch-fixes/) |
 | 009 | New header logo (wordmark) | yes | Done (awaiting owner test) | [specs/009-header-logo-wordmark](../specs/009-header-logo-wordmark/) |
+| 010 | Storefront polish (footer credit, link underline, readable sitemap, product addresses) | no | Done (awaiting owner test) | [specs/010-storefront-polish](../specs/010-storefront-polish/) |
 
 Numbers are a suggested order. Spec Kit gives each feature the next free number when it is
 created, so if the order changes, the numbers follow the order of creation, not this table.

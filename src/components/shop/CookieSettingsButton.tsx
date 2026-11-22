@@ -16,7 +16,7 @@ export function CookieSettingsButton({ label }: { label: string }) {
         document.documentElement.setAttribute(SETTINGS_REQUESTED_ATTR, '');
         window.dispatchEvent(new Event(SETTINGS_EVENT));
       }}
-      className="flex min-h-11 items-center text-start hover:underline"
+      className="flex min-h-11 items-center text-start"
     >
       {label}
     </button>

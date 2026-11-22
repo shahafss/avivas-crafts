@@ -38,7 +38,7 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   const title = pick(locale, category.nameHe, category.nameEn).text;
   return {
     title,
-    ...pageMetadata({ locale, path: `/c/${category.slug}`, title, description, siteName }),
+    ...pageMetadata({ locale, path: `/category/${category.slug}`, title, description, siteName }),
   };
 }
 
@@ -99,7 +99,11 @@ export default async function CategoryPage({
         />
       ) : (
         <>
-          <SortLinks locale={locale} basePath={`/${locale}/c/${category.slug}`} current={sort} />
+          <SortLinks
+            locale={locale}
+            basePath={`/${locale}/category/${category.slug}`}
+            current={sort}
+          />
           <ProductGrid products={products} locale={locale} />
         </>
       )}

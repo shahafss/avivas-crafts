@@ -84,7 +84,7 @@ for (const locale of ['he', 'en'] as const) {
       };
 
       await check('/shop');
-      await check('/c/sample-ceramics');
+      await check('/category/sample-ceramics');
       await check('/search?q=bowl');
       for (const slug of CONTENT_PAGES) await check(`/pages/${slug}`);
       await check('/contact');
@@ -93,7 +93,7 @@ for (const locale of ['he', 'en'] as const) {
 
       await putCartItem(page, 'sample-clay-mug');
       // The cart is a drawer now (FR-046): open it on the product page and check the open dialog.
-      await check('/p/sample-clay-mug');
+      await check('/product/sample-clay-mug');
       await openCartDrawer(page);
       await expect(page.getByTestId('cart-line')).toHaveCount(1, { timeout: 20_000 });
       await expectNoViolations(page, `${locale} cart drawer with a line`);
@@ -190,7 +190,7 @@ test('keyboard only: add to cart and complete an offline checkout (375 px, he)',
   page,
 }) => {
   await page.setViewportSize(PHONE);
-  await page.goto('/he/p/sample-clay-mug');
+  await page.goto('/he/product/sample-clay-mug');
   await hydrated(page, 'add-to-cart');
 
   /** Presses Tab (or Shift+Tab) until the element is focused; never uses the mouse. */
@@ -281,7 +281,7 @@ test('keyboard only: the zoom dialog opens with Enter, moves with arrows, closes
   page,
 }) => {
   await page.setViewportSize(PHONE);
-  await page.goto('/he/p/sample-soy-candle');
+  await page.goto('/he/product/sample-soy-candle');
   await hydrated(page, 'gallery-zoom');
   const opener = page.getByTestId('gallery-zoom');
   await opener.focus();

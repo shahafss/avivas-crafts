@@ -134,6 +134,12 @@ function priceSpan(
   return { fromPriceMinor: from, priceVaries: varies };
 }
 
+/** The address of a published product; the database check `product_slug_when_public` makes `null` impossible. */
+export function publicSlug(slug: string | null): string {
+  if (slug === null) throw new Error('A published product has no address');
+  return slug;
+}
+
 const CARD_COLUMNS = {
   id: product.id,
   slug: product.slug,
@@ -151,7 +157,7 @@ const CARD_COLUMNS = {
 
 type CardRow = {
   id: string;
-  slug: string;
+  slug: string | null;
   nameHe: string;
   nameEn: string | null;
   priceIlsMinor: number | null;
@@ -191,7 +197,7 @@ async function toCards(rows: CardRow[]): Promise<PublicProductCard[]> {
     const groups = [...(byProduct.get(row.id)?.values() ?? [])].map((deltas) => ({ deltas }));
     return {
       id: row.id,
-      slug: row.slug,
+      slug: publicSlug(row.slug),
       nameHe: row.nameHe,
       nameEn: row.nameEn,
       priceIlsMinor: base,
@@ -430,7 +436,10 @@ export async function listSitemapEntries(): Promise<{
       .orderBy(asc(product.slug)),
     listCategoriesWithProducts(),
   ]);
-  return { products, categorySlugs: categories.map((item) => item.slug) };
+  return {
+    products: products.map((item) => ({ slug: publicSlug(item.slug), updatedAt: item.updatedAt })),
+    categorySlugs: categories.map((item) => item.slug),
+  };
 }
 
 /** `null` for draft, hidden and missing products. Deduplicated within one request. */
@@ -509,7 +518,7 @@ export const getPublishedProductBySlug = cache(
     const base = item.priceIlsMinor ?? 0;
     return {
       id: item.id,
-      slug: item.slug,
+      slug: publicSlug(item.slug),
       nameHe: item.nameHe,
       nameEn: item.nameEn,
       descriptionHe: item.descriptionHe,

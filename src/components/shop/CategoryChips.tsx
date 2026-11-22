@@ -27,7 +27,7 @@ export async function CategoryChips({
         return (
           <ChipLink
             key={category.id}
-            href={`/${locale}/c/${category.slug}`}
+            href={`/${locale}/category/${category.slug}`}
             current={currentSlug === category.slug}
             {...fallbackAttrs(name)}
           >

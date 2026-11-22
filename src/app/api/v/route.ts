@@ -32,7 +32,7 @@ async function readLimited(request: Request): Promise<string | null> {
 }
 
 /**
- * Cookieless page-view beacon (contracts/routes.md): `{"p": "/he/p/doll", "r": "instagram.com"}`.
+ * Cookieless page-view beacon (contracts/routes.md): `{"p": "/he/product/doll", "r": "instagram.com"}`.
  * Always answers 204 with no body, whatever happened; sets no cookie; stores nothing about the
  * requester.
  */

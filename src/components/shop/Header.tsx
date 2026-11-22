@@ -9,6 +9,7 @@ import { HeaderNavLinks, MenuCategories } from './HeaderCategories';
 import { HeaderScrollState } from './HeaderScrollState';
 import { HeaderSearch } from './HeaderSearch';
 import { MenuBurger } from './MenuBurger';
+import { NavLink } from './NavLink';
 
 const MENU_ID = 'site-menu';
 
@@ -116,19 +117,27 @@ export async function Header({
           <MenuCategories locale={locale} categories={menuCategories} />
           <ul className="grid gap-1 text-base font-medium">
             <li>
-              <Link href={`${base}/pages/about`} className="flex min-h-11 items-center">
+              <NavLink
+                markCurrent
+                href={`${base}/pages/about`}
+                className="flex min-h-11 items-center"
+              >
                 {t('nav.about')}
-              </Link>
+              </NavLink>
             </li>
             <li>
-              <Link href={`${base}/pages/shipping-returns`} className="flex min-h-11 items-center">
+              <NavLink
+                markCurrent
+                href={`${base}/pages/shipping-returns`}
+                className="flex min-h-11 items-center"
+              >
                 {t('nav.shippingReturns')}
-              </Link>
+              </NavLink>
             </li>
             <li>
-              <Link href={`${base}/contact`} className="flex min-h-11 items-center">
+              <NavLink markCurrent href={`${base}/contact`} className="flex min-h-11 items-center">
                 {t('nav.contact')}
-              </Link>
+              </NavLink>
             </li>
           </ul>
           <div className="mt-2 border-t border-line pt-2">{menuLanguageSwitch}</div>
