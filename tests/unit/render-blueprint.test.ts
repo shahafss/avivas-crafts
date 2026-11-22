@@ -132,7 +132,7 @@ describe('render.yaml web service', () => {
     /^\s*region: frankfurt\s*$/m,
     /^\s*plan: starter\s*$/m,
     /^\s*branch: main\s*$/m,
-    /^\s*autoDeployTrigger: checksPass\s*$/m,
+    /^\s*autoDeployTrigger: commit\s*$/m,
     /^\s*healthCheckPath: \/api\/health\s*$/m,
     /^\s*buildCommand: corepack enable pnpm && pnpm install --frozen-lockfile --prod=false && pnpm build\s*$/m,
     /^\s*preDeployCommand: pnpm db:migrate && pnpm db:seed\s*$/m,
@@ -215,7 +215,7 @@ describe('render.yaml cron job', () => {
     /^\s*dockerContext: \.\/ops\/backup\s*$/m,
     /^\s*schedule: "30 0 \* \* \*"\s*$/m,
     /^\s*branch: main\s*$/m,
-    /^\s*autoDeployTrigger: checksPass\s*$/m,
+    /^\s*autoDeployTrigger: commit\s*$/m,
   ])('contains %s', (pattern) => {
     expect(cronBlock).toMatch(pattern);
   });

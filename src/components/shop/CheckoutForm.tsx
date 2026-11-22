@@ -669,7 +669,7 @@ function CheckoutBody({
       </form>
       <aside
         aria-label={t('summary.label')}
-        className="order-first rounded-card border border-line bg-paper p-[18px] lg:sticky lg:top-[calc(var(--header-h)+var(--logo-overhang)+16px)] lg:order-none"
+        className="order-first rounded-card border border-line bg-paper p-[18px] lg:sticky lg:top-[calc(var(--header-h)+16px)] lg:order-none"
       >
         <details ref={summaryRef} className="group">
           <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 font-bold lg:hidden [&::-webkit-details-marker]:hidden">

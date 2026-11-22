@@ -496,10 +496,10 @@ test('header at 320, 375, 900, 1024 and 1280 px: search is the menu sheet below 
                 expect(overlaps, `${label}: "${a.name}" overlaps "${b.name}"`).toBe(false);
               }
             }
-            // 008 US6: the brand is the logo image; a long name does not widen it (it is only the
-            // alt text and the link's accessible name).
+            // 009: the logo link is 93/107 px plus 8 px padding each side; a long name does not
+            // widen it (it is only the alt text and the link's accessible name).
             expect(brand.width, `${label}: brand width is the logo size`).toBeLessThanOrEqual(
-              width >= 900 ? 112.5 : 88.5,
+              width >= 900 ? 123.5 : 109.5,
             );
             await expect(page.getByTestId('header-logo'), `${label}: logo alt`).toHaveAttribute(
               'alt',
@@ -859,7 +859,7 @@ test('from 1024 px a 60-character shop name leaves the logo at its size and in t
         await expect(brand, label).toBeVisible();
         const box = await brand.boundingBox();
         if (!box) throw new Error(`${label}: no brand box`);
-        expect(box.width, `${label}: brand width`).toBeLessThanOrEqual(112.5);
+        expect(box.width, `${label}: brand width`).toBeLessThanOrEqual(123.5);
         await expect(page.getByTestId('header-logo'), `${label}: alt`).toHaveAttribute('alt', name);
         await expect(brand, `${label}: link name`).toHaveAccessibleName(homeName(name, locale));
         expectNoOverlap(await visibleHeaderControls(page), label);
@@ -1465,7 +1465,7 @@ test('no sideways scroll at 320 and 375 px with the cart drawer or the menu draw
   }
 });
 
-// ------------------------------------------------------------------ 008 US6: logo in the header
+// ------------------------------------------------------------------ 009: logo in the header
 
 // The name is built from the image alt and the hidden suffix; Chrome may put one space between
 // them, which a screen reader does not voice.
@@ -1487,54 +1487,112 @@ async function logoGeometry(page: Page) {
   });
 }
 
-function expectHalfOut(geometry: Awaited<ReturnType<typeof logoGeometry>>, label: string): void {
+function expectInsideCentred(
+  geometry: Awaited<ReturnType<typeof logoGeometry>>,
+  label: string,
+): void {
   const { logo, header } = geometry;
-  expect(logo.top, `${label}: logo starts above the bar's bottom edge`).toBeLessThan(header.bottom);
-  expect(logo.bottom, `${label}: logo ends below the bar's bottom edge`).toBeGreaterThan(
-    header.bottom,
-  );
+  expect(logo.top, `${label}: logo starts inside the bar`).toBeGreaterThanOrEqual(header.top + 4);
+  expect(logo.bottom, `${label}: logo ends inside the bar`).toBeLessThanOrEqual(header.bottom - 4);
   expect(
-    Math.abs(header.bottom - logo.top - logo.height / 2),
-    `${label}: half of the logo hangs below the bar`,
+    Math.abs((logo.top + logo.bottom) / 2 - (header.top + header.bottom) / 2),
+    `${label}: logo is centred in the bar`,
   ).toBeLessThanOrEqual(1);
 }
 
-test('logo: on a content page it hangs half below the bar while scrolled and the content starts below it at the top', async ({
+// 640 px is 1280 px at 200 % zoom (spec edge case).
+const LOGO_VIEWPORTS = [320, 375, 640, 1024, 1280];
+
+test('logo: on a content page it is inside the bar and centred, at scroll 0 and scrolled, and the content starts right under the bar', async ({
   page,
 }) => {
-  for (const locale of LOCALES) {
-    for (const path of ['/pages/about', '/p/sample-clay-mug', '/contact']) {
-      const label = `${locale}${path}`;
-      await page.goto(`/${locale}${path}`);
-      await expect(page.getByTestId('header-logo')).toBeVisible();
-      const top = await page.evaluate(() => {
-        const logo = document.querySelector('[data-testid="header-logo"]');
-        const first = document.querySelector('main')?.firstElementChild;
-        if (!logo || !first) throw new Error('missing element');
-        return {
-          logoBottom: logo.getBoundingClientRect().bottom,
-          first: first.getBoundingClientRect().top,
-        };
-      });
-      expect(top.first, `${label}: first content at or below the logo`).toBeGreaterThanOrEqual(
-        top.logoBottom - 0.5,
-      );
-      await page.evaluate(() => {
-        window.scrollTo({ top: 200, behavior: 'instant' });
-      });
-      await page.waitForFunction(() => window.scrollY >= 199);
-      expectHalfOut(await logoGeometry(page), label);
+  for (const width of LOGO_VIEWPORTS) {
+    await page.setViewportSize({ width, height: 400 });
+    let scrolledChecks = 0;
+    for (const locale of LOCALES) {
+      for (const path of ['/pages/about', '/p/sample-clay-mug', '/contact']) {
+        const label = `${locale}${path} at ${String(width)} px`;
+        await page.goto(`/${locale}${path}`);
+        await expect(page.getByTestId('header-logo')).toBeVisible();
+        const top = await page.evaluate(() => {
+          const main = document.querySelector('main');
+          const header = document.querySelector('#site-header');
+          if (!main || !header) throw new Error('missing element');
+          const first = main.firstElementChild?.getBoundingClientRect();
+          return {
+            firstTop: first ? first.top : Number.NaN,
+            headerBottom: header.getBoundingClientRect().bottom,
+            mainPadding: getComputedStyle(main).paddingTop,
+            scrollPadding: getComputedStyle(document.documentElement).scrollPaddingTop,
+            headerHeight: header.getBoundingClientRect().height,
+          };
+        });
+        expect(top.mainPadding, `${label}: main has no top padding`).toBe('0px');
+        expect(parseFloat(top.scrollPadding), `${label}: scroll-padding-top`).toBeCloseTo(
+          top.headerHeight,
+          1,
+        );
+        expect(top.firstTop, `${label}: content starts at or below the bar`).toBeGreaterThanOrEqual(
+          top.headerBottom - 0.5,
+        );
+        expect(top.firstTop, `${label}: content starts right under the bar`).toBeLessThan(
+          top.headerBottom + 40,
+        );
+        expectInsideCentred(await logoGeometry(page), `${label} at scroll 0`);
+        // A short page may not scroll at all in a short window; then there is nothing to check.
+        const scrolled = await page.evaluate(() => {
+          window.scrollTo({ top: 200, behavior: 'instant' });
+          return window.scrollY;
+        });
+        if (scrolled >= 199) {
+          expectInsideCentred(await logoGeometry(page), `${label} scrolled`);
+          scrolledChecks += 1;
+        }
+      }
     }
+    expect(
+      scrolledChecks,
+      `at ${String(width)} px some page scrolled and was checked`,
+    ).toBeGreaterThan(0);
   }
 });
 
 test('logo: on the home page at scroll 0 over the photo the same geometry holds', async ({
   page,
 }) => {
-  for (const locale of LOCALES) {
-    await page.goto(`/${locale}`);
-    await expect(page.getByTestId('header-logo')).toBeVisible();
-    expectHalfOut(await logoGeometry(page), `${locale} home`);
+  for (const width of LOGO_VIEWPORTS) {
+    await page.setViewportSize({ width, height: 800 });
+    for (const locale of LOCALES) {
+      await page.goto(`/${locale}`);
+      await expect(page.getByTestId('header-logo')).toBeVisible();
+      expectInsideCentred(await logoGeometry(page), `${locale} home at ${String(width)} px`);
+    }
+  }
+});
+
+test('logo: from 1024 px the buy panel and the checkout summary stick at header height + 16 px', async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-desktop', 'Desktop project only');
+  for (const width of [1024, 1280]) {
+    await page.setViewportSize({ width, height: 800 });
+    await page.goto('/he/p/sample-clay-mug');
+    const panelTop = await page.evaluate(() => {
+      const h1 = document.querySelector('main h1');
+      const panel = h1?.parentElement;
+      if (!panel) throw new Error('no buy panel');
+      return getComputedStyle(panel).top;
+    });
+    expect(panelTop, `product panel at ${String(width)} px`).toBe('88px');
+    await putCartItem(page, 'sample-clay-mug');
+    await page.goto('/he/checkout');
+    await expect(page.getByTestId('checkout-form')).toBeVisible({ timeout: 20_000 });
+    const asideTop = await page.evaluate(() => {
+      const aside = document.querySelector('main aside');
+      if (!aside) throw new Error('no summary');
+      return getComputedStyle(aside).top;
+    });
+    expect(asideTop, `checkout summary at ${String(width)} px`).toBe('88px');
   }
 });
 
@@ -1586,7 +1644,7 @@ test('logo: the image alt is the shop name and the link name has the home wordin
   }
 });
 
-test('logo: after a checkout error link the focused field is not under the logo', async ({
+test('logo: after a checkout error link the focused field is not under the bar', async ({
   page,
 }, testInfo) => {
   test.skip(testInfo.project.name !== 'chromium-mobile', 'Phone project only');
@@ -1608,15 +1666,15 @@ test('logo: after a checkout error link the focused field is not under the logo'
     })
     .toBe(true);
   const result = await page.evaluate(() => {
-    const logo = document.querySelector('[data-testid="header-logo"]')?.getBoundingClientRect();
+    const header = document.querySelector('#site-header')?.getBoundingClientRect();
     const active = document.activeElement?.getBoundingClientRect();
-    if (!logo || !active) throw new Error('missing element');
-    return { logoBottom: logo.bottom, activeTop: active.top, scrollY: window.scrollY };
+    if (!header || !active) throw new Error('missing element');
+    return { headerBottom: header.bottom, activeTop: active.top, scrollY: window.scrollY };
   });
   expect(result.scrollY, 'the page scrolled to the field').toBeGreaterThan(0);
-  expect(result.activeTop - result.logoBottom, 'field sits just below the logo').toBeLessThan(40);
-  expect(result.activeTop, 'focused field starts below the logo').toBeGreaterThanOrEqual(
-    result.logoBottom - 0.5,
+  expect(result.activeTop - result.headerBottom, 'field sits just below the bar').toBeLessThan(40);
+  expect(result.activeTop, 'focused field starts below the bar').toBeGreaterThanOrEqual(
+    result.headerBottom - 0.5,
   );
 });
 

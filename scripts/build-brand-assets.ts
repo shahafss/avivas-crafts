@@ -1,21 +1,23 @@
 /**
- * pnpm brand:assets (contracts/brand-assets.md, research R9, R11, R12).
+ * pnpm brand:assets (specs/009 contracts/brand-assets.md, research D1-D9).
  *
- * Builds the logo, favicon, icons and link-preview image from `assets/logo/logo-original.jpg`
- * (a checkerboard is drawn into the picture) and the hero photo:
- * - finds the cream disc by colour (the cream is close to the checker white, so brightness would
- *   not do), compares it with the hand-measured disc in `src/lib/brand/config.ts`, cuts it out
- *   with an anti-aliased circular mask and trims to the disc;
- * - writes header logos (WebP with alpha), the favicon (ICO with 16/32/48 PNG entries) and
- *   `icon-32` from the yarn crop, the touch/Android icons, the link preview, `site.webmanifest`
- *   and `src/lib/brand/manifest.json`.
+ * Builds the logo, favicon, icons and link-preview image from
+ * `assets/logo/logo-wordmark-original.jpg` (a checkerboard is drawn into the picture) and the hero
+ * photo:
+ * - cuts the drawing out of the checkerboard (`scripts/brand-cutout.ts`), finds its content box,
+ *   compares it with the hand-measured box in `src/lib/brand/config.ts` and trims to it;
+ * - writes header logos (WebP with alpha) at several widths;
+ * - finds the yarn region (balls, needles, tail) from a seed point and writes the favicon (ICO
+ *   with 16/32/48 PNG entries), `icon-32`, the touch and Android icons from it, on cream;
+ * - writes the link preview (hero crop, a light card, the full logo), `site.webmanifest` and
+ *   `src/lib/brand/manifest.json` (which records the detected boxes).
  * Files are named `<name>.<8 hex of the sha-256>.<ext>` except `favicon.ico` and
  * `site.webmanifest`. Empties `public/brand/` before writing. Same inputs and same sharp version
  * give the same bytes and names.
  *
- * Exit 0 on success; exit 1 with a reason when an input is missing, too small, the disc is not
- * where it should be or not square, or a budget is exceeded. Nothing on disk is touched before
- * every file has been built and checked.
+ * Exit 0 on success; exit 1 with a reason when an input is missing or too small, a detected box is
+ * not where it should be, or a budget is exceeded. Nothing on disk is touched before every file
+ * has been built and checked.
  */
 import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
@@ -24,22 +26,25 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp, { type Sharp } from 'sharp';
 import {
-  ANDROID_ICON_PADDING,
   ANDROID_ICON_SIZES,
   APPLE_TOUCH_SIZE,
+  BOX_TOLERANCE_PX,
   BRAND_SOURCES,
   BUDGETS,
   CREAM_RGB,
-  DISC_TOLERANCE,
-  EXPECTED_DISC,
+  CUTOUT,
+  EXPECTED_BOX,
+  EXPECTED_YARN_BOX,
   FAVICON_SIZES,
-  LOGO_SIZES,
-  MASK_INSET_PX,
+  ICON_ART_SHARE,
+  LOGO_MARGIN_PX,
+  LOGO_WIDTHS,
   OG,
   WEB_MANIFEST,
-  YARN_CROP,
+  YARN_SEED,
 } from '../src/lib/brand/config';
 import { HOME_PHOTOS } from '../src/lib/home-photos/config';
+import { type Box, contentBox, cutOut, regionFrom } from './brand-cutout';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const BRAND_DIR = join(ROOT, 'public/brand');
@@ -49,10 +54,6 @@ const MANIFEST_PATH = join(ROOT, 'src/lib/brand/manifest.json');
 const HERO_PATH = join(ROOT, 'assets/home-photos', HOME_PHOTOS.hero.source);
 
 const MIN_SOURCE = 1000;
-/** A pixel is "disc" when its blue channel is this much below red and green (cream, brown, pastels). */
-const COLOUR_GAP = 8;
-/** A row or column needs this many disc pixels to count (ignores JPEG specks). */
-const MIN_RUN = 5;
 
 const WEBP_QUALITY = 90;
 const WEBP_EFFORT = 6;
@@ -65,75 +66,34 @@ interface Entry {
 interface Built extends Entry {
   buffer: Buffer;
 }
-interface Disc {
-  cx: number;
-  cy: number;
-  r: number;
-}
 
 class BuildError extends Error {}
+
+/** Runs a pure helper; its plain errors become `BuildError`s so the script prints `error: <reason>`. */
+function plain<T>(run: () => T): T {
+  try {
+    return run();
+  } catch (err) {
+    if (err instanceof BuildError || !(err instanceof Error)) throw err;
+    throw new BuildError(err.message);
+  }
+}
 
 function need(path: string, what: string): void {
   if (!existsSync(path)) throw new BuildError(`${what} is missing (${path})`);
 }
 
-const round1 = (n: number): number => Math.round(n * 10) / 10;
+const fmt = (b: Box): string =>
+  `x ${String(b.x0)}-${String(b.x1)}, y ${String(b.y0)}-${String(b.y1)}`;
 
-/** The disc's bounding box, found by colour. */
-async function detectDisc(path: string): Promise<Disc> {
-  const { data, info } = await sharp(path)
-    .removeAlpha()
-    .raw()
-    .toBuffer({ resolveWithObject: true });
-  const { width: W, height: H } = info;
-  if (W !== H) {
-    throw new BuildError(`the logo is ${String(W)}x${String(H)}, it must be square`);
-  }
-  if (W < MIN_SOURCE || H < MIN_SOURCE) {
+/** Refuses a detected box with any edge more than BOX_TOLERANCE_PX from the expected one. */
+function checkBox(label: string, found: Box, expected: Box): void {
+  const keys = ['x0', 'y0', 'x1', 'y1'] as const;
+  if (keys.some((k) => Math.abs(found[k] - expected[k]) > BOX_TOLERANCE_PX)) {
     throw new BuildError(
-      `the logo is ${String(W)}x${String(H)}, smaller than ${String(MIN_SOURCE)}x${String(MIN_SOURCE)}`,
+      `the ${label} box (${fmt(found)}) is more than ${String(BOX_TOLERANCE_PX)} px away from the expected one (${fmt(expected)}) in src/lib/brand/config.ts`,
     );
   }
-  const rows = new Uint32Array(H);
-  const cols = new Uint32Array(W);
-  for (let y = 0; y < H; y++) {
-    for (let x = 0; x < W; x++) {
-      const i = (y * W + x) * 3;
-      const r = data[i] ?? 0;
-      const g = data[i + 1] ?? 0;
-      const b = data[i + 2] ?? 0;
-      if (Math.min(r, g) - b >= COLOUR_GAP) {
-        rows[y] = (rows[y] ?? 0) + 1;
-        cols[x] = (cols[x] ?? 0) + 1;
-      }
-    }
-  }
-  const extent = (counts: Uint32Array): [number, number] => {
-    const first = counts.findIndex((n) => n >= MIN_RUN);
-    let last = counts.length - 1;
-    while (last >= 0 && (counts[last] ?? 0) < MIN_RUN) last--;
-    if (first < 0 || last < first) throw new BuildError('no disc found in the logo');
-    return [first, last];
-  };
-  const [x0, x1] = extent(cols);
-  const [y0, y1] = extent(rows);
-  const w = x1 - x0 + 1;
-  const h = y1 - y0 + 1;
-  if (Math.abs(w - h) > Math.max(w, h) * DISC_TOLERANCE) {
-    throw new BuildError(`the disc box is ${String(w)}x${String(h)}, not square within 2 %`);
-  }
-  const disc: Disc = { cx: round1(x0 + w / 2), cy: round1(y0 + h / 2), r: round1((w + h) / 4) };
-  const tolerance = EXPECTED_DISC.r * DISC_TOLERANCE;
-  if (
-    Math.abs(disc.cx - EXPECTED_DISC.cx) > tolerance ||
-    Math.abs(disc.cy - EXPECTED_DISC.cy) > tolerance ||
-    Math.abs(disc.r - EXPECTED_DISC.r) > tolerance
-  ) {
-    throw new BuildError(
-      `the detected disc (centre ${String(disc.cx)},${String(disc.cy)}, radius ${String(disc.r)}) is more than 2 % away from the expected one in src/lib/brand/config.ts`,
-    );
-  }
-  return disc;
 }
 
 function circleSvg(size: number, radius: number): Buffer {
@@ -204,83 +164,113 @@ async function main(): Promise<void> {
       `the hero photo is ${String(heroMeta.width)}x${String(heroMeta.height)}, smaller than ${String(OG.width)}x${String(OG.height)}`,
     );
   }
-  const disc = await detectDisc(logoPath);
-
-  // Square around the disc, cut out with a mask 2 px inside the edge.
-  const R = Math.round(disc.r);
-  const side = 2 * R;
-  const left = Math.round(disc.cx) - R;
-  const top = Math.round(disc.cy) - R;
-  const square = await sharp(logoPath)
+  const { data: rgb, info } = await sharp(logoPath)
     .removeAlpha()
-    .extract({ left, top, width: side, height: side })
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  const W = info.width;
+  const H = info.height;
+  if (W < MIN_SOURCE || H < MIN_SOURCE) {
+    throw new BuildError(
+      `the logo is ${String(W)}x${String(H)}, smaller than ${String(MIN_SOURCE)}x${String(MIN_SOURCE)}`,
+    );
+  }
+
+  // Cut-out and content box.
+  const alpha = cutOut(rgb, W, H, CUTOUT);
+  const box = plain(() => contentBox(alpha, W, H));
+  checkBox('logo content', box, EXPECTED_BOX);
+  const rgba = Buffer.alloc(W * H * 4);
+  for (let p = 0; p < W * H; p++) {
+    rgba[p * 4] = rgb[p * 3] ?? 0;
+    rgba[p * 4 + 1] = rgb[p * 3 + 1] ?? 0;
+    rgba[p * 4 + 2] = rgb[p * 3 + 2] ?? 0;
+    rgba[p * 4 + 3] = alpha[p] ?? 0;
+  }
+  const raw = { raw: { width: W, height: H, channels: 4 as const } };
+  const tLeft = Math.max(box.x0 - LOGO_MARGIN_PX, 0);
+  const tTop = Math.max(box.y0 - LOGO_MARGIN_PX, 0);
+  const tW = Math.min(box.x1 + LOGO_MARGIN_PX, W - 1) - tLeft + 1;
+  const tH = Math.min(box.y1 + LOGO_MARGIN_PX, H - 1) - tTop + 1;
+  const trimmed = await sharp(rgba, raw)
+    .extract({ left: tLeft, top: tTop, width: tW, height: tH })
     .png()
     .toBuffer();
-  const badge = await circleMask(square, side, R - MASK_INSET_PX); // RGBA PNG, transparent outside
 
+  // Header logos.
   const logos: Built[] = [];
-  for (const size of LOGO_SIZES) {
-    const buffer = await sharp(badge)
-      .resize(size, size)
+  for (const width of LOGO_WIDTHS) {
+    const height = Math.round((width * tH) / tW);
+    const buffer = await sharp(trimmed)
+      .resize(width, height)
       .webp({ quality: WEBP_QUALITY, effort: WEBP_EFFORT, alphaQuality: 100 })
       .toBuffer();
-    const file = named(`logo-${String(size)}`, 'webp', buffer, size, size);
+    const file = named(`logo-${String(width)}`, 'webp', buffer, width, height);
     checkBudget(file.file, buffer.length, BUDGETS.logo);
     logos.push(file);
   }
 
-  // Yarn crop (fractions of the disc square), circle-masked: keeps the cream behind it.
-  const cropSide = Math.round(YARN_CROP.size * side);
-  const yarn = await sharp(square)
+  // Yarn art: the region holding the seed, cut out, cropped to its box.
+  const yarn = plain(() => regionFrom(alpha, W, H, YARN_SEED));
+  checkBox('yarn', yarn.box, EXPECTED_YARN_BOX);
+  const yarnRgba = Buffer.from(rgba);
+  for (let p = 0; p < W * H; p++) {
+    yarnRgba[p * 4 + 3] = yarn.mask[p] ? (alpha[p] ?? 0) : 0;
+  }
+  const art = await sharp(yarnRgba, raw)
     .extract({
-      left: Math.round(YARN_CROP.x * side),
-      top: Math.round(YARN_CROP.y * side),
-      width: cropSide,
-      height: cropSide,
+      left: yarn.box.x0,
+      top: yarn.box.y0,
+      width: yarn.box.x1 - yarn.box.x0 + 1,
+      height: yarn.box.y1 - yarn.box.y0 + 1,
     })
     .png()
     .toBuffer();
-  const yarnIcon = async (size: number): Promise<Buffer> => {
-    const resized = await sharp(yarn).resize(size, size, { fit: 'cover' }).png().toBuffer();
-    return circleMask(resized, size, size / 2);
+
+  // Yarn on cream, square; circle-masked for the favicon sizes.
+  const yarnOnCream = async (size: number, circle: boolean): Promise<Buffer> => {
+    const inner = Math.round(size * ICON_ART_SHARE);
+    const fitted = await sharp(art)
+      .resize(inner, inner, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+      .png()
+      .toBuffer();
+    const offset = Math.floor((size - inner) / 2);
+    const square = await sharp({
+      create: { width: size, height: size, channels: 3, background: CREAM_RGB },
+    })
+      .composite([{ input: fitted, left: offset, top: offset }])
+      .removeAlpha()
+      .png()
+      .toBuffer();
+    return circle ? circleMask(square, size, size / 2) : square;
   };
   const favicons: { size: number; buffer: Buffer }[] = [];
   for (const size of FAVICON_SIZES) {
     favicons.push({
       size,
-      buffer: await sharp(await yarnIcon(size))
+      buffer: await sharp(await yarnOnCream(size, true))
         .png({ compressionLevel: 9, effort: 10 })
         .toBuffer(),
     });
   }
   const faviconIco = ico(favicons);
   checkBudget('favicon.ico', faviconIco.length, BUDGETS.favicon);
-  const icon32 = await png('icon-32', sharp(await yarnIcon(32)), 32);
+  const icon32 = await png('icon-32', sharp(await yarnOnCream(32, true)), 32);
   checkBudget(icon32.file, icon32.buffer.length, BUDGETS.png);
-
-  // Full badge on opaque cream.
-  const onCream = async (size: number, padding: number): Promise<Sharp> => {
-    const inner = Math.round(size * (1 - 2 * padding));
-    const margin = Math.floor((size - inner) / 2);
-    const resized = await sharp(badge).resize(inner, inner).png().toBuffer();
-    return sharp({ create: { width: size, height: size, channels: 3, background: CREAM_RGB } })
-      .composite([{ input: resized, left: margin, top: margin }])
-      .removeAlpha();
-  };
-  const apple = await png('apple-touch-icon', await onCream(APPLE_TOUCH_SIZE, 0), APPLE_TOUCH_SIZE);
+  const apple = await png(
+    'apple-touch-icon',
+    sharp(await yarnOnCream(APPLE_TOUCH_SIZE, false)),
+    APPLE_TOUCH_SIZE,
+  );
   checkBudget(apple.file, apple.buffer.length, BUDGETS.png);
   const icons: Built[] = [];
   for (const size of ANDROID_ICON_SIZES) {
-    const built = await png(
-      `icon-${String(size)}`,
-      await onCream(size, ANDROID_ICON_PADDING),
-      size,
-    );
+    const built = await png(`icon-${String(size)}`, sharp(await yarnOnCream(size, false)), size);
     checkBudget(built.file, built.buffer.length, BUDGETS.png);
     icons.push(built);
   }
 
-  // Link preview: hero photo, cover crop around the focal point, logo in the centre.
+  // Link preview: hero photo (cover crop around the focal point), a light card, the full logo.
   const scale = Math.max(OG.width / heroMeta.width, OG.height / heroMeta.height);
   const scaledW = Math.max(Math.round(heroMeta.width * scale), OG.width);
   const scaledH = Math.max(Math.round(heroMeta.height * scale), OG.height);
@@ -294,13 +284,22 @@ async function main(): Promise<void> {
     .extract({ left: ogLeft, top: ogTop, width: OG.width, height: OG.height })
     .png()
     .toBuffer();
-  const ogLogo = await sharp(badge).resize(OG.logoSize, OG.logoSize).png().toBuffer();
+  const card = Buffer.from(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${String(OG.card.width)}" height="${String(OG.card.height)}"><rect width="${String(OG.card.width)}" height="${String(OG.card.height)}" rx="${String(OG.card.radius)}" ry="${String(OG.card.radius)}" fill="#fff" fill-opacity="${String(OG.card.opacity)}"/></svg>`,
+  );
+  const ogLogoBuf = await sharp(trimmed).resize({ width: OG.logoWidth }).png().toBuffer();
+  const ogLogoMeta = await sharp(ogLogoBuf).metadata();
   const ogBuffer = await sharp(heroCrop)
     .composite([
       {
-        input: ogLogo,
-        left: Math.round((OG.width - OG.logoSize) / 2),
-        top: Math.round((OG.height - OG.logoSize) / 2),
+        input: card,
+        left: Math.round((OG.width - OG.card.width) / 2),
+        top: Math.round((OG.height - OG.card.height) / 2),
+      },
+      {
+        input: ogLogoBuf,
+        left: Math.round((OG.width - OG.logoWidth) / 2),
+        top: Math.round((OG.height - ogLogoMeta.height) / 2),
       },
     ])
     .removeAlpha()
@@ -327,11 +326,12 @@ async function main(): Promise<void> {
   };
   const manifest = {
     appleTouchIcon: entry(apple),
-    disc,
+    box,
     icon32: entry(icon32),
     icons: icons.map(entry),
     logo: logos.map(entry),
     og: entry(og),
+    yarnBox: yarn.box,
   };
 
   // Everything is built and within budget: replace the folder's content.
@@ -343,7 +343,8 @@ async function main(): Promise<void> {
   await writeFile(WEB_MANIFEST_PATH, `${JSON.stringify(webManifest, null, 2)}\n`);
   await writeFile(MANIFEST_PATH, `${JSON.stringify(manifest, null, 2)}\n`);
 
-  console.log(`disc: centre ${String(disc.cx)},${String(disc.cy)} radius ${String(disc.r)}`);
+  console.log(`logo box: ${fmt(box)} (expected ${fmt(EXPECTED_BOX)})`);
+  console.log(`yarn box: ${fmt(yarn.box)} (expected ${fmt(EXPECTED_YARN_BOX)})`);
   for (const file of files) {
     console.log(
       `${file.file}  ${String(file.width)}x${String(file.height)}  ${(file.buffer.length / 1024).toFixed(1)} KB`,

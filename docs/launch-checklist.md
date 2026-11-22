@@ -198,9 +198,9 @@ Source: `ops/backup/README.md` > One-time setup, 1.
 ## 11. First deploy
 
 1. **Where**: GitHub Actions, then Render > `avivas-crafts` > Events.
-   **Do**: merge to `main`. Wait for CI to turn green on `main` (Render deploys only after checks
-   pass, `autoDeployTrigger: checksPass`). **Record the time from CI turning green on `main` to the
-   new version being live**: the target is under 15 minutes (spec SC-001). Write it here:
+   **Do**: merge to `main` only once CI is green on the pull request. Render deploys every commit
+   on `main` at once and does not wait for CI there (`autoDeployTrigger: commit`, owner decision
+   2026-11-21). **Record the time from the merge to the new version being live**: the target is under 15 minutes (spec SC-001). Write it here:
    `____ minutes`. **Check**: the deploy event says "Live", and
    `curl -s https://<service>.onrender.com/api/health` prints `{"ok":true}` (the health check
    Render uses, `healthCheckPath: /api/health`). `<service>.onrender.com` is the address shown at

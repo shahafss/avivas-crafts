@@ -28,6 +28,12 @@
 > numbers are unchanged. New text qualifies requirement ids as "007 FR-xxx" / "007 D-xx"
 > (`specs/007-storefront-redesign/`: `research.md` decisions D1–D20, `contracts/`). The Phase D gate (2026-11-16) changed the header, the free-shipping strip and the hero line; see §3.3, §4, §7.17–§7.19, §7.33, §14.
 
+> **Amended 2026-11-21 by `009-header-logo-wordmark`**: the owner's new wordmark logo replaces the
+> round badge and sits wholly inside the header bar (no hanging part). Changed: [§3.6](#36-layering),
+> [§4](#4-global-layout-and-direction-rtlltr) (page frame, "The logo"), [§6](#6-images) (Brand
+> assets), [§7.18](#718-shopheader-server-shell--two-islands) (brand), [§14](#14-decisions-and-open-points)
+> (entry 15). New text cites `specs/009-header-logo-wordmark/` (`research.md` D1–D9, `contracts/`).
+
 **Feature**: `001-online-crafts-shop` · **Status**: Approved by the user (2026-11-08); amended after plan-review rounds 1–2 the same day; look replaced 2026-11-16 (007) ·
 **Visual authority** (since 2026-11-16): the approved home page example
 `docs/design/home-example.src.html` (owner approval 2026-11-16; it is a reference document, not
@@ -304,7 +310,7 @@ other rule keeps the other breakpoints. Design at 375 px first.
 
 ### 3.6 Layering
 
-`z-header` 20 (sticky header; the hanging logo is a child of the header and lives in this context, so it sits above the page content, below the drawers (top layer) and below the consent banner), `z-banner` 40 (consent); `z-popover` 30 is no longer used by the menu (the two drawers are native popovers, so no z-index applies); dialogs and the two drawers use
+`z-header` 20 (sticky header; the logo is inside the bar, so it sits above the page content, below the drawers (top layer) and below the consent banner), `z-banner` 40 (consent); `z-popover` 30 is no longer used by the menu (the two drawers are native popovers, so no z-index applies); dialogs and the two drawers use
 the top layer.
 
 ---
@@ -334,10 +340,10 @@ the top layer.
 ```
 ┌ free-shipping strip (forest, not sticky): text centred · language switch at reading end ┐
 ├ sticky header bar (id + data-testid "site-header"), 64 / 72 px ──────────────────────────┤
-│  < 1024 px:  menu button       logo (centred, hangs below)   cart                        │
+│  < 1024 px:  menu button       logo (centred, inside the bar)   cart                       │
 │  ≥ 1024 px:  All pieces · cat 1 · cat 2 · home cat · About · Shipping & Returns ·        │
 │              logo · [search field] · cart                 (one row, reading order)       │
-├ <main id="main"> (top padding = the logo's overhang + 8 px) ──────────────────────────────┤
+├ <main id="main"> (no top padding: content starts right under the bar) ─────────────────────┤
 ├ footer (mint) ───────────────────────────────────────────────────────────────────────────┤
 └ consent banner (only when consentRequired()) ────────────────────────────────────────────┘
 ```
@@ -368,13 +374,15 @@ the top layer.
   (`has-[>[data-full-bleed]]:max-w-none has-[>[data-full-bleed]]:px-0 has-[>[data-full-bleed]]:pb-0`, so no gap is left above the footer); only the home page does.
   Its non-photo sections (the row, the band) put their content back in the 1240 px container.
   Never use `100vw` break-outs (they scroll sideways where scrollbars take space).
-- **The logo** (008, `specs/008-post-launch-fixes/contracts/ui.md`): the brand link holds the round
-  logo image, 88 px (`--logo-size`; 112 px from 900 px). Its centre is on the header's bottom edge:
-  half of it (`--logo-overhang`, half of `--logo-size`) is inside the bar and half hangs over the
-  page. So `<main>` has a top padding of `--logo-overhang` plus 8 px on every page but the home page
-  (where the hero is under the header), and `html` `scroll-padding-top` is `--header-h` plus
-  `--logo-overhang`, so an anchor jump does not hide a heading under the logo. The logo never covers
-  the menu button, cart button or search field. Details: [§7.18](#718-shopheader-server-shell--two-islands),
+- **The logo** (009, `specs/009-header-logo-wordmark/contracts/ui.md`; replaces 008's hanging round
+  badge): the brand link holds the owner's wordmark logo (yarn balls and "Aviva's Crafts"), wholly
+  inside the bar and centred: 52 px tall (`--logo-h`) and 93 px wide (`--logo-w`) below 900 px,
+  60 px and 107 px from 900 px (research D3; the width is fixed so it never depends on which file
+  the browser picks). `<main>` has no top padding on any page (research D4), and `html`
+  `scroll-padding-top` is `--header-h`, so an anchor jump does not hide a heading under the bar.
+  Only the home page at scroll 0, where the bar is see-through over the photo, gives the
+  logo a soft white glow that follows its drawing (no box, [§7.18](#718-shopheader-server-shell--two-islands),
+  research D5). The logo never covers the menu button, cart button or search field. Details:
   [§6](#6-images).
 - **Breadcrumbs** sit right under the header on category, product, search and content pages.
 
@@ -468,21 +476,35 @@ icons (the sample's `−`, `+` and `✓` become SVG).
 - A product without any public image cannot be published, so no "no image" art is needed;
   a broken image shows the empty `photo` box.
 
-### Brand assets (008, contracts/brand-assets.md)
+### Brand assets (009, contracts/brand-assets.md; 008 set up the script)
 
-The logo is a round badge supplied by the owner (2026-11-20): original `assets/logo/logo-original.jpg`
-(2000 x 2000, not served). `pnpm brand:assets` (`scripts/build-brand-assets.ts`, settings in
-`src/lib/brand/config.ts`) finds the disc by colour, cuts it with an anti-aliased circular alpha mask
-and writes, deterministically, `<name>.<8 hex of sha-256>.<ext>` files to `public/brand/`: the header
-logo as WebP with alpha at 176, 224, 264 and 336 px (each at most 40 KB), `icon-32`, `apple-touch-icon`
-(180), `icon-192` and `icon-512` (PNG), and the link-preview image `og` (1200 x 630 JPEG: the home hero
-photo with the logo centred). It also writes `public/favicon.ico` (16, 32 and 48 px PNG entries: the
-yarn crop of the logo on cream, since the whole badge is unreadable at 16 px) and
-`public/site.webmanifest`. `src/lib/brand/manifest.json` lists every file with its size and the
-detected disc; `src/lib/brand/index.ts` gives the URLs. The files are committed, like the home photos;
-run the script again (and commit the result) only when the logo changes. The preview image is cached
-for a year (`immutable`; the hash is in the name). The page metadata that uses them:
-`specs/008-post-launch-fixes/contracts/metadata.md`.
+The logo is the owner's wordmark (supplied 2026-11-21): the words "Aviva's Crafts" with yarn balls,
+needles and a tail, on a light checkerboard background. Original `assets/logo/logo-wordmark-original.jpg`
+(not served). 008's round badge original (`assets/logo/logo-original.jpg`) is kept in the folder and
+no longer used. `pnpm brand:assets` (`scripts/build-brand-assets.ts`, the cut-out functions in
+`scripts/brand-cutout.ts`, settings in `src/lib/brand/config.ts`) removes the checkerboard by colour
+(low-saturation light pixels become transparent; enclosed see-through spots such as the letter counters
+stay transparent; research D1), finds the content box, checks it is within 40 px of the expected one,
+trims to the box plus 16 px, and writes, deterministically, `<name>.<8 hex of sha-256>.<ext>` files
+to `public/brand/`:
+
+- the header logo as WebP with alpha at 186, 214, 279 and 321 px wide (the trimmed logo measures
+  1569 x 878, so the heights are 104, 120, 156 and 180 px; each file at most 40 KB), for the 52/60 px
+  tall header image at 1x to 3x;
+- the icons `icon-32`, `apple-touch-icon` (180), `icon-192` and `icon-512` (PNG) and
+  `public/favicon.ico` (16, 32 and 48 px): only the yarn balls, needles and tail (the connected yarn
+  region of the cut-out, research D7) on cream `#faf8e9`, because the whole wordmark is unreadable
+  at icon size; round for the tab icons, square for the home-screen and app icons;
+- the link-preview image `og` (1200 x 630 JPEG, research D8): the home hero photo with a centred light
+  card (white at 92 %, 32 px corners) and the full logo on it, 680 px wide;
+- `public/site.webmanifest`, and `src/lib/brand/manifest.json` (every file, its size, the detected
+  `box` and `yarnBox`).
+
+Rule: never place the logo on a dark or photo background without the soft white glow or a light card
+([§7.18](#718-shopheader-server-shell--two-islands)): its lettering is dark and its shapes are pastel.
+The files are committed, like the home photos; run the script again (and commit the result) only
+when the logo changes. The preview image is cached for a year (`immutable`; the hash is in the name).
+The page metadata that uses them: `specs/008-post-launch-fixes/contracts/metadata.md` (unchanged).
 
 ### Home photos (007 D3, contracts/home-photos.md)
 
@@ -821,26 +843,28 @@ centred header.
     or M) can be wider and ends with "…" (owner answer: rare, acceptable). Hence the 12-character
     limit on category names ([§12.12](#1212-categories-admincategories), FR-040).
 - Brand (`data-testid="header-brand"`, home link; 008 replaced the text wordmark with the owner's
-  logo): the link is `relative block`, `--logo-size` wide (88 px; 112 px from 900 px) and as tall as
-  the bar (`self-stretch`), so the bar height is unchanged. It holds one `<img
-  data-testid="header-logo">` (the logo files in `srcset`, `width` and `height` 112,
-  `sizes="(min-width: 900px) 112px, 88px"`, `decoding="async"`, `rounded-full`), placed `absolute` with
-  its centre on the bar's bottom edge (`inset-block-start: calc(var(--header-h) -
-  var(--logo-overhang))`): half inside the bar, half hanging below it over the page; centred below
-  1024 px (centre column) and between the links and the search field from 1024 px (`nav:mx-auto`).
-  The image is round (`rounded-full`), so only the badge takes clicks, not the corners of its box. It
-  is a child of the header, so it shares the header's stacking context (`z-header`): above the page,
-  below the drawers and the consent banner.
-  - **Name**: the link has no `aria-label`; its accessible name is the image's `alt` (the shop name
-    from settings, `shop_name_he/en`, English falling back to Hebrew through `pick()`; the img, not
-    the link, carries `lang="he"` when the Hebrew fallback is used, so it is read correctly) plus a
-    visually hidden `<span class="sr-only">` with `common.homeLinkSuffix` (", דף הבית" / ", home
-    page"): "{name}, דף הבית". No visible text. Not the legal `business_name_*`.
-  - **Focus**: the ring is drawn on the round image, not on the link's rectangle (the link has no
-    outline; `group-focus-visible:outline-3 outline-offset-3 outline-current` on the image): 3 px
-    wide, 3 px out. On the home page at scroll 0 the ring is white (`currentColor`) and the lower
-    half of the logo is over the bare photo, so a soft dark halo (`box-shadow: 0 0 0 7px rgb(6 20 6 /
-    0.55)`) sits under the ring there; without JavaScript the bar is white and the halo is off.
+  logo, 009 swapped it for the wordmark logo and moved it inside the bar): the link is `inline-flex
+  min-h-11 items-center rounded-card px-2 py-0.5` (44 px target; `nav:mx-auto` between the links and the
+  search field from 1024 px, centred in the middle column below). It holds one `<img
+  data-testid="header-logo">`: the logo files in `srcset`, `width` and `height` from `logoSize()`
+  (321 x 180), `sizes="(min-width: 900px) 107px, 93px"`, `decoding="async"`, classes `block
+  h-(--logo-h) w-(--logo-w) max-w-none object-contain` (52 x 93 px; 60 x 107 px from 900 px). The bar
+  height is unchanged (64 / 72 px). Width budget: the link is 93/107 px plus 8 px padding each side,
+  that is 109.5 / 123.5 px, inside the 160 px brand cap of the one-row layout above (research D3).
+  - **Name**: unchanged from 008. The link has no `aria-label`; its accessible name is the image's
+    `alt` (the shop name from settings, `shop_name_he/en`, English falling back to Hebrew through
+    `pick()`; the img carries `lang="he"` when the Hebrew fallback is used) plus a visually hidden
+    `<span class="sr-only">` with `common.homeLinkSuffix`: "{name}, דף הבית". No visible text. Not
+    the legal `business_name_*`.
+  - **Glow** (research D5, amended 2026-11-22): only on the home page at scroll 0
+    (`body:has([data-hero]) #site-header[data-at-top]`), where the bar is see-through over the photo:
+    the logo image gets a soft white glow that follows its lines (a CSS `filter` of stacked white
+    `drop-shadow`s), faded in and out in 250 ms (no motion with reduced motion). The link itself
+    never has a background or box. Once the bar turns white, on every other page, without
+    JavaScript (`scripting: none`) and in forced colours there is no glow (`filter: none`).
+  - **Focus** (research D6, amended 2026-11-22): a 2 px outline on the link itself
+    (`outline-offset: 0`), drawn inside the header so it is never cut off. `ink` on the white bar;
+    white (`on-photo`) at the top of the home page, where the bar is see-through over the dark photo.
   - The logo is the owner's: never edit it, redraw it or make another mark (PRODUCT.md).
 - **Menu drawer** (below 1024 px; replaces the menu sheet, 007 D21, FR-044, FR-045): the header's
   menu button is `<button popovertarget="site-menu">` (name "תפריט" / "Menu", native
@@ -2234,3 +2258,9 @@ the create form); only the name rule changes.
     first with per-field errors and focus; new home band sentence; brand assets, favicon and link
     previews (`pnpm brand:assets`). Change log: sections 3.6, 4, 5, 6 (new "Brand assets"), 7.5, 7.18,
     7.20, 8.1, 8.4, 8.10, 12.10, 12.11 amended.
+15. **New wordmark logo** (2026-11-21, feature 009, owner decision): the owner's wordmark logo
+    replaces the round badge and sits wholly inside the header bar (`--logo-h`, `--logo-w`; the
+    hanging part, `--logo-size` and `--logo-overhang` are gone), with a soft white glow around
+    the drawing only at the top of the home page (amended 2026-11-22, was a white rounded box); icons show the yarn balls on cream; the link preview shows the
+    full logo on a light card over the hero photo. Change log: sections 3.6, 4, 6 (Brand assets),
+    7.18 amended. Decisions: `specs/009-header-logo-wordmark/research.md` D1–D9.
