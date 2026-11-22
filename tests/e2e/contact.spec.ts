@@ -298,7 +298,7 @@ test('the contact links across the shop lead to the page in the same language', 
       await contactLinkWorks(page, '#site-menu', locale);
       await contactLinkWorks(page, 'footer', locale);
 
-      await page.goto(`/${locale}/p/sample-clay-mug`);
+      await page.goto(`/${locale}/product/sample-clay-mug`);
       await expect(page.getByTestId('unavailable-notice')).toBeVisible();
       await contactLinkWorks(page, '[data-testid="unavailable-notice"]', locale);
     }

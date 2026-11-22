@@ -1,11 +1,11 @@
-import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import type { Locale } from '@/i18n/routing';
 import { fallbackAttrs, pick } from '@/lib/i18n-fallback';
 import type { PublicCategory } from '@/server/catalog/public-queries';
+import { NavLink } from './NavLink';
 
 const HEADER_LINK =
-  'inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center whitespace-nowrap hover:underline hover:underline-offset-4';
+  'inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center whitespace-nowrap';
 
 /**
  * The links of the header's one row from 1024 px (research D20), in the owner's order: "All pieces",
@@ -25,31 +25,36 @@ export async function HeaderNavLinks({
   return (
     <>
       <li className="shrink-0">
-        <Link href={`/${locale}/shop`} className={HEADER_LINK}>
+        <NavLink markCurrent href={`/${locale}/shop`} className={HEADER_LINK}>
           {t('allPieces')}
-        </Link>
+        </NavLink>
       </li>
       {categories.map((category) => {
         const name = pick(locale, category.nameHe, category.nameEn);
         return (
           <li key={category.id} className="shrink-0">
-            <Link href={`/${locale}/c/${category.slug}`} className={HEADER_LINK}>
-              <span {...fallbackAttrs(name)} className="block max-w-[95px] truncate">
+            <NavLink
+              href={`/${locale}/category/${category.slug}`}
+              markCurrent
+              bareChildren
+              className={HEADER_LINK}
+            >
+              <span {...fallbackAttrs(name)} className="nav-line block max-w-[95px] truncate">
                 {name.text}
               </span>
-            </Link>
+            </NavLink>
           </li>
         );
       })}
       <li className="shrink-0">
-        <Link href={`/${locale}/pages/about`} className={HEADER_LINK}>
+        <NavLink markCurrent href={`/${locale}/pages/about`} className={HEADER_LINK}>
           {t('about')}
-        </Link>
+        </NavLink>
       </li>
       <li className="shrink-0">
-        <Link href={`/${locale}/pages/shipping-returns`} className={HEADER_LINK}>
+        <NavLink markCurrent href={`/${locale}/pages/shipping-returns`} className={HEADER_LINK}>
           {t('shippingReturns')}
-        </Link>
+        </NavLink>
       </li>
     </>
   );
@@ -74,21 +79,22 @@ export async function MenuCategories({
       )}
       <ul className="grid gap-1 text-base font-medium">
         <li>
-          <Link href={`/${locale}/shop`} className="flex min-h-11 items-center">
+          <NavLink markCurrent href={`/${locale}/shop`} className="flex min-h-11 items-center">
             {t('allPieces')}
-          </Link>
+          </NavLink>
         </li>
         {categories.map((category) => {
           const name = pick(locale, category.nameHe, category.nameEn);
           return (
             <li key={category.id}>
-              <Link
-                href={`/${locale}/c/${category.slug}`}
+              <NavLink
+                markCurrent
+                href={`/${locale}/category/${category.slug}`}
                 {...fallbackAttrs(name)}
                 className="flex min-h-11 items-center"
               >
                 {name.text}
-              </Link>
+              </NavLink>
             </li>
           );
         })}

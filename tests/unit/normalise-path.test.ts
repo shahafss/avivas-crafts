@@ -18,10 +18,10 @@ describe('normalisePath: accepted paths', () => {
     ['/he', '/he'],
     ['/en', '/en'],
     ['/en/', '/en'],
-    ['/he/c/dolls', '/he/c/dolls'],
-    ['/he/c/dolls/', '/he/c/dolls'],
-    ['/he/p/doll-1?x=1#y', '/he/p/doll-1'],
-    ['/he/p/doll-1#y', '/he/p/doll-1'],
+    ['/he/category/dolls', '/he/category/dolls'],
+    ['/he/category/dolls/', '/he/category/dolls'],
+    ['/he/product/doll-1?x=1#y', '/he/product/doll-1'],
+    ['/he/product/doll-1#y', '/he/product/doll-1'],
     ['/en/search?q=a', '/en/search'],
     ['/he/shop', '/he/shop'],
     ['/en/shop?sort=price-asc', '/en/shop'],
@@ -29,14 +29,14 @@ describe('normalisePath: accepted paths', () => {
     ['/he/pages/about', '/he/pages/about'],
     ['/he/pages/shipping-returns', '/he/pages/shipping-returns'],
     ['/en/contact', '/en/contact'],
-    ['/he/p/%64oll-1', '/he/p/doll-1'],
+    ['/he/product/%64oll-1', '/he/product/doll-1'],
   ])('%s -> %s', (raw, expected) => {
     expect(normalisePath(raw)).toBe(expected);
   });
 
   it('a slug of exactly 80 characters is accepted', () => {
     const slug = 'a'.repeat(80);
-    expect(normalisePath(`/he/p/${slug}`)).toBe(`/he/p/${slug}`);
+    expect(normalisePath(`/he/product/${slug}`)).toBe(`/he/product/${slug}`);
   });
 });
 
@@ -59,26 +59,28 @@ describe('normalisePath: rejected paths', () => {
     '/he/pages/unknown',
     '/he/pages/contact',
     '/he/pages',
-    '/he/p',
-    '/he/p/',
-    '/he/p/Doll',
-    '/he/p/do ll',
-    '/he/p/doll_1',
-    '/he/p/doll/extra',
-    '/he/c/dolls/extra',
+    '/he/product',
+    '/he/product/',
+    '/he/product/Doll',
+    '/he/product/do ll',
+    '/he/product/doll_1',
+    '/he/product/doll/extra',
+    '/he/category/dolls/extra',
     '/he/shop/x',
     '/he/shop/doll-1',
     '/HE/cart',
-    '/he/p/%zz',
-    '/he/p/%2e%2e',
-    '/he/p/a%2fb',
+    '/he/p/doll-1',
+    '/en/c/dolls',
+    '/he/product/%zz',
+    '/he/product/%2e%2e',
+    '/he/product/a%2fb',
   ])('%j -> null', (raw) => {
     expect(normalisePath(raw)).toBeNull();
   });
 
   it('rejects slugs over 80 characters and paths over 300 characters', () => {
-    expect(normalisePath(`/he/p/${'a'.repeat(81)}`)).toBeNull();
-    expect(normalisePath(`/he/p/doll?${'x'.repeat(300)}`)).toBeNull();
+    expect(normalisePath(`/he/product/${'a'.repeat(81)}`)).toBeNull();
+    expect(normalisePath(`/he/product/doll?${'x'.repeat(300)}`)).toBeNull();
     expect(normalisePath(`/he/${'a'.repeat(301)}`)).toBeNull();
   });
 
@@ -89,13 +91,13 @@ describe('normalisePath: rejected paths', () => {
 
 describe('parseCountablePath', () => {
   it('names the kind and the slug the database check needs', () => {
-    expect(parseCountablePath('/he/p/doll-1?x=1')).toEqual({
-      path: '/he/p/doll-1',
+    expect(parseCountablePath('/he/product/doll-1?x=1')).toEqual({
+      path: '/he/product/doll-1',
       kind: 'product',
       slug: 'doll-1',
     });
-    expect(parseCountablePath('/en/c/dolls')).toEqual({
-      path: '/en/c/dolls',
+    expect(parseCountablePath('/en/category/dolls')).toEqual({
+      path: '/en/category/dolls',
       kind: 'category',
       slug: 'dolls',
     });

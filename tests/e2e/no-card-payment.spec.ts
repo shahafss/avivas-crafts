@@ -44,7 +44,7 @@ async function noViolations(page: Page): Promise<void> {
 }
 
 test('the product page shows the offline payment line and no card line', async ({ page }) => {
-  const response = await page.goto('/he/p/sample-clay-mug');
+  const response = await page.goto('/he/product/sample-clay-mug');
   expect(response?.status()).toBe(200);
   await dismissConsent(page);
   await expect(page.getByText('תשלום ישיר אליי')).toBeVisible();
@@ -52,7 +52,7 @@ test('the product page shows the offline payment line and no card line', async (
 });
 
 test('checkout offers only offline payment and an order completes', async ({ page }) => {
-  await page.goto('/he/p/sample-clay-mug');
+  await page.goto('/he/product/sample-clay-mug');
   await dismissConsent(page);
   await page.waitForFunction(
     () => {

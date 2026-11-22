@@ -75,16 +75,22 @@ async function makeCategory(nameHe = 'נרות', nameEn?: string): Promise<strin
 }
 
 /** A product that satisfies every publish rule. */
-async function completeProduct(extra: { priceUsdMinor?: number } = {}): Promise<string> {
+let completeCounter = 0;
+
+async function completeProduct(
+  extra: { priceUsdMinor?: number; slug?: string | null } = {},
+): Promise<string> {
   const categoryId = await makeCategory();
   const { id } = await ok(createProduct(actor, { nameHe: 'בובה' }));
+  const { slug = `complete-${String((completeCounter += 1))}`, ...rest } = extra;
   await ok(
     updateProduct(actor, id, {
+      ...(slug === null ? {} : { slug }),
       descriptionHe: 'בובה בעבודת יד',
       priceIlsMinor: 12000,
       categoryIds: [categoryId],
       prepTimeHe: 'כשבועיים',
-      ...extra,
+      ...rest,
     }),
   );
   const added = await addImage(actor, id, await photo());
@@ -111,8 +117,8 @@ async function activity(action: string) {
 }
 
 describe('createProduct', () => {
-  it('makes a draft with only name_he, and a random slug without English text', async () => {
-    const { id, slug } = await ok(createProduct(actor, { nameHe: 'בובת בד' }));
+  it('makes a draft with only name_he and no address yet', async () => {
+    const { id } = await ok(createProduct(actor, { nameHe: 'בובת בד' }));
     const row = await getProduct(id);
     expect(row).toMatchObject({
       nameHe: 'בובת בד',
@@ -121,18 +127,17 @@ describe('createProduct', () => {
       orderable: true,
       publishedAt: null,
       priceIlsMinor: null,
+      slug: null,
     });
     expect(await linkedCategoryIds(id)).toEqual([]);
-    expect(slug).toMatch(/^p-[a-z2-7]{8}$/);
-    expect(row.slug).toBe(slug);
     expect(await activity('product.created')).toHaveLength(1);
   });
 
-  it('slugifies the English name and suffixes duplicates -2, -3', async () => {
+  it('does not derive an address from the English name', async () => {
     const first = await ok(createProduct(actor, { nameHe: 'א', nameEn: 'Rag Doll!' }));
     const second = await ok(createProduct(actor, { nameHe: 'ב', nameEn: 'Rag Doll' }));
-    const third = await ok(createProduct(actor, { nameHe: 'ג', nameEn: 'rag doll' }));
-    expect([first.slug, second.slug, third.slug]).toEqual(['rag-doll', 'rag-doll-2', 'rag-doll-3']);
+    expect((await getProduct(first.id)).slug).toBeNull();
+    expect((await getProduct(second.id)).slug).toBeNull();
   });
 
   it('rejects an empty or over-long Hebrew name', async () => {
@@ -155,23 +160,57 @@ describe('new-product placeholder name', () => {
 });
 
 describe('updateProduct', () => {
-  it('keeps the slug editable while draft and frozen after the first publish', async () => {
-    const id = await completeProduct();
+  it('a draft sets, changes and clears its address; an empty string clears it to null', async () => {
+    const { id } = await ok(createProduct(actor, { nameHe: 'א' }));
     expect((await updateProduct(actor, id, { slug: 'my-doll' })).ok).toBe(true);
     expect((await getProduct(id)).slug).toBe('my-doll');
-    expect((await updateProduct(actor, id, { slug: 'Bad Slug' })).ok).toBe(false);
+    expect((await updateProduct(actor, id, { slug: 'my-doll-2' })).ok).toBe(true);
+    expect((await getProduct(id)).slug).toBe('my-doll-2');
+    expect((await updateProduct(actor, id, { slug: '' })).ok).toBe(true);
+    expect((await getProduct(id)).slug).toBeNull();
+  });
+
+  it.each([
+    ['uppercase and a space', 'Blue Bunny'],
+    ['a leading space', ' baby'],
+    ['a leading dash', '-a'],
+    ['a double dash', 'a--b'],
+    ['a random-looking code', 'p-abcdefgh'],
+    ['61 characters', 'a'.repeat(61)],
+  ])('refuses %s as an address with slug_invalid and saves nothing', async (_label, slug) => {
+    const { id } = await ok(createProduct(actor, { nameHe: 'א' }));
+    await ok(updateProduct(actor, id, { slug: 'keep-me' }));
+    const result = await updateProduct(actor, id, { slug });
+    expect(result).toMatchObject({
+      ok: false,
+      fieldErrors: { slug: 'admin.products.errors.slug_invalid' },
+    });
+    expect((await getProduct(id)).slug).toBe('keep-me');
+  });
+
+  it('refuses a published or hidden product its address change, and allows it again once it is a draft', async () => {
+    const id = await completeProduct();
+    await ok(updateProduct(actor, id, { slug: 'my-doll' }));
     await ok(setProductState(actor, id, 'publish'));
     const frozen = await updateProduct(actor, id, { slug: 'other-slug' });
     expect(frozen).toMatchObject({
       ok: false,
       fieldErrors: { slug: 'admin.products.errors.slug_frozen' },
     });
+    await ok(setProductState(actor, id, 'hide'));
+    expect(await updateProduct(actor, id, { slug: 'other-slug' })).toMatchObject({
+      ok: false,
+      fieldErrors: { slug: 'admin.products.errors.slug_frozen' },
+    });
+    expect((await getProduct(id)).slug).toBe('my-doll');
     await ok(setProductState(actor, id, 'draft'));
-    expect((await updateProduct(actor, id, { slug: 'other-slug' })).ok).toBe(false);
+    expect((await updateProduct(actor, id, { slug: 'other-slug' })).ok).toBe(true);
+    expect((await getProduct(id)).slug).toBe('other-slug');
   });
 
   it('rejects a slug that another product uses', async () => {
-    const { id } = await ok(createProduct(actor, { nameHe: 'א', nameEn: 'Taken' }));
+    const { id } = await ok(createProduct(actor, { nameHe: 'א' }));
+    await ok(updateProduct(actor, id, { slug: 'taken' }));
     const other = await ok(createProduct(actor, { nameHe: 'ב' }));
     const result = await updateProduct(actor, other.id, { slug: 'taken' });
     expect(result).toMatchObject({
@@ -179,6 +218,28 @@ describe('updateProduct', () => {
       fieldErrors: { slug: 'admin.products.errors.slug_taken' },
     });
     expect((await getProduct(id)).slug).toBe('taken');
+    expect((await getProduct(other.id)).slug).toBeNull();
+  });
+
+  it('an English-name save leaves the address unchanged', async () => {
+    const { id } = await ok(createProduct(actor, { nameHe: 'א' }));
+    await ok(updateProduct(actor, id, { nameEn: 'Blue Doll' }));
+    expect((await getProduct(id)).slug).toBeNull();
+    await ok(updateProduct(actor, id, { slug: 'my-doll' }));
+    await ok(updateProduct(actor, id, { nameEn: 'Green Doll' }));
+    expect((await getProduct(id)).slug).toBe('my-doll');
+  });
+
+  it('a published product with a random address can still be saved, and a hidden one unhidden', async () => {
+    const id = await completeProduct();
+    await ok(updateProduct(actor, id, { slug: 'my-doll' }));
+    await ok(setProductState(actor, id, 'publish'));
+    await testDb.db.update(product).set({ slug: 'p-abcdefgh' }).where(eq(product.id, id));
+    await ok(updateProduct(actor, id, { prepTimeHe: 'כשלושה שבועות' }));
+    await ok(setProductState(actor, id, 'hide'));
+    await ok(setProductState(actor, id, 'unhide'));
+    expect((await getProduct(id)).state).toBe('published');
+    expect((await getProduct(id)).slug).toBe('p-abcdefgh');
   });
 
   it('refuses edits that would break a published product', async () => {
@@ -285,6 +346,7 @@ describe('setProductState', () => {
     expect(result).toMatchObject({ ok: false });
     if (result.ok) throw new Error('unreachable');
     expect(result.missingFields).toEqual([
+      'slug',
       'descriptionHe',
       'priceIlsMinor',
       'categoryId',
@@ -349,12 +411,24 @@ describe('setProductState', () => {
     expect(await setProductState(actor, id, 'unhide')).toMatchObject({ ok: false });
   });
 
-  it('derives the slug from the English name on the first publish when it is still random', async () => {
+  it('refuses to publish from draft with no address or a random-looking one, naming slug', async () => {
+    const id = await completeProduct({ slug: null });
+    const none = await setProductState(actor, id, 'publish');
+    if (none.ok) throw new Error('expected a failure');
+    expect(none.missingFields).toEqual(['slug']);
+    expect((await getProduct(id)).state).toBe('draft');
+    await testDb.db.update(product).set({ slug: 'p-abcdefgh' }).where(eq(product.id, id));
+    const random = await setProductState(actor, id, 'publish');
+    if (random.ok) throw new Error('expected a failure');
+    expect(random.missingFields).toEqual(['slug']);
+    expect((await getProduct(id)).state).toBe('draft');
+  });
+
+  it('publishes with a typed address and keeps it', async () => {
     const id = await completeProduct();
-    await ok(updateProduct(actor, id, { nameEn: 'Blue Doll' }));
-    expect((await getProduct(id)).slug).toBe('blue-doll');
+    await ok(updateProduct(actor, id, { nameEn: 'Blue Doll', slug: 'my-doll' }));
     await ok(setProductState(actor, id, 'publish'));
-    expect((await getProduct(id)).slug).toBe('blue-doll');
+    expect((await getProduct(id)).slug).toBe('my-doll');
   });
 
   it('orderable=false keeps the product public', async () => {

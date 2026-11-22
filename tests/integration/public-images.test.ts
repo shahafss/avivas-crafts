@@ -58,12 +58,20 @@ afterAll(async () => {
 
 const WIDTHS = [400, 800, 1600] as const;
 
+let productCounter = 0;
+
+async function publish(id: string): Promise<void> {
+  const result = await setProductState(actor, id, 'publish');
+  if (!result.ok) throw new Error(`publish failed: ${JSON.stringify(result)}`);
+}
+
 async function newProduct(): Promise<string> {
   const created = await createProduct(actor, { nameHe: 'בובה' });
   if (!created.ok) throw new Error('create failed');
   const cat = await createCategory(actor, { nameHe: 'נרות' });
   if (!cat.ok) throw new Error('category failed');
   const updated = await updateProduct(actor, created.data.id, {
+    slug: `piece-${String((productCounter += 1))}`,
     descriptionHe: 'תיאור',
     priceIlsMinor: 9000,
     categoryIds: [cat.data.id],
@@ -165,7 +173,7 @@ describe('public bucket', () => {
     const gone = await upload(id, 160);
     await removeImage(actor, id, gone.id);
 
-    await setProductState(actor, id, 'publish');
+    await publish(id);
     expect((await where(a.key)).publicAll).toBe(true);
     expect((await where(b.key)).publicAll).toBe(true);
     expect((await where(gone.key)).publicAny).toBe(false);
@@ -184,7 +192,7 @@ describe('public bucket', () => {
     expect((await where(a.key)).publicAny).toBe(false);
     expect((await where(b.key)).publicAny).toBe(false);
 
-    await setProductState(actor, id, 'publish');
+    await publish(id);
     expect((await where(b.key)).publicAll).toBe(true);
     await deleteProduct(actor, id, { confirm: true });
     for (const key of [a.key, b.key, gone.key]) {
@@ -200,7 +208,7 @@ describe('public bucket', () => {
   it('public copies carry no private-only objects and are served with the same bytes', async () => {
     const id = await newProduct();
     const a = await upload(id);
-    await setProductState(actor, id, 'publish');
+    await publish(id);
     const fromPrivate = await new Response(
       (await files.storage.get('private', `${a.key}-800.webp`))?.body,
     ).arrayBuffer();
@@ -214,7 +222,7 @@ describe('public bucket', () => {
     const id = await newProduct();
     const a = await upload(id, 30);
     const b = await upload(id, 60);
-    await setProductState(actor, id, 'publish');
+    await publish(id);
 
     const c = await upload(id, 120);
     expect((await where(c.key)).publicAll).toBe(true);
@@ -230,7 +238,7 @@ describe('public bucket', () => {
     const id = await newProduct();
     await syncPublicImages(id);
     const a = await upload(id);
-    await setProductState(actor, id, 'publish');
+    await publish(id);
     await syncPublicImages(id);
     await syncPublicImages(id);
     expect((await where(a.key)).publicAll).toBe(true);
@@ -241,7 +249,7 @@ describe('races and cost', () => {
   it('a product hidden while its new photo is being copied ends with no public files', async () => {
     const id = await newProduct();
     await upload(id, 20);
-    await setProductState(actor, id, 'publish');
+    await publish(id);
     const put = files.storage.put.bind(files.storage);
     let hidden = false;
     files.storage.put = async (...args) => {
@@ -266,7 +274,7 @@ describe('races and cost', () => {
   it('a photo added to a hidden product gets no public copy', async () => {
     const id = await newProduct();
     await upload(id, 20);
-    await setProductState(actor, id, 'publish');
+    await publish(id);
     await setProductState(actor, id, 'hide');
     const added = await upload(id, 90);
     expect((await where(added.key)).publicAny).toBe(false);
@@ -276,7 +284,7 @@ describe('races and cost', () => {
     const id = await newProduct();
     const a = await upload(id, 20);
     const b = await upload(id, 90);
-    await setProductState(actor, id, 'publish');
+    await publish(id);
     const put = files.storage.put.bind(files.storage);
     const puts: string[] = [];
     files.storage.put = async (...args) => {
@@ -324,7 +332,7 @@ describe('order of photos', () => {
       { id: string },
       { id: string },
     ];
-    await setProductState(actor, id, 'publish');
+    await publish(id);
     expect(await mainPhoto(id)).toBe(a.id);
 
     await reorderImages(actor, id, [c.id, a.id, b.id]);
@@ -359,7 +367,7 @@ describe('order of photos', () => {
       { id: string },
       { id: string },
     ];
-    await setProductState(actor, id, 'publish');
+    await publish(id);
     await removeImage(actor, id, a.id);
 
     const [removed] = await testDb.db.select().from(productImage).where(eq(productImage.id, a.id));
@@ -378,7 +386,7 @@ describe('order of photos', () => {
   it('refuses to remove the last photo of a published product', async () => {
     const id = await newProduct();
     const a = await upload(id);
-    await setProductState(actor, id, 'publish');
+    await publish(id);
     expect(await removeImage(actor, id, a.id)).toMatchObject({ ok: false });
     await setProductState(actor, id, 'draft');
     expect((await removeImage(actor, id, a.id)).ok).toBe(true);
@@ -486,7 +494,7 @@ describe('deleteImagesOfProduct', () => {
     const id = await newProduct();
     const a = await upload(id, 20);
     const b = await upload(id, 90);
-    await setProductState(actor, id, 'publish');
+    await publish(id);
     await removeImage(actor, id, b.id);
     await deleteImagesOfProduct(id);
     for (const key of [a.key, b.key]) {

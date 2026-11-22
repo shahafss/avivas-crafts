@@ -6,16 +6,17 @@ import { getEnv } from '@/server/env';
 
 export const dynamic = 'force-dynamic';
 
-// Every public page once per language, each naming both versions (contracts/seo.md). Search,
-// cart, checkout, order pages, admin and api are left out.
+// Every public page once per language. No language-alternate lines: the page heads carry the
+// hreflang pairs (src/server/seo.ts; 010 research D8), and without them Chrome shows the file as a
+// tree. Search, cart, checkout, order pages, admin and api are left out.
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const origin = getEnv().APP_ORIGIN;
   const { products, categorySlugs } = await listSitemapEntries();
   const pages: { path: string; lastModified?: Date }[] = [
     { path: '' },
     { path: '/shop' },
-    ...categorySlugs.map((slug) => ({ path: `/c/${slug}` })),
-    ...products.map((item) => ({ path: `/p/${item.slug}`, lastModified: item.updatedAt })),
+    ...categorySlugs.map((slug) => ({ path: `/category/${slug}` })),
+    ...products.map((item) => ({ path: `/product/${item.slug}`, lastModified: item.updatedAt })),
     ...CONTENT_SLUGS.filter((slug) => slug !== 'contact').map((slug) => ({
       path: `/pages/${slug}`,
     })),
@@ -25,9 +26,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     routing.locales.map((locale) => ({
       url: `${origin}/${locale}${path}`,
       ...(lastModified === undefined ? {} : { lastModified }),
-      alternates: {
-        languages: { he: `${origin}/he${path}`, en: `${origin}/en${path}` },
-      },
     })),
   );
 }

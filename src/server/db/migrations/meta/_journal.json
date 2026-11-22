@@ -64,6 +64,20 @@
       "when": 1795201010922,
       "tag": "0008_refresh_terms_privacy",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1795374930133,
+      "tag": "0009_product_slug_nullable",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1795374930561,
+      "tag": "0010_product_addresses",
+      "breakpoints": true
     }
   ]
 }

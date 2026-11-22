@@ -123,6 +123,8 @@ export interface CheckoutFixture {
   candle: { id: string; slug: string };
 }
 
+let seedCounter = 0;
+
 /** Two published products with a photo each, in a category. */
 export async function seedCatalog(actor: Actor): Promise<CheckoutFixture> {
   const cat = await createCategory(actor, { nameHe: 'בובות' });
@@ -137,15 +139,18 @@ export async function seedCatalog(actor: Actor): Promise<CheckoutFixture> {
   ) {
     const created = await createProduct(actor, { nameHe, nameEn });
     if (!created.ok) throw new Error('product');
-    await updateProduct(actor, created.data.id, {
+    const slug = `seed-${String((seedCounter += 1))}`;
+    const updated = await updateProduct(actor, created.data.id, {
+      slug,
       descriptionHe: 'תיאור',
       priceIlsMinor: price,
       categoryIds: [categoryId],
       prepTimeHe: prepHe,
       prepTimeEn: prepEn,
     });
+    if (!updated.ok) throw new Error('product update');
     await addImage(actor, created.data.id, await photo(640, 480, 90 + price / 100));
-    return created.data;
+    return { id: created.data.id, slug };
   }
   const doll = await make('בובה סרוגה', 'Crocheted doll', 10000, 'כשבועיים', 'about two weeks');
   const group = await upsertOptionGroup(actor, doll.id, {
@@ -160,8 +165,10 @@ export async function seedCatalog(actor: Actor): Promise<CheckoutFixture> {
   const values = await db.select().from(optionValue);
   const idOf = (label: string): string => values.find((value) => value.labelHe === label)?.id ?? '';
   const candle = await make('נר סויה', 'Soy candle', 4500, 'כשלושה ימים', 'about three days');
-  await setProductState(actor, doll.id, 'publish');
-  await setProductState(actor, candle.id, 'publish');
+  for (const id of [doll.id, candle.id]) {
+    const published = await setProductState(actor, id, 'publish');
+    if (!published.ok) throw new Error(`publish failed: ${JSON.stringify(published)}`);
+  }
   return {
     doll: { id: doll.id, slug: doll.slug, brown: idOf('חום'), blond: idOf('בלונד') },
     candle: { id: candle.id, slug: candle.slug },

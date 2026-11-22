@@ -47,8 +47,8 @@ export function parseCountablePath(raw: unknown): CountablePath | null {
   if (rest.length === 2) {
     const [area, slug] = rest;
     if (slug === undefined || !SLUG.test(slug)) return null;
-    if (area === 'p') return { path, kind: 'product', slug };
-    if (area === 'c') return { path, kind: 'category', slug };
+    if (area === 'product') return { path, kind: 'product', slug };
+    if (area === 'category') return { path, kind: 'category', slug };
     if (area === 'pages' && PAGE_SLUGS.includes(slug)) return { path, kind: 'page', slug };
   }
   return null;
