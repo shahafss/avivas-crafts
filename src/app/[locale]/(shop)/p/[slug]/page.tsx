@@ -217,7 +217,7 @@ export default async function ProductPage({ params }: { params: Params }) {
         <NextIntlClientProvider locale={locale} messages={clientMessages}>
           <div className="grid gap-5 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] lg:items-start lg:gap-10">
             <Gallery name={name.text} images={images} />
-            <div className="grid content-start gap-4 lg:sticky lg:top-[calc(var(--header-h)+var(--logo-overhang)+16px)]">
+            <div className="grid content-start gap-4 lg:sticky lg:top-[calc(var(--header-h)+16px)]">
               <h1
                 {...fallbackAttrs(name)}
                 className="text-[30px] leading-[1.15] font-bold tracking-[-0.01em] text-balance lg:text-[36px]"

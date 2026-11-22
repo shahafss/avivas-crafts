@@ -154,7 +154,7 @@ a new section for the provider before it is switched on.
 | A05 Injection | Drizzle with parameters (no `sql.raw`), Zod validation, escaped output, re-encoded uploads |
 | A06 Insecure Design | Server-side pricing and state machines, guest orders without accounts, rate limits, this model |
 | A07 Authentication Failures | Google sign-in with PKCE, `state`, `nonce`, admin role only, Testing-mode OAuth client, session limits |
-| A08 Software or Data Integrity Failures | Deploy only after CI passes (`checksPass`), pinned images, payment never confirmed from the browser |
+| A08 Software or Data Integrity Failures | Every merge to `main` deploys at once (`autoDeployTrigger: commit`, owner decision 2026-11-21); CI, including the audit, runs on the pull request before the merge, so merge only when it is green. Pinned images, payment never confirmed from the browser |
 | A09 Security Logging and Alerting Failures | Structured logs with a field allow-list, activity log, Render failure email for the backup job, owner alerts for payment problems |
 | A10 Mishandling of Exceptional Conditions | Fail closed: the app refuses to start on a bad environment, the backup stops on the first error, unknown payment providers are refused |
 

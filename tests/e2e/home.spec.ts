@@ -976,8 +976,134 @@ test('without JavaScript the home header is the readable frosted bar when scroll
     const header = bare.getByTestId('site-header');
     await expect(header, 'ink text, not white on the page').toHaveCSS('color', INK);
     await expect(header).not.toHaveCSS('background-color', TRANSPARENT);
+    // The bar itself is the white bar there, so the logo has no glow and the link no box.
+    await bare.evaluate(() => {
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    });
+    const brand = bare.getByTestId('header-brand');
+    await expect(brand, 'no box without JavaScript').toHaveCSS('background-color', TRANSPARENT);
+    await expect(brand).toHaveCSS('box-shadow', 'none');
+    await expect(bare.getByTestId('header-logo'), 'no glow without JavaScript').toHaveCSS(
+      'filter',
+      'none',
+    );
   } finally {
     await context.close();
+  }
+});
+
+type Backing = { filter: string; bg: string; shadow: string };
+
+async function logoBacking(page: Page): Promise<Backing> {
+  return page.evaluate(() => {
+    const brand = document.querySelector('#site-header [data-testid="header-brand"]');
+    const logo = document.querySelector('#site-header [data-testid="header-logo"]');
+    if (!brand || !logo) throw new Error('no brand link or logo');
+    const link = getComputedStyle(brand);
+    return {
+      filter: getComputedStyle(logo).filter,
+      bg: link.backgroundColor,
+      shadow: link.boxShadow,
+    };
+  });
+}
+
+/** Scrolls to `y`, waits for the 250 ms fade to settle, then returns the logo's glow state. */
+async function settledBacking(page: Page, y: number, glowing: boolean): Promise<Backing> {
+  await scrollToY(page, y);
+  await expect
+    .poll(
+      async () => {
+        const now = await logoBacking(page);
+        return glowing ? now.filter.includes('drop-shadow') : now.filter === 'none';
+      },
+      {
+        message: `scroll ${String(y)}: glow settles ${glowing ? 'in' : 'out'}`,
+        timeout: 3000,
+      },
+    )
+    .toBe(true);
+  return logoBacking(page);
+}
+
+/** The link never has a box of its own, in any state. */
+function expectNoBox(look: Backing, label: string): void {
+  expect(look.bg, `${label}: link background is transparent`).toBe(TRANSPARENT);
+  expect(look.shadow, `${label}: link has no box-shadow`).toBe('none');
+}
+
+test('logo backing: soft white glow at the top of the home page, gone once scrolled, never on other pages', async ({
+  page,
+}) => {
+  const check = async (label: string): Promise<void> => {
+    await page.goto('/he');
+    const top = await settledBacking(page, 0, true);
+    expect(top.filter, `${label}: glow at scroll 0`).toContain('drop-shadow');
+    expectNoBox(top, `${label} top`);
+    const down = await settledBacking(page, 600, false);
+    expect(down.filter, `${label}: no glow when scrolled`).toBe('none');
+    expectNoBox(down, `${label} scrolled`);
+
+    await page.goto('/he/c/sample-ceramics');
+    await scrollToY(page, 0);
+    const other = await logoBacking(page);
+    expect(other.filter, `${label}: no glow on another page`).toBe('none');
+    expectNoBox(other, `${label} other page`);
+  };
+  await check('normal motion');
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await check('reduced motion');
+});
+
+test('logo backing: none in forced colours', async ({ page }, testInfo) => {
+  skipUnlessProject(testInfo, ['chromium-desktop', 'chromium-mobile']);
+  await page.emulateMedia({ forcedColors: 'active' });
+  await page.goto('/he');
+  await scrollToY(page, 0);
+  const look = await logoBacking(page);
+  expect(look.filter, 'no glow in forced colours').toBe('none');
+  expectNoBox(look, 'forced colours');
+});
+
+test('logo focus ring: white at the top of the home page, ink elsewhere, 2 px, inside the header', async ({
+  page,
+}) => {
+  const cases: [string, string][] = [
+    ['/he', WHITE],
+    ['/he/c/sample-ceramics', INK],
+  ];
+  for (const [path, wantColor] of cases) {
+    await page.goto(path);
+    await scrollToY(page, 0);
+    // Tab from the skip link onward until the brand link has focus.
+    let focused = false;
+    for (let step = 0; step < 12 && !focused; step += 1) {
+      await page.keyboard.press('Tab');
+      focused = await page.evaluate(
+        () => document.activeElement?.getAttribute('data-testid') === 'header-brand',
+      );
+    }
+    expect(focused, `${path}: the brand link gets keyboard focus`).toBe(true);
+    const ring = await page.evaluate(() => {
+      const brand = document.querySelector('#site-header [data-testid="header-brand"]');
+      const header = document.querySelector('#site-header');
+      if (!brand || !header) throw new Error('missing element');
+      const style = getComputedStyle(brand);
+      const b = brand.getBoundingClientRect();
+      const h = header.getBoundingClientRect();
+      return {
+        style: style.outlineStyle,
+        width: style.outlineWidth,
+        offset: style.outlineOffset,
+        color: style.outlineColor,
+        inside: b.top - 2 >= h.top && b.bottom + 2 <= h.bottom,
+      };
+    });
+    expect(ring.style, `${path}: outline style`).toBe('solid');
+    expect(ring.width, `${path}: outline width`).toBe('2px');
+    expect(ring.offset, `${path}: outline offset`).toBe('0px');
+    expect(ring.color, `${path}: outline colour`).toBe(wantColor);
+    expect(ring.inside, `${path}: ring lies inside the header`).toBe(true);
   }
 });
 

@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import type { ReactNode } from 'react';
-import { logoSrc, logoSrcSet } from '@/lib/brand';
+import { logoSize, logoSrc, logoSrcSet } from '@/lib/brand';
 import { IconButton } from '@/components/ui/IconButton';
 import type { Locale } from '@/i18n/routing';
 import type { PublicCategory } from '@/server/catalog/public-queries';
@@ -28,8 +28,10 @@ export interface HeaderProps {
 
 /**
  * Full-width sticky bar (storefront.md 7.18, research D20). Below 1024 px: menu button, brand,
- * cart. From 1024 px one row in reading order: site links, brand, search field, cart. The menu
- * drawer is a native popover sliding in from the reading start (`.drawer` in `globals.css`).
+ * cart. From 1024 px one row in reading order: site links, brand, search field, cart. The logo
+ * (the wordmark) sits inside the bar, centred, never hanging below it (feature 009, research D3).
+ * The menu drawer is a native popover sliding in from the reading start (`.drawer` in
+ * `globals.css`).
  */
 export async function Header({
   locale,
@@ -64,19 +66,19 @@ export async function Header({
           <Link
             href={base}
             data-testid="header-brand"
-            className="group relative block h-full min-h-11 w-(--logo-size) self-stretch focus-visible:outline-none nav:mx-auto"
+            className="inline-flex min-h-11 items-center rounded-card px-2 py-0.5 nav:mx-auto"
           >
             <img
               data-testid="header-logo"
-              src={logoSrc(176)}
+              src={logoSrc(186)}
               srcSet={logoSrcSet()}
-              sizes="(min-width: 900px) 112px, 88px"
-              width={112}
-              height={112}
+              sizes="(min-width: 900px) 107px, 93px"
+              width={logoSize().width}
+              height={logoSize().height}
               alt={brand.text}
               lang={brand.lang}
               decoding="async"
-              className="absolute inset-s-0 inset-bs-[calc(var(--header-h)-var(--logo-overhang))] block size-(--logo-size) max-w-none rounded-full group-focus-visible:outline-3 group-focus-visible:outline-offset-3 group-focus-visible:outline-current"
+              className="block h-(--logo-h) w-(--logo-w) max-w-none object-contain"
             />
             <span className="sr-only">{t('homeLinkSuffix')}</span>
           </Link>
