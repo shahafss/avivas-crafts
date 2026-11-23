@@ -359,6 +359,25 @@ export async function setProductOrderable(
   });
 }
 
+/** Spec 011 FR-012: the owner's "Show as New" tick box; works in every product state. */
+export async function setProductShowAsNew(
+  actor: Actor,
+  id: string,
+  value: boolean,
+): Promise<ActionResult> {
+  return db.transaction(async (tx): Promise<ActionResult> => {
+    const [current] = await tx.select().from(product).where(eq(product.id, id)).for('update');
+    if (!current) return formFailure('admin.products.errors.not_found');
+    if (current.showAsNew === value) return ok(undefined);
+    await tx.update(product).set({ showAsNew: value }).where(eq(product.id, id));
+    await logActivity(
+      tx,
+      activity(actor, 'product.updated', id, { field: 'showAsNew', to: value }),
+    );
+    return ok(undefined);
+  });
+}
+
 /**
  * Deletes the product and all its photo files at once; order lines keep their own snapshot
  * (`order_line.product_id` becomes null).

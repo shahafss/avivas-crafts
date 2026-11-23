@@ -25,13 +25,14 @@ import { expect, resetDb, signInAsAdmin, sql, test } from './fixtures';
 //                              save-product (saves the form without changing the state; NOT "move to draft"),
 //                              publish, hide, unhide, set-draft (moves to draft)   PublishBar buttons
 //                              orderable-toggle                 checkbox "לא זמין להזמנה כרגע"
+//                              show-as-new-toggle               checkbox "הצגה כ'חדש'" (011 FR-012, saved with the piece)
 //                              delete-product                   delete button (opens the ConfirmDialog)
 //                              confirm-dialog-confirm           the dialog's confirm button
 //                              publish-errors                   the list of missing fields (Hebrew labels)
 //                              option-group-add, option-group-name, option-value-add, option-value-label,
 //                              option-value-delta, option-swatch-<name>, option-group-save
 //   /he/shop, /he/product/[slug]    product-card (link; contains an <img>, the name, the price, the
-//                              "לא זמין להזמנה כרגע" label), option-chip (radio chips; .swatch-<name> dot),
+//                              "לא זמין להזמנה כרגע" label, card-pill-new "חדש" when ticked), option-chip (radio chips; .swatch-<name> dot),
 //                              buy-price (live price), unavailable-notice
 //                              (007: a new piece is on "All pieces" at /he/shop; the home page's row only
 //                              shows the pieces of the home-row category)
@@ -354,6 +355,45 @@ test('4. not orderable: still visible with the label, options read-only, no add-
       async () => await scalar<boolean>(sql`SELECT orderable FROM product WHERE id = ${productId}`),
     )
     .toBe(true);
+});
+
+test('4b. "Show as New": tick and save keeps it after a reload and shows "חדש" on the card; untick removes it', async ({
+  page,
+}) => {
+  await signInAsAdmin(page);
+  try {
+    await openEditor(page);
+    await expect(page.getByTestId('show-as-new-toggle')).not.toBeChecked();
+    await page.getByTestId('show-as-new-toggle').check();
+    await page.getByTestId('save-product').click();
+    await expect
+      .poll(
+        async () =>
+          await scalar<boolean>(sql`SELECT show_as_new FROM product WHERE id = ${productId}`),
+      )
+      .toBe(true);
+
+    await openEditor(page);
+    await expect(page.getByTestId('show-as-new-toggle')).toBeChecked();
+    await page.goto('/he/shop');
+    const card = page.getByTestId('product-card').filter({ hasText: NAME });
+    await expect(card.getByTestId('card-pill-new')).toHaveText('חדש');
+
+    await openEditor(page);
+    await page.getByTestId('show-as-new-toggle').uncheck();
+    await page.getByTestId('save-product').click();
+    await expect
+      .poll(
+        async () =>
+          await scalar<boolean>(sql`SELECT show_as_new FROM product WHERE id = ${productId}`),
+      )
+      .toBe(false);
+    await page.goto('/he/shop');
+    await expect(card).toBeVisible();
+    await expect(card.getByTestId('card-pill-new')).toHaveCount(0);
+  } finally {
+    await sql`UPDATE product SET show_as_new = false WHERE id = ${productId}`;
+  }
 });
 
 test('8. the English view with empty English fields shows the Hebrew texts', async ({ page }) => {

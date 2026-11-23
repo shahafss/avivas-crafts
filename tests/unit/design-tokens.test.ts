@@ -92,6 +92,24 @@ describe('colour contrast of the tokens in globals.css', () => {
   });
 });
 
+describe('card shadows and radii (spec 011)', () => {
+  const block = /@theme\s*\{([\s\S]*?)\n\}/.exec(globals)?.[1] ?? '';
+  function token(name: string): string {
+    const value = new RegExp(`--${name}:\\s*([^;]+);`).exec(block)?.[1];
+    if (value === undefined) throw new Error(`--${name} missing`);
+    return value.trim();
+  }
+
+  it.each([
+    ['shadow-card', '0 1px 2px rgb(6 20 6 / 0.06), 0 4px 14px rgb(6 20 6 / 0.07)'],
+    ['shadow-card-hover', '0 2px 4px rgb(6 20 6 / 0.07), 0 10px 26px rgb(6 20 6 / 0.12)'],
+    ['radius-photo', '8px'],
+    ['radius-sheet', '16px'],
+  ])('--%s has its exact value', (name, value) => {
+    expect(token(name)).toBe(value);
+  });
+});
+
 describe('scrims over photos (research D4)', () => {
   function scrim(name: string): number {
     const value = new RegExp(`--${name}:\\s*([0-9.]+)\\s*;`).exec(globals)?.[1];

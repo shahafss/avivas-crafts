@@ -51,6 +51,12 @@ export interface PublicProductCard {
   /** Some option changes the price, so the card says "from". */
   priceVaries: boolean;
   orderable: boolean;
+  /** The owner ticked "Show as New" (spec 011 FR-012): the card shows the "New" pill. */
+  showAsNew: boolean;
+  /** The category the card's pill names (the breadcrumb rule), or null for no pill. */
+  mainCategory: PublicCategory | null;
+  /** The home-row category when the piece is in it, else null: the card's "featured" pill. */
+  featuredCategory: PublicCategory | null;
   /** Main photo (position 0), or null when the product has none. */
   image: PublicImage | null;
 }
@@ -134,6 +140,21 @@ function priceSpan(
   return { fromPriceMinor: from, priceVaries: varies };
 }
 
+/**
+ * FR-037, one rule for the product page's breadcrumb and the card's category pill: the first
+ * category (in the shop's order) that is not the home-row one, else the home-row one, else none.
+ */
+export function pickMainCategory<T extends { id: string }>(
+  categories: readonly T[],
+  homeCategoryId: string | null,
+): T | null {
+  return (
+    categories.find((entry) => entry.id !== homeCategoryId) ??
+    categories.find((entry) => entry.id === homeCategoryId) ??
+    null
+  );
+}
+
 /** The address of a published product; the database check `product_slug_when_public` makes `null` impossible. */
 export function publicSlug(slug: string | null): string {
   if (slug === null) throw new Error('A published product has no address');
@@ -147,6 +168,7 @@ const CARD_COLUMNS = {
   nameEn: product.nameEn,
   priceIlsMinor: product.priceIlsMinor,
   orderable: product.orderable,
+  showAsNew: product.showAsNew,
   imageId: productImage.id,
   imageKey: productImage.storageKey,
   imageWidth: productImage.width,
@@ -162,6 +184,7 @@ type CardRow = {
   nameEn: string | null;
   priceIlsMinor: number | null;
   orderable: boolean;
+  showAsNew: boolean;
   imageId: string | null;
   imageKey: string | null;
   imageWidth: number | null;
@@ -170,8 +193,36 @@ type CardRow = {
   imageAltEn: string | null;
 };
 
-async function toCards(rows: CardRow[]): Promise<PublicProductCard[]> {
+/** Every category of each product, in the shop's order (`sort_order`, then `id`). */
+const CATEGORY_ORDER = [asc(category.sortOrder), asc(category.id)] as const;
+
+async function toCards(
+  rows: CardRow[],
+  knownHomeCategoryId?: string | null,
+): Promise<PublicProductCard[]> {
   if (rows.length === 0) return [];
+  const ids = rows.map((row) => row.id);
+  const [homeCategoryId, links] = await Promise.all([
+    knownHomeCategoryId === undefined
+      ? getSettings().then((settings) => settings.homeCategoryId)
+      : knownHomeCategoryId,
+    db
+      .select({
+        productId: productCategory.productId,
+        id: category.id,
+        slug: category.slug,
+        nameHe: category.nameHe,
+        nameEn: category.nameEn,
+      })
+      .from(productCategory)
+      .innerJoin(category, eq(category.id, productCategory.categoryId))
+      .where(inArray(productCategory.productId, ids))
+      .orderBy(...CATEGORY_ORDER),
+  ]);
+  const categoriesOf = new Map<string, PublicCategory[]>();
+  for (const { productId, ...entry } of links) {
+    categoriesOf.set(productId, [...(categoriesOf.get(productId) ?? []), entry]);
+  }
   const values = await db
     .select({
       productId: optionGroup.productId,
@@ -180,12 +231,7 @@ async function toCards(rows: CardRow[]): Promise<PublicProductCard[]> {
     })
     .from(optionValue)
     .innerJoin(optionGroup, eq(optionValue.groupId, optionGroup.id))
-    .where(
-      inArray(
-        optionGroup.productId,
-        rows.map((row) => row.id),
-      ),
-    );
+    .where(inArray(optionGroup.productId, ids));
   const byProduct = new Map<string, Map<string, number[]>>();
   for (const value of values) {
     const groups = byProduct.get(value.productId) ?? new Map<string, number[]>();
@@ -203,6 +249,12 @@ async function toCards(rows: CardRow[]): Promise<PublicProductCard[]> {
       priceIlsMinor: base,
       ...priceSpan(base, groups),
       orderable: row.orderable,
+      showAsNew: row.showAsNew,
+      mainCategory: pickMainCategory(categoriesOf.get(row.id) ?? [], homeCategoryId),
+      featuredCategory:
+        homeCategoryId === null
+          ? null
+          : ((categoriesOf.get(row.id) ?? []).find((entry) => entry.id === homeCategoryId) ?? null),
       image:
         row.imageId !== null && row.imageKey !== null
           ? toImage({
@@ -256,9 +308,11 @@ export async function listPublishedProducts(
     sort?: ProductSort;
     searchPattern?: string;
     limit?: number;
+    /** The home-row category id when the caller already has it (saves one settings read). */
+    homeCategoryId?: string | null;
   } = {},
 ): Promise<PublicProductCard[]> {
-  const { categoryId, sort = 'newest', searchPattern, limit } = options;
+  const { categoryId, sort = 'newest', searchPattern, limit, homeCategoryId } = options;
   const filters: (SQL | undefined)[] = [eq(product.state, 'published')];
   if (categoryId !== undefined) filters.push(inCategory(categoryId));
   // `searchPattern` is an already escaped ILIKE pattern (see search.ts).
@@ -273,7 +327,7 @@ export async function listPublishedProducts(
   const query = cardSelect()
     .where(where)
     .orderBy(...order);
-  return toCards(await (limit === undefined ? query : query.limit(limit)));
+  return toCards(await (limit === undefined ? query : query.limit(limit)), homeCategoryId);
 }
 
 /** The piece is linked to any of the categories (an `EXISTS`, so a piece is never listed twice). */
@@ -300,6 +354,7 @@ export async function listAlsoLike(
   productId: string,
   categoryIds: string[],
   limit = 4,
+  homeCategoryId?: string | null,
 ): Promise<PublicProductCard[]> {
   const shared =
     categoryIds.length === 0
@@ -315,6 +370,7 @@ export async function listAlsoLike(
             )
             .orderBy(...NEWEST)
             .limit(limit),
+          homeCategoryId,
         );
   const missing = limit - shared.length;
   if (missing <= 0) return shared;
@@ -328,6 +384,7 @@ export async function listAlsoLike(
       )
       .orderBy(...NEWEST)
       .limit(missing),
+    homeCategoryId,
   );
   return [...shared, ...rest];
 }
@@ -345,6 +402,7 @@ export function listAlsoLikeFor(
     piece.id,
     piece.categories.filter((entry) => entry.id !== homeCategoryId).map((entry) => entry.id),
     limit,
+    homeCategoryId,
   );
 }
 
@@ -418,7 +476,11 @@ export async function getHomeRow(locale: ContentLocale): Promise<HomeRow | null>
     .from(category)
     .where(eq(category.id, homeCategoryId));
   if (!row) return null;
-  const cards = await listPublishedProducts({ categoryId: homeCategoryId, limit: HOME_ROW_LIMIT });
+  const cards = await listPublishedProducts({
+    categoryId: homeCategoryId,
+    limit: HOME_ROW_LIMIT,
+    homeCategoryId,
+  });
   if (cards.length === 0) return null;
   return { name: pick(locale, row.nameHe, row.nameEn), slug: row.slug, cards };
 }
@@ -461,13 +523,9 @@ export const getPublishedProductBySlug = cache(
       .from(productCategory)
       .innerJoin(category, eq(category.id, productCategory.categoryId))
       .where(eq(productCategory.productId, item.id))
-      .orderBy(asc(category.sortOrder));
+      .orderBy(...CATEGORY_ORDER);
     const { homeCategoryId } = await getSettings();
-    // FR-037: the first category that is not the home-row one, else the home-row one, else none.
-    const mainCategory =
-      categories.find((entry) => entry.id !== homeCategoryId) ??
-      categories.find((entry) => entry.id === homeCategoryId) ??
-      null;
+    const mainCategory = pickMainCategory(categories, homeCategoryId);
 
     const images = await db
       .select({

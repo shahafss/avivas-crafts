@@ -111,6 +111,7 @@ export interface EditorProduct {
   categoryIds: string[];
   state: ProductState;
   orderable: boolean;
+  showAsNew: boolean;
 }
 
 export interface EditorImage extends ImageRow {
@@ -148,6 +149,7 @@ export async function getEditorData(id: string): Promise<EditorData | null> {
       categoryIds: links.map((link) => link.categoryId),
       state: row.state,
       orderable: row.orderable,
+      showAsNew: row.showAsNew,
     },
     images: images.map((image) => ({ ...image, url: adminImageUrl(image.storageKey, 400) })),
     groups: await listOptionGroups(id),

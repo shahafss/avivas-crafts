@@ -85,6 +85,7 @@
     },
     "card": {
       "from": "From",
+      "new": "New",
       "notOrderable": "Not available to order right now"
     },
     "product": {
@@ -882,6 +883,8 @@
         "setDraft": "Move to draft",
         "orderable": "Not available to order right now",
         "orderableHint": "The product stays in the shop, without an add-to-cart button.",
+        "showAsNew": "Show as New",
+        "showAsNewHint": "Shows a 'New' label on the piece's card in the shop. You can untick it at any time.",
         "delete": "Delete product",
         "deleteTitle": "Delete the product?",
         "deleteText": "The product and its photos are deleted at once. Past orders keep their own details. This cannot be undone.",

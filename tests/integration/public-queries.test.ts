@@ -8,10 +8,16 @@ import type { Actor } from '@/server/catalog/result';
 import { createCategory } from '@/server/catalog/categories';
 import { addImage } from '@/server/catalog/images';
 import { upsertOptionGroup } from '@/server/catalog/options';
-import { createProduct, setProductState, updateProduct } from '@/server/catalog/products';
+import {
+  createProduct,
+  setProductShowAsNew,
+  setProductState,
+  updateProduct,
+} from '@/server/catalog/products';
 import {
   getHomeRow,
   getPublishedProductBySlug,
+  pickMainCategory,
   listCategoriesWithProducts,
   listSitemapEntries,
   listNewestProducts,
@@ -346,5 +352,76 @@ describe('listAlsoLike (007 FR-019, D8)', () => {
     const list = ids(await listAlsoLike(mine.id, [a, b]));
     expect(list).toEqual([both.id, other.id]);
     expect(new Set(list).size).toBe(list.length);
+  });
+  describe('card labels (spec 011 FR-004, FR-012, FR-013)', () => {
+    it('cards carry showAsNew from the owner tick box', async () => {
+      const home = await featuredId();
+      const fresh = await make('חדשה', 1000, home);
+      const old = await make('ישנה', 1000, home);
+      await setProductShowAsNew(actor, fresh.id, true);
+      const cards = await listPublishedProducts();
+      expect(cards.find((card) => card.id === fresh.id)?.showAsNew).toBe(true);
+      expect(cards.find((card) => card.id === old.id)?.showAsNew).toBe(false);
+    });
+
+    it('mainCategory is the first non-home category, else the home one, else null', async () => {
+      const home = await featuredId();
+      const a = await newCategory('א');
+      const b = await newCategory('ב');
+      const both = await make('שתיים', 1000, [home, b, a]);
+      const onlyHome = await make('בית', 1000, home);
+      const none = await make('בלי', 1000, home);
+      await testDb.db.delete(productCategory).where(eq(productCategory.productId, none.id));
+      const byId = new Map((await listPublishedProducts()).map((card) => [card.id, card]));
+      expect(byId.get(both.id)?.mainCategory?.id).toBe(a);
+      expect(byId.get(onlyHome.id)?.mainCategory?.id).toBe(home);
+      expect(byId.get(none.id)?.mainCategory).toBeNull();
+    });
+
+    it('featuredCategory is the home-row category when the piece is in it, else null', async () => {
+      const home = await featuredId();
+      const a = await newCategory('א');
+      const both = await make('שתיים', 1000, [home, a]);
+      const onlyHome = await make('בית', 1000, home);
+      const notIn = await make('אחרת', 1000, a);
+      const byId = new Map((await listPublishedProducts()).map((card) => [card.id, card]));
+      expect(byId.get(both.id)?.featuredCategory?.id).toBe(home);
+      expect(byId.get(both.id)?.mainCategory?.id).toBe(a);
+      expect(byId.get(onlyHome.id)?.featuredCategory?.id).toBe(home);
+      expect(byId.get(onlyHome.id)?.mainCategory?.id).toBe(home);
+      expect(byId.get(notIn.id)?.featuredCategory).toBeNull();
+    });
+
+    it('every card list fills the labels, and the card agrees with the product page', async () => {
+      const home = await featuredId();
+      const a = await newCategory('א');
+      const piece = await make('בובה', 1000, [home, a]);
+      const other = await make('אחרת', 1000, [home, a]);
+      await setProductShowAsNew(actor, piece.id, true);
+      const detail = await getPublishedProductBySlug(piece.slug);
+      const lists = [
+        await listPublishedProducts(),
+        await listNewestProducts(5),
+        await listAlsoLike(other.id, [a]),
+        await listAlsoLikeFor({ id: other.id, categories: [{ id: home }, { id: a }] }, home),
+        (await getHomeRow('he'))?.cards ?? [],
+      ];
+      for (const list of lists) {
+        const card = list.find((entry) => entry.id === piece.id);
+        expect(card?.showAsNew).toBe(true);
+        expect(card?.mainCategory).toEqual(detail?.mainCategory);
+        expect(card?.mainCategory?.id).toBe(a);
+        expect(card?.featuredCategory?.id).toBe(home);
+      }
+    });
+
+    it('pickMainCategory follows the breadcrumb rule', () => {
+      const x = { id: 'x' };
+      const y = { id: 'y' };
+      expect(pickMainCategory([x, y], 'x')).toBe(y);
+      expect(pickMainCategory([x], 'x')).toBe(x);
+      expect(pickMainCategory([x, y], null)).toBe(x);
+      expect(pickMainCategory([], 'x')).toBeNull();
+    });
   });
 });

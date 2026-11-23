@@ -31,6 +31,7 @@ import {
   createProduct,
   deleteProduct,
   setProductOrderable,
+  setProductShowAsNew,
   setProductState,
   updateProduct,
 } from '@/server/catalog/products';
@@ -439,6 +440,47 @@ describe('setProductState', () => {
     expect(row).toMatchObject({ state: 'published', orderable: false });
     await ok(setProductOrderable(actor, id, true));
     expect((await getProduct(id)).orderable).toBe(true);
+  });
+
+  it('starts with the "Show as New" box off', async () => {
+    const id = await completeProduct();
+    expect((await getProduct(id)).showAsNew).toBe(false);
+  });
+
+  it('setProductShowAsNew stores the value in any state and logs the change', async () => {
+    const id = await completeProduct();
+    await ok(setProductShowAsNew(actor, id, true));
+    expect(await getProduct(id)).toMatchObject({ state: 'draft', showAsNew: true });
+    const rows = await activity('product.updated');
+    expect(
+      rows.filter(
+        (row) =>
+          (row.details as { field?: string; to?: boolean }).field === 'showAsNew' &&
+          (row.details as { to?: boolean }).to === true,
+      ),
+    ).toHaveLength(1);
+    await ok(setProductShowAsNew(actor, id, false));
+    expect((await getProduct(id)).showAsNew).toBe(false);
+  });
+
+  it('setProductShowAsNew with the same value writes nothing', async () => {
+    const id = await completeProduct();
+    const before = (await activity('product.updated')).length;
+    await ok(setProductShowAsNew(actor, id, false));
+    await ok(setProductShowAsNew(actor, id, true));
+    await ok(setProductShowAsNew(actor, id, true));
+    expect((await activity('product.updated')).length).toBe(before + 1);
+  });
+
+  it('setProductShowAsNew fails for a missing product', async () => {
+    const result = await setProductShowAsNew(actor, '00000000-0000-4000-8000-000000000000', true);
+    expect(result).toMatchObject({ ok: false });
+  });
+
+  it('getEditorData returns the saved "Show as New" value', async () => {
+    const id = await completeProduct();
+    await ok(setProductShowAsNew(actor, id, true));
+    expect((await getEditorData(id))?.product.showAsNew).toBe(true);
   });
 
   it('writes product.updated with the new state', async () => {

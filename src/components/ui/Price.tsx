@@ -5,7 +5,7 @@ export interface PriceProps {
   minor: number;
   currency: Currency;
   locale: MoneyLocale;
-  size?: 'lg' | 'md' | 'sm';
+  size?: 'lg' | 'md' | 'card';
   /** Translated prefix such as "From"; the price then reads "From ₪120". */
   from?: string;
   className?: string;
@@ -24,7 +24,7 @@ export function Price({
       {from === undefined ? null : (
         <span
           className={cn(
-            size === 'sm' ? 'text-sm font-normal' : 'text-[15px] font-medium',
+            size === 'card' ? 'text-sm font-normal' : 'text-[15px] font-medium',
             'text-ink-2',
           )}
         >
@@ -36,7 +36,7 @@ export function Price({
           'tnum',
           size === 'lg' && 'text-2xl leading-tight font-bold',
           size === 'md' && 'text-[15px] font-medium',
-          size === 'sm' && 'text-sm font-normal text-ink-2',
+          size === 'card' && 'text-[15px] font-normal text-ink lg:text-base',
         )}
       >
         {formatMoney(minor, currency, locale)}
