@@ -13,9 +13,9 @@ const TRACK_ID = 'home-row-track';
  * The home page's swipeable row (storefront.md §7.32, contracts/home-row.md "Home row"): the
  * pieces of the home-row category in one line that scrolls and snaps with CSS alone, so it swipes
  * and scrolls without JavaScript and the page itself never scrolls sideways. `RowArrows` adds the
- * previous / next buttons from 900 px. The track's padding gives the focus ring of a card room
- * (the track clips what lies outside it); the negative margin keeps the cards in line with the
- * heading.
+ * previous / next buttons from 900 px. The track's padding gives the shadow, the 2 px lift and the
+ * focus ring of a card room (the track clips what lies outside it); the negative margin keeps the
+ * cards in line with the heading.
  */
 export async function HomeRow({ row, locale }: { row: HomeRowData; locale: Locale }) {
   const t = await getTranslations({ locale, namespace: 'shop.home.row' });
@@ -49,11 +49,11 @@ export async function HomeRow({ row, locale }: { row: HomeRowData; locale: Local
         id={TRACK_ID}
         data-testid="home-row-track"
         aria-label={row.name.text}
-        className="row-track -mx-2 -my-2 grid auto-cols-[calc((100%-0.75rem)/2.15)] grid-flow-col gap-3 overflow-x-auto overscroll-x-contain scroll-px-2 snap-x snap-mandatory px-2 py-2 lg:auto-cols-[calc((100%-3rem)/4)] lg:gap-4"
+        className="row-track -mx-4 -mt-4 -mb-10 grid auto-cols-[calc((100%-0.75rem)/2.15)] grid-flow-col gap-3 overflow-x-auto overscroll-x-contain scroll-px-4 snap-x snap-mandatory px-4 pt-4 pb-10 lg:auto-cols-[calc((100%-3rem)/4)] lg:gap-4"
       >
         {row.cards.map((card, index) => (
           <li key={card.id} className="min-w-0 snap-start">
-            <ProductCard product={card} locale={locale} index={index} eager={false} />
+            <ProductCard product={card} locale={locale} index={index} eager={false} inHomeRow />
           </li>
         ))}
       </ul>

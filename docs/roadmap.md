@@ -36,6 +36,7 @@ The vision (who the shop is for, what success means, principles, what is out of 
 | 008 | Post-launch fixes (orders, logo, WhatsApp, business number, link previews) | yes | Done (awaiting owner test) | [specs/008-post-launch-fixes](../specs/008-post-launch-fixes/) |
 | 009 | New header logo (wordmark) | yes | Done (awaiting owner test) | [specs/009-header-logo-wordmark](../specs/009-header-logo-wordmark/) |
 | 010 | Storefront polish (footer credit, link underline, readable sitemap, product addresses) | no | Done (awaiting owner test) | [specs/010-storefront-polish](../specs/010-storefront-polish/) |
+| 011 | New look for product cards and the product page (mounted cards, one-card product page, "New" and category labels, rounded photos) | no | Done (awaiting owner test) | [specs/011-product-card-page-look](../specs/011-product-card-page-look/) |
 
 Numbers are a suggested order. Spec Kit gives each feature the next free number when it is
 created, so if the order changes, the numbers follow the order of creation, not this table.
@@ -157,6 +158,15 @@ on every page, readable over the home photo (soft white backing); new tab and ap
 preview built from it. Replaces 008's round badge.
 
 **Source**: owner decisions 2026-11-21 (recorded in the spec).
+
+### 011 — New look for product cards and the product page
+
+**Goal**: product cards become white "mounted photo" cards (rounded photo inside a bordered card,
+soft shadow, "New" and category labels on the photo); the product page puts the gallery and the
+details in one rounded card; product photos, thumbnails and the cart and checkout photos get
+rounded corners. "New" is a tick box the owner sets in the piece editor.
+
+**Source**: owner design choices 2026-11-22 and answers 2026-11-23 (recorded in the spec).
 
 ## Later (after launch)
 

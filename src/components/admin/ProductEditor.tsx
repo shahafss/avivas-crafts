@@ -23,6 +23,7 @@ export interface ProductEditorActions extends PhotoActions, OptionActions {
   updateProduct: (productId: string, input: ProductUpdate) => Promise<ActionResult>;
   setProductState: (productId: string, action: string) => Promise<ActionResult>;
   setProductOrderable: (productId: string, orderable: boolean) => Promise<ActionResult>;
+  setProductShowAsNew: (productId: string, value: boolean) => Promise<ActionResult>;
   deleteProduct: (input: { id: string; confirm: boolean }) => Promise<ActionResult>;
 }
 
@@ -40,6 +41,7 @@ export interface EditorProductData {
   categoryIds: string[];
   state: ProductState;
   orderable: boolean;
+  showAsNew: boolean;
 }
 
 interface Feedback {
@@ -155,6 +157,7 @@ export function ProductEditor({
   const [prepTimeEn, setPrepTimeEn] = useState(product.prepTimeEn ?? '');
   const [categoryIds, setCategoryIds] = useState<string[]>(product.categoryIds);
   const [notOrderable, setNotOrderable] = useState(!product.orderable);
+  const [showAsNew, setShowAsNew] = useState(product.showAsNew);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [missing, setMissing] = useState<string[]>([]);
@@ -249,6 +252,10 @@ export function ProductEditor({
     if (notOrderable === product.orderable) {
       const orderable = await actions.setProductOrderable(product.id, !notOrderable);
       if (!orderable.ok) return showFailure(orderable);
+    }
+    if (showAsNew !== product.showAsNew) {
+      const shown = await actions.setProductShowAsNew(product.id, showAsNew);
+      if (!shown.ok) return showFailure(shown);
     }
     return true;
   }
@@ -539,6 +546,8 @@ export function ProductEditor({
               state={product.state}
               notOrderable={notOrderable}
               onNotOrderableChange={setNotOrderable}
+              showAsNew={showAsNew}
+              onShowAsNewChange={setShowAsNew}
               missing={missing}
               busy={busy}
               onSave={() => void onSave()}

@@ -15,8 +15,9 @@ interface Measure {
 /**
  * Previous / next buttons for the home row (storefront.md §7.32, research D18). The row itself
  * works without them; they are not rendered until the track has been measured, and not at all
- * when nothing overflows. Shown from 900 px. A press scrolls by the track's visible width toward
- * the reading end (next) or start (previous); RTL tracks have a negative `scrollLeft`. No timers.
+ * when nothing overflows. Shown from 900 px. A press scrolls one page of cards (the visible width
+ * minus the track's start padding) toward the reading end (next) or start (previous); RTL tracks
+ * have a negative `scrollLeft`. No timers.
  */
 export function RowArrows({
   trackId,
@@ -53,10 +54,13 @@ export function RowArrows({
   function go(toward: 1 | -1): void {
     const track = document.getElementById(trackId);
     if (track === null) return;
-    const sign = getComputedStyle(track).direction === 'rtl' ? -1 : 1;
+    const style = getComputedStyle(track);
+    const sign = style.direction === 'rtl' ? -1 : 1;
+    // One page of cards: the visible width minus the room the track keeps at its start.
+    const page = track.clientWidth - (Number.parseFloat(style.paddingInlineStart) || 0);
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     track.scrollBy({
-      left: toward * sign * track.clientWidth,
+      left: toward * sign * page,
       behavior: reduced ? 'auto' : 'smooth',
     });
   }

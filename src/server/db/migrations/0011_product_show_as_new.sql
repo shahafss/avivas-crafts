@@ -1,0 +1,1 @@
+ALTER TABLE "product" ADD COLUMN "show_as_new" boolean DEFAULT false NOT NULL;

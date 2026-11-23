@@ -1927,3 +1927,117 @@ test('footer credit: the text, the link to shahafs.com in a new tab and no sidew
     await noSidewaysScroll(page, `${locale} footer credit at 320 px`);
   }
 });
+
+// 011 US3 (FR-004, FR-012): a piece ticked "Show as New" shows the "New" pill above its category
+// pill, on the photo's reading-start side (right in Hebrew, left in English); a piece without
+// the tick shows only the category pill.
+test('a card shows the New pill above the category pill on the photo start side, only when ticked', async ({
+  page,
+}) => {
+  const NEW_TEXT = { he: 'חדש', en: 'New' } as const;
+  await sql`UPDATE product SET show_as_new = true WHERE slug = 'sample-soy-candle'`;
+  try {
+    for (const width of [375, 1280]) {
+      await page.setViewportSize({ width, height: 800 });
+      for (const locale of LOCALES) {
+        const label = `${locale} at ${String(width)} px`;
+        await page.goto(`/${locale}/shop`);
+        const marked = page.locator(
+          'a[data-testid="product-card"][href$="/product/sample-soy-candle"]',
+        );
+        const pillNew = marked.getByTestId('card-pill-new');
+        const pillCategory = marked.getByTestId('card-pill-category');
+        await expect(pillNew, label).toHaveText(NEW_TEXT[locale]);
+        await expect(pillCategory, label).toBeVisible();
+        const photo = await marked.getByTestId('card-photo').boundingBox();
+        const first = await pillNew.boundingBox();
+        const second = await pillCategory.boundingBox();
+        if (!photo || !first || !second) throw new Error(`${label}: missing boxes`);
+        expect(first.y, `${label}: New is above the category pill`).toBeLessThan(second.y);
+        expect(first.y, `${label}: New is inside the photo`).toBeGreaterThanOrEqual(photo.y);
+        const startGap = (box: { x: number; width: number }): number =>
+          locale === 'he' ? photo.x + photo.width - (box.x + box.width) : box.x - photo.x;
+        for (const [name, box] of [
+          ['New', first],
+          ['category', second],
+        ] as const) {
+          expect(
+            startGap(box),
+            `${label}: ${name} starts at the photo's start side`,
+          ).toBeGreaterThan(0);
+          expect(startGap(box), `${label}: ${name} starts at the photo's start side`).toBeLessThan(
+            photo.width / 3,
+          );
+        }
+
+        // A piece without the tick has only the category pill.
+        const plain = page
+          .locator('[data-testid="product-card"]:not([href$="/product/sample-soy-candle"])')
+          .first();
+        await expect(plain.getByTestId('card-pill-new'), label).toHaveCount(0);
+        await expect(plain.getByTestId('card-pill-category'), label).toBeVisible();
+      }
+    }
+  } finally {
+    await sql`UPDATE product SET show_as_new = false WHERE slug = 'sample-soy-candle'`;
+  }
+});
+
+// 011 FR-013 (the pill rule, owner feedback 2026-11-23): the seed puts every sample piece in the
+// home-row category ("featured") and in its own category. A piece not marked new shows the
+// featured pill above its category pill; the home row's cards never show the featured pill; no
+// card shows more than two pills (all three apply to a piece marked new: New + category).
+test('the pill rule: featured above the category, none in the home row, never more than two', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  const FEATURED_TEXT = { he: 'מומלצות', en: 'Featured' } as const;
+  const soy = 'a[data-testid="product-card"][href$="/product/sample-soy-candle"]';
+  const pillCount = (card: Locator): Promise<number> =>
+    card.locator('[data-testid^="card-pill-"]').count();
+  try {
+    for (const locale of LOCALES) {
+      // Not marked new: Featured + Category, featured on top.
+      await page.goto(`/${locale}/shop`);
+      const card = page.locator(soy);
+      const featured = card.getByTestId('card-pill-featured');
+      const categoryPill = card.getByTestId('card-pill-category');
+      await expect(featured, locale).toHaveText(FEATURED_TEXT[locale]);
+      await expect(card.getByTestId('card-pill-new'), locale).toHaveCount(0);
+      const top = await featured.boundingBox();
+      const under = await categoryPill.boundingBox();
+      if (!top || !under) throw new Error(`${locale}: missing pill boxes`);
+      expect(top.y, `${locale}: featured is above the category pill`).toBeLessThan(under.y);
+
+      // The home row: no featured pill on any card; the other category still shows.
+      await page.goto(`/${locale}`);
+      const rowCards = page.getByTestId('home-row-track').getByTestId('product-card');
+      expect(await rowCards.count(), `${locale}: the home row has cards`).toBeGreaterThan(0);
+      await expect(rowCards.getByTestId('card-pill-featured'), locale).toHaveCount(0);
+      await expect(
+        rowCards.first().getByTestId('card-pill-category'),
+        `${locale}: the other category shows in the row`,
+      ).toBeVisible();
+    }
+
+    // Marked new, all three apply: New + Category, never the featured pill; no card has more than two.
+    await sql`UPDATE product SET show_as_new = true WHERE slug = 'sample-soy-candle'`;
+    for (const locale of LOCALES) {
+      for (const path of [`/${locale}/shop`, `/${locale}`]) {
+        await page.goto(path);
+        const marked = page.locator(soy).first();
+        await expect(marked.getByTestId('card-pill-new'), path).toBeVisible();
+        await expect(marked.getByTestId('card-pill-category'), path).toBeVisible();
+        await expect(marked.getByTestId('card-pill-featured'), path).toHaveCount(0);
+        const cards = page.getByTestId('product-card');
+        for (let i = 0; i < (await cards.count()); i += 1) {
+          expect(await pillCount(cards.nth(i)), `${path}: card ${String(i)}`).toBeLessThanOrEqual(
+            2,
+          );
+        }
+      }
+    }
+  } finally {
+    await sql`UPDATE product SET show_as_new = false WHERE slug = 'sample-soy-candle'`;
+  }
+});

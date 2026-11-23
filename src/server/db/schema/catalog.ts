@@ -50,6 +50,8 @@ export const product = pgTable(
     prepTimeEn: text('prep_time_en'),
     state: productStateEnum('state').notNull().default('draft'),
     orderable: boolean('orderable').notNull().default(true),
+    /** The owner's "Show as New" tick box (spec 011 FR-012). */
+    showAsNew: boolean('show_as_new').notNull().default(false),
     publishedAt: tstz('published_at'),
     searchText: text('search_text').generatedAlwaysAs(
       sql`lower(coalesce(name_he,'') || ' ' || coalesce(name_en,'') || ' ' || coalesce(description_he,'') || ' ' || coalesce(description_en,''))`,

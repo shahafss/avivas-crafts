@@ -24,7 +24,7 @@ export async function ProductGrid({
   return (
     <ul
       aria-label={label ?? fallback('gridLabel')}
-      className="grid grid-cols-2 gap-x-3 gap-y-7 sm:grid-cols-3 lg:grid-cols-4 lg:gap-x-5 lg:gap-y-10"
+      className="grid grid-cols-2 gap-x-3 gap-y-6 sm:grid-cols-3 lg:grid-cols-4 lg:gap-x-5 lg:gap-y-9"
     >
       {products.map((product, index) => (
         <li key={product.id} className="min-w-0">

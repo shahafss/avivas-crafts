@@ -7,11 +7,16 @@ import type { ProductState } from '@/server/catalog/admin-queries';
 
 export type StateAction = 'publish' | 'hide' | 'unhide' | 'draft';
 
-/** Save, state buttons, the "not available to order" switch, delete, and what blocks publishing. */
+/**
+ * Save, state buttons, the "not available to order" and "Show as New" boxes, delete, and what
+ * blocks publishing.
+ */
 export function PublishBar({
   state,
   notOrderable,
   onNotOrderableChange,
+  showAsNew,
+  onShowAsNewChange,
   missing,
   busy,
   onSave,
@@ -21,6 +26,8 @@ export function PublishBar({
   state: ProductState;
   notOrderable: boolean;
   onNotOrderableChange: (value: boolean) => void;
+  showAsNew: boolean;
+  onShowAsNewChange: (value: boolean) => void;
   /** Field names that block publishing (`nameHe`, `images`, ...), shown with their Hebrew labels. */
   missing: string[];
   busy: boolean;
@@ -55,6 +62,22 @@ export function PublishBar({
         <span>
           <span className="block font-bold">{t('bar.orderable')}</span>
           <span className="block text-[13px] text-ink-2">{t('bar.orderableHint')}</span>
+        </span>
+      </label>
+
+      <label className="flex min-h-11 cursor-pointer items-start gap-3 py-1">
+        <input
+          type="checkbox"
+          checked={showAsNew}
+          onChange={(event) => {
+            onShowAsNewChange(event.target.checked);
+          }}
+          className="mt-1 size-6 shrink-0 accent-ink"
+          data-testid="show-as-new-toggle"
+        />
+        <span>
+          <span className="block font-bold">{t('bar.showAsNew')}</span>
+          <span className="block text-[13px] text-ink-2">{t('bar.showAsNewHint')}</span>
         </span>
       </label>
 
