@@ -20,6 +20,7 @@ import {
 import {
   deleteProduct as deleteProductRecord,
   setProductOrderable as setProductOrderableRecord,
+  setProductShowAsNew as setProductShowAsNewRecord,
   setProductState as setProductStateRecord,
   updateProduct as updateProductRecord,
 } from '@/server/catalog/products';
@@ -68,6 +69,16 @@ export async function setProductOrderable(
   const id = idSchema.safeParse(productId);
   if (!id.success || typeof orderable !== 'boolean') return formFailure(NOT_FOUND);
   return setProductOrderableRecord(actorOf(context), id.data, orderable);
+}
+
+export async function setProductShowAsNew(
+  productId: string,
+  value: boolean,
+): Promise<ActionResult> {
+  const context = await requireAdmin();
+  const id = idSchema.safeParse(productId);
+  if (!id.success || typeof value !== 'boolean') return formFailure(NOT_FOUND);
+  return setProductShowAsNewRecord(actorOf(context), id.data, value);
 }
 
 export async function deleteProduct(input: {

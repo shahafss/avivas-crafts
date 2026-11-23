@@ -61,7 +61,7 @@ export function CartLine({
         flagged ? 'border-[1.5px] border-alert' : 'border-line',
       )}
     >
-      <span className="block h-[72px] w-[72px] overflow-hidden bg-photo">
+      <span className="block h-[72px] w-[72px] overflow-hidden rounded-photo bg-photo">
         {line.imageUrl === null ? null : (
           <img
             src={line.imageUrl}

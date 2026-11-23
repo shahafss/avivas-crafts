@@ -119,7 +119,8 @@ export function Gallery({ name, images }: { name: string; images: GalleryImage[]
 
   return (
     <div className="min-w-0">
-      <div className="relative overflow-hidden bg-photo">
+      {/* Phone corners: 15 px = the card's 16 px minus its 1 px border. */}
+      <div className="relative isolate overflow-hidden rounded-ss-[15px] rounded-se-[15px] rounded-es-[12px] rounded-ee-[12px] bg-photo lg:rounded-photo">
         <div
           ref={track}
           data-testid="gallery-track"
@@ -162,7 +163,7 @@ export function Gallery({ name, images }: { name: string; images: GalleryImage[]
         <span
           data-testid="gallery-focus-ring"
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 peer-focus-visible:-outline-offset-4 peer-focus-visible:outline-3 peer-focus-visible:outline-ink peer-focus-visible:outline-solid"
+          className="pointer-events-none absolute inset-0 rounded-[inherit] peer-focus-visible:-outline-offset-4 peer-focus-visible:outline-3 peer-focus-visible:outline-ink peer-focus-visible:outline-solid"
         />
         {total > 1 ? (
           <span
@@ -188,11 +189,14 @@ export function Gallery({ name, images }: { name: string; images: GalleryImage[]
         </span>
       </div>
 
+      {/* 6 px of room on every side of the buttons (the row clips): the focus ring is 3 px at a 3 px
+          offset. Phones: buttons 8 px from the card's edge and 8 px under the photo; from 900 px in
+          line with the photo and 12 px under it. The bottom room overlaps the details' padding. */}
       {total > 1 ? (
         <ul
           aria-label={t('thumbnails')}
           data-testid="gallery-thumbnails"
-          className="mt-2 flex gap-2 overflow-x-auto p-1"
+          className="mx-0.5 mt-0.5 -mb-1.5 flex gap-2 overflow-x-auto p-1.5 lg:-mx-1.5 lg:mt-1.5"
         >
           {images.map((image, index) => (
             <li key={image.id} className="shrink-0">
@@ -204,8 +208,8 @@ export function Gallery({ name, images }: { name: string; images: GalleryImage[]
                   goTo(index);
                 }}
                 className={cn(
-                  'relative block h-[72px] w-[72px] overflow-hidden bg-photo',
-                  current === index && 'ring-[3px] ring-forest',
+                  'relative block h-[72px] w-[72px] overflow-hidden rounded-photo bg-photo',
+                  current === index && 'ring-2 ring-forest ring-offset-2 ring-offset-paper',
                 )}
               >
                 <img

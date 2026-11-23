@@ -215,9 +215,10 @@ export default async function ProductPage({ params }: { params: Params }) {
       <div className="grid gap-4">
         <Breadcrumbs label={t('breadcrumbs')} items={crumbs} />
         <NextIntlClientProvider locale={locale} messages={clientMessages}>
-          <div className="grid gap-5 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] lg:items-start lg:gap-10">
+          {/* One card (spec 011 D7). No overflow-hidden/clip: it would break the sticky details. */}
+          <div className="grid rounded-sheet border border-line bg-paper shadow-card lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] lg:items-start lg:gap-9 lg:p-3">
             <Gallery name={name.text} images={images} />
-            <div className="grid content-start gap-4 lg:sticky lg:top-[calc(var(--header-h)+16px)]">
+            <div className="grid content-start gap-4 px-4 pt-[18px] pb-4 lg:sticky lg:top-[calc(var(--header-h)+16px)] lg:ps-0 lg:pe-5 lg:pt-5 lg:pb-4">
               <h1
                 {...fallbackAttrs(name)}
                 className="text-[30px] leading-[1.15] font-bold tracking-[-0.01em] text-balance lg:text-[36px]"
