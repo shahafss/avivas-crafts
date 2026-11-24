@@ -96,6 +96,19 @@ grey-green border, `sage` soft green, `forest` dark green, `photo` light photo b
   Featured ("Featured as a last choice"). Elsewhere (All pieces, category pages, search, "You may
   also like") the featured pill may show as that last choice.
 
+### Owner feedback, second round (2026-11-23)
+
+- The header logo must sit in the exact centre of the whole header's width at every width, not
+  just in the gap between the links and the search field (separate from the cards, same branch).
+  When the links side is too full for that (three header categories on a narrow computer screen),
+  the category names are cut shorter with "…"; the fixed links, the logo and the search field keep
+  their size. Owner answer (2026-11-24): "Always exact centre": the logo never moves, even when
+  three header categories with 12-character names at about 1024 px leave room for only 3–4
+  letters of each name before "…". This replaces, for that case only, the earlier promise that an
+  ordinary 12-character category name shows in full at 1024 px (001 FR-040, `storefront.md`
+  §7.18 width budget and §12.12); with one or two header categories, and on wider screens, names
+  still show in full.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Browsing pieces as mounted cards (Priority: P1)
@@ -351,6 +364,13 @@ checks.
 - **FR-017**: The photos in the cart drawer lines (72 × 72 px) MUST have 8 px rounded corners and
   the photos in the checkout order summary (48 × 48 px) 6 px rounded corners; both stay square
   within 1 px and keep their `photo` background while loading.
+- **FR-018** (owner feedback, second round, 2026-11-23): The header logo link's centre MUST be at
+  the centre of the header bar (within 1 px) at every width, in both languages, on every public
+  page. From 1024 px the bar is three columns of which the two outer ones are always equal: the
+  links at the reading start, the logo in the middle, the search field and the cart at the reading
+  end. If the links do not fit in their half, only the header category names get shorter (down to
+  the 44 px link target, ending in "…"); nothing overlaps, nothing wraps, no sideways scroll.
+  Below 1024 px nothing changes (the logo is already centred).
 
 ### Key Entities *(include if feature involves data)*
 

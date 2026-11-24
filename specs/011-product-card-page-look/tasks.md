@@ -257,3 +257,42 @@ contracts/ui.md). Same rules as above. One batch, in order.
 
 - [X] T024 Update the 011 row of `docs/design/storefront.md` §11 "Verification" for the pill rule: add `tests/unit/card-pills.test.ts` to its file list, and mention `featuredCategory`, the featured pill above the category pill, no featured pill in the home row, and never more than two pills, per FR-014 (partial)
 - [X] T025 In `tests/integration/public-queries.test.ts` ("every card list fills the labels…", around line 396) also assert `featuredCategory` on every card list (the piece is in `[home, a]`, so `featuredCategory?.id` is the home-row id) per contracts/ui.md "Checks" and data-model.md `featuredCategory` (partial)
+
+---
+
+## Phase 6: Owner feedback, second round (2026-11-23): header logo in the exact centre
+
+- [X] T026 Header (FR-018): in `src/components/shop/Header.tsx` make the bar a grid from 1024 px too:
+  `nav:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] nav:gap-4` instead of `nav:flex nav:gap-4`
+  (the phone grid `1fr minmax(0,auto) 1fr` stays). Column 1: the menu button below 1024 px, the
+  `<nav>` from 1024 px (`min-w-0`). Column 2: the brand, without `nav:mx-auto`. Column 3: one
+  wrapper (`flex items-center justify-end gap-4`, `min-w-0`) holding the search field (hidden below
+  1024 px) and the cart, so DOM and reading order stay links, brand, search, cart. In
+  `HeaderCategories.tsx` the fixed links ("All pieces", "About", "Shipping & Returns") stay
+  `shrink-0`; the category `<li>` and its link may shrink (`min-w-0`, `shrink`), down to the
+  44 px link target, the inner span keeping `max-w-[95px] truncate` so the name ends in "…" and the
+  focus ring stays on the `<a>`. Update the header doc comments.
+- [X] T027 Tests (FR-018) in `tests/e2e/storefront-layout.spec.ts` (`chromium-desktop`): replace the
+  test "the brand is centred between the nav and the search form from 1024 px…" with one that
+  checks the brand's centre equals the header's centre within 1 px at 375, 1024 and 1280 px, `he`
+  and `en`, on `/` and `/shop`, both with the seed's header categories and with three header
+  categories (`setHeaderCategories('sample-candles', 'sample-ceramics')`, restored in `finally`).
+  The existing one-row order, no-overlap, no-sideways-scroll and 60-character-name tests keep
+  passing (update only what asserts the old "centred in the free space" rule). Check whether
+  `home.spec.ts` asserts the old rule (around its `header-brand` boxes) and update it if so.
+- [X] T028 Docs: `docs/design/storefront.md` §7.18 (the "From 1024 px" brand sentence, "Nothing
+  overlaps, by construction" and the width budget at 1024 px: the brand is no longer the item that
+  absorbs a narrow width, the category names are), the 011 row of §11, and a §14 item for the owner
+  decision (2026-11-23). Then final checks: `pnpm verify`, `pnpm build`, `storefront-layout.spec.ts`
+  and `home.spec.ts` on `chromium-desktop`. Add `he-1024-header.png`, `en-1024-header.png` and
+  `he-1280-header.png` (the top 120 px of `/he/shop` and `/en/shop`) to
+  `test-results/011-screenshots/` without deleting the 14 there (copy them out of `test-results`
+  before any Playwright run and back afterwards).
+
+---
+
+## Phase 7: Convergence
+
+- [X] T029 In `tests/e2e/storefront-layout.spec.ts`, in the 12-character category names test, also assert the brand's centre equals the header's centre within 1 px in every layout, and, for ordinary names with three header categories at 1024 px, that the names really are cut (`span.fits` is `false`), per FR-018 and the 2026-11-24 owner answer (partial)
+- [X] T030 In `docs/design/storefront.md`, fix §7.18: drop the stale "160 px brand cap" in "Nothing overlaps, by construction" and in the Brand paragraph (the brand is the fixed 109.5 / 123.5 px logo link in the middle column), drop "`shrink-0`" for the brand, and note the classic-scrollbar case (a 1024 px window leaves about 1007 px; English with three categories then sits at the 44 px link minimum, no overlap). Add 7.18 and 12.12 to the amended-sections list of §14 item 16, per FR-014 (partial)
+- [X] T031 Re-wrap the 161-character doc comment line in `src/components/shop/HeaderCategories.tsx` (`HeaderNavLinks` comment) to the file's width, per Constitution code style (partial)

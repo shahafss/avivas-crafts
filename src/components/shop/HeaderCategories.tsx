@@ -7,12 +7,16 @@ import { NavLink } from './NavLink';
 const HEADER_LINK =
   'inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center whitespace-nowrap';
 
+/** A category link may shrink (FR-018) down to the 44 px target; its inner span ends in an ellipsis. */
+const HEADER_CATEGORY_LINK =
+  'inline-flex min-h-11 min-w-11 max-w-full items-center justify-center whitespace-nowrap';
+
 /**
  * The links of the header's one row from 1024 px (research D20), in the owner's order: "All pieces",
  * the header categories (Settings 1 and 2, then the home-row category, picked by
- * `pickHeaderCategories`), "About", "Shipping & Returns". Every item is `shrink-0`; a category name
- * sits in an inner span of at most 95 px with an ellipsis, so the link and its focus ring are never
- * clipped.
+ * `pickHeaderCategories`), "About", "Shipping & Returns". The fixed links are `shrink-0`; a category
+ * link shrinks when the half is too full (FR-018), its name sitting in an inner span of at most
+ * 95 px with an ellipsis, so the link and its focus ring are never clipped.
  */
 export async function HeaderNavLinks({
   locale,
@@ -32,12 +36,12 @@ export async function HeaderNavLinks({
       {categories.map((category) => {
         const name = pick(locale, category.nameHe, category.nameEn);
         return (
-          <li key={category.id} className="shrink-0">
+          <li key={category.id} className="min-w-0 shrink">
             <NavLink
               href={`/${locale}/category/${category.slug}`}
               markCurrent
               bareChildren
-              className={HEADER_LINK}
+              className={HEADER_CATEGORY_LINK}
             >
               <span {...fallbackAttrs(name)} className="nav-line block max-w-[95px] truncate">
                 {name.text}

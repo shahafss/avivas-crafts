@@ -802,42 +802,41 @@ test('from 1024 px the header is one row in the owner order, in reading order, w
   }
 });
 
-// Owner fix 2026-11-17: the brand sits in the middle of the free space between the links and the
-// search field from 1024 px, and stays centred in the bar below that.
-test('the brand is centred between the nav and the search form from 1024 px, and in the bar at 375 px', async ({
+// Owner feedback 2026-11-23 (FR-018): the brand link's centre is the header bar's centre at every
+// width, with the seed's header categories and with three; the category names shrink instead.
+test('the brand link is at the exact centre of the header bar at 375, 1024 and 1280 px', async ({
   page,
 }) => {
-  const gap = (a: { x: number; width: number }, b: { x: number; width: number }): number =>
-    Math.max(a.x - (b.x + b.width), b.x - (a.x + a.width));
-  const boxOf = async (selector: string): Promise<{ x: number; width: number }> => {
+  const centreOf = async (selector: string): Promise<{ centre: number; width: number }> => {
     const found = await page.locator(selector).first().boundingBox();
     if (!found) throw new Error(`no box for ${selector}`);
-    return found;
+    return { centre: found.x + found.width / 2, width: found.width };
   };
-  for (const locale of LOCALES) {
-    for (const width of [1024, 1280]) {
-      const label = `${locale} at ${String(width)} px`;
-      await page.setViewportSize({ width, height: 800 });
-      await page.goto(`/${locale}`);
-      const nav = await boxOf('#site-header nav');
-      const brand = await boxOf('[data-testid="header-brand"]');
-      const search = await boxOf('[data-testid="header-search"]');
-      const before = gap(brand, nav);
-      const after = gap(brand, search);
-      expect(before, `${label}: room between the nav and the brand`).toBeGreaterThan(0);
-      expect(
-        Math.abs(before - after),
-        `${label}: ${String(before)} vs ${String(after)}`,
-      ).toBeLessThanOrEqual(2);
+  try {
+    for (const three of [false, true]) {
+      if (three) await setHeaderCategories('sample-candles', 'sample-ceramics');
+      for (const width of [375, 1024, 1280]) {
+        await page.setViewportSize({ width, height: 800 });
+        for (const locale of LOCALES) {
+          for (const path of ['', '/shop']) {
+            const label = `${locale}${path} at ${String(width)} px, ${three ? 'three' : 'seed'} header categories`;
+            await page.goto(`/${locale}${path}`);
+            const header = await centreOf('#site-header');
+            const brand = await centreOf('[data-testid="header-brand"]');
+            expect(
+              Math.abs(brand.centre - header.centre),
+              `${label}: brand centre ${String(brand.centre)} vs header ${String(header.centre)}`,
+            ).toBeLessThanOrEqual(1);
+            if (width >= 1024) {
+              expectNoOverlap(await visibleHeaderControls(page), label);
+              await noSidewaysScroll(page, label);
+            }
+          }
+        }
+      }
     }
-    await page.setViewportSize({ width: 375, height: 800 });
-    await page.goto(`/${locale}`);
-    const header = await boxOf('#site-header');
-    const brand = await boxOf('[data-testid="header-brand"]');
-    expect(
-      Math.abs(brand.x + brand.width / 2 - (header.x + header.width / 2)),
-      `${locale} at 375 px: brand centred in the bar`,
-    ).toBeLessThanOrEqual(2);
+  } finally {
+    await clearHeaderCategories();
   }
 });
 
@@ -937,58 +936,91 @@ test('tabbing through every header control keeps each focused element fully insi
   }
 });
 
-test('at 1024 px ordinary 12-character category names show in full, wide-letter ones are cut with an ellipsis and never overlap', async ({
+// Owner answer 2026-11-24 (FR-018): the logo never moves, so with three header categories at about
+// 1024 px the names are cut with "…" (down to the 44 px target). Where the half is wide enough,
+// ordinary 12-character names still show in full; wide-letter ones are always cut and never overlap.
+test('12-character category names: cut with an ellipsis when the half is full (three at 1024 px), whole where it fits (two at 1024 px, three at 1280 px), never overlapping', async ({
   page,
 }) => {
   const original = await readCategoryNames();
-  await setHeaderCategories('sample-candles', 'sample-ceramics');
   const slugs = ['sample-candles', 'sample-ceramics', 'featured'];
   const cases = [
     { kind: 'ordinary', he: 'סלסלות קטנות', en: 'Small hearts' },
     { kind: 'wide', he: 'שששששששששששש', en: 'WWWWWWWWWWWW' },
   ] as const;
+  const layouts = [
+    { width: 1024, header: ['sample-candles', null], showsInFull: true },
+    { width: 1024, header: ['sample-candles', 'sample-ceramics'], showsInFull: false },
+    { width: 1280, header: ['sample-candles', 'sample-ceramics'], showsInFull: true },
+  ] as const;
   try {
-    await page.setViewportSize({ width: 1024, height: 800 });
-    for (const sample of cases) {
-      for (const slug of slugs) {
-        await sql`UPDATE category SET name_he = ${sample.he}, name_en = ${sample.en} WHERE slug = ${slug}`;
-      }
-      for (const locale of LOCALES) {
-        const label = `${locale} ${sample.kind} names at 1024 px`;
-        await page.goto(`/${locale}`);
-        const spans = page
-          .getByTestId('site-header')
-          .getByRole('navigation', { name: FOUR_LABELS[locale].menuNav })
-          .locator('a[href*="/category/"] > span');
-        await expect(spans, label).toHaveCount(3);
-        const measured = await spans.evaluateAll((nodes) =>
-          nodes.map((node) => {
-            const style = getComputedStyle(node);
-            return {
-              text: node.textContent,
-              width: node.clientWidth,
-              fits: node.scrollWidth <= node.clientWidth,
-              overflow: style.overflowX,
-              textOverflow: style.textOverflow,
-            };
-          }),
-        );
-        for (const span of measured) {
-          if (sample.kind === 'ordinary') {
-            expect(span.width, `${label}: "${span.text}" is a box with width`).toBeGreaterThan(0);
-            expect(span.fits, `${label}: "${span.text}" shown in full`).toBe(true);
-          } else {
+    for (const layout of layouts) {
+      await setHeaderCategories(layout.header[0], layout.header[1]);
+      await page.setViewportSize({ width: layout.width, height: 800 });
+      for (const sample of cases) {
+        for (const slug of slugs) {
+          await sql`UPDATE category SET name_he = ${sample.he}, name_en = ${sample.en} WHERE slug = ${slug}`;
+        }
+        for (const locale of LOCALES) {
+          const label = `${locale} ${sample.kind} names, ${layout.header[1] ? 'three' : 'two'} links at ${String(layout.width)} px`;
+          await page.goto(`/${locale}`);
+          const spans = page
+            .getByTestId('site-header')
+            .getByRole('navigation', { name: FOUR_LABELS[locale].menuNav })
+            .locator('a[href*="/category/"] > span');
+          await expect(spans.first(), label).toBeVisible();
+          const measured = await spans.evaluateAll((nodes) =>
+            nodes.map((node) => {
+              const style = getComputedStyle(node);
+              const link = node.parentElement as HTMLElement;
+              return {
+                text: node.textContent,
+                width: node.clientWidth,
+                linkWidth: link.getBoundingClientRect().width,
+                linkOverflow: getComputedStyle(link).overflowX,
+                fits: node.scrollWidth <= node.clientWidth,
+                overflow: style.overflowX,
+                textOverflow: style.textOverflow,
+              };
+            }),
+          );
+          expect(measured.length, `${label}: category links`).toBeGreaterThan(0);
+          for (const span of measured) {
+            expect(span.linkWidth, `${label}: "${span.text}" link target`).toBeGreaterThanOrEqual(
+              43.5,
+            );
+            // The ring is drawn on the <a>, which clips nothing.
+            expect(span.linkOverflow, `${label}: "${span.text}" link overflow`).toBe('visible');
             expect(span.overflow, `${label}: overflow of "${span.text}"`).toBe('hidden');
             expect(span.textOverflow, `${label}: text-overflow of "${span.text}"`).toBe('ellipsis');
+            if (sample.kind === 'ordinary' && layout.showsInFull) {
+              expect(span.width, `${label}: "${span.text}" is a box with width`).toBeGreaterThan(0);
+              expect(span.fits, `${label}: "${span.text}" shown in full`).toBe(true);
+            }
+          }
+          const boxes = await visibleHeaderControls(page);
+          expectNoOverlap(boxes, label);
+          for (const box of boxes) {
+            expect(box.x, `${label}: "${box.name}" left edge`).toBeGreaterThanOrEqual(-0.5);
+            expect(box.right, `${label}: "${box.name}" right edge`).toBeLessThanOrEqual(
+              layout.width + 0.5,
+            );
+          }
+          await noSidewaysScroll(page, label);
+          const headerBox = await page.locator('#site-header').boundingBox();
+          const brandBox = await page.getByTestId('header-brand').boundingBox();
+          if (!headerBox || !brandBox) throw new Error(`${label}: no header or brand box`);
+          expect(
+            Math.abs(brandBox.x + brandBox.width / 2 - (headerBox.x + headerBox.width / 2)),
+            `${label}: brand centre equals header centre`,
+          ).toBeLessThanOrEqual(1);
+          if (sample.kind === 'ordinary' && !layout.showsInFull) {
+            expect(
+              measured.some((span) => !span.fits),
+              `${label}: the names are really cut`,
+            ).toBe(true);
           }
         }
-        const boxes = await visibleHeaderControls(page);
-        expectNoOverlap(boxes, label);
-        for (const box of boxes) {
-          expect(box.x, `${label}: "${box.name}" left edge`).toBeGreaterThanOrEqual(-0.5);
-          expect(box.right, `${label}: "${box.name}" right edge`).toBeLessThanOrEqual(1024.5);
-        }
-        await noSidewaysScroll(page, label);
       }
     }
   } finally {

@@ -29,8 +29,10 @@ export interface HeaderProps {
 
 /**
  * Full-width sticky bar (storefront.md 7.18, research D20). Below 1024 px: menu button, brand,
- * cart. From 1024 px one row in reading order: site links, brand, search field, cart. The logo
- * (the wordmark) sits inside the bar, centred, never hanging below it (feature 009, research D3).
+ * cart. From 1024 px one row in reading order: site links, brand, search field, cart, as a grid of
+ * three columns whose outer two are always equal, so the logo's centre is the bar's centre (FR-018);
+ * when the links do not fit their half, only the category names shrink. The logo (the wordmark)
+ * sits inside the bar, never hanging below it (feature 009, research D3).
  * The menu drawer is a native popover sliding in from the reading start (`.drawer` in
  * `globals.css`).
  */
@@ -53,21 +55,21 @@ export async function Header({
         data-at-top=""
         className="sticky top-0 z-header h-(--header-h) border-b border-line text-ink"
       >
-        <div className="mx-auto grid h-full max-w-[1240px] grid-cols-[1fr_minmax(0,auto)_1fr] items-center px-4 nav:flex nav:gap-4">
+        <div className="mx-auto grid h-full max-w-[1240px] grid-cols-[1fr_minmax(0,auto)_1fr] items-center px-4 nav:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] nav:gap-4">
           <div className="flex items-center nav:hidden">
             <IconButton popoverTarget={MENU_ID} label={t('menu')}>
               <MenuBurger />
             </IconButton>
           </div>
-          <nav aria-label={t('menuNav')} className="hidden shrink-0 nav:block">
-            <ul className="flex items-center gap-3 text-[15px]">
+          <nav aria-label={t('menuNav')} className="hidden min-w-0 nav:block">
+            <ul className="flex min-w-0 items-center gap-3 text-[15px]">
               <HeaderNavLinks locale={locale} categories={headerCategories} />
             </ul>
           </nav>
           <Link
             href={base}
             data-testid="header-brand"
-            className="inline-flex min-h-11 items-center rounded-card px-2 py-0.5 nav:mx-auto"
+            className="inline-flex min-h-11 items-center rounded-card px-2 py-0.5"
           >
             <img
               data-testid="header-logo"
@@ -83,10 +85,12 @@ export async function Header({
             />
             <span className="sr-only">{t('homeLinkSuffix')}</span>
           </Link>
-          <div className="hidden shrink-0 nav:block">
-            <HeaderSearch locale={locale} variant="header" />
+          <div className="flex min-w-0 items-center justify-end gap-4">
+            <div className="hidden shrink-0 nav:block">
+              <HeaderSearch locale={locale} variant="header" />
+            </div>
+            <div className="flex shrink-0 items-center justify-end">{cartLink}</div>
           </div>
-          <div className="flex shrink-0 items-center justify-end">{cartLink}</div>
         </div>
       </header>
       <HeaderScrollState />
